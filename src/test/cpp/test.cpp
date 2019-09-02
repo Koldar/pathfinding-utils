@@ -2,9 +2,9 @@
 
 #include "xyLoc.hpp"
 #include "OctileHeuristic.hpp"
+#include "GridMapState.hpp"
 
 using namespace pathfinding;
-using namespace heuristics;
 
 SCENARIO("test xyLoc") {
 
@@ -39,17 +39,17 @@ SCENARIO("test xyLoc") {
 }
 
 
-SCNEARIO("test octile") {
+SCENARIO("test octile") {
 
-    OctileHeuristic h{};
+    search::OctileHeuristic h{};
 
-    REQUIRE(h.getHeuristic(GridMapState::make(xyLoc{10,10}), GridMapState::make(xyLoc{10, 10})) == 0L);
-    REQUIRE(h.getHeuristic(GridMapState::make(xyLoc{10,10}), GridMapState::make(xyLoc{10, 0})) == 10L);
-    REQUIRE(h.getHeuristic(GridMapState::make(xyLoc{10,10}), GridMapState::make(xyLoc{0, 10})) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 10})) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 0})) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{0, 10})) == 10L);
     
-    REQUIRE(h.getHeuristic(GridMapState::make(xyLoc{100,100}), GridMapState::make(xyLoc{150, 130})) == (20L + 42L));
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 130})) == (20L + 42L));
 
-    REQUIRE(h.getHeuristic(GridMapState::make(xyLoc{100,100}), GridMapState::make(xyLoc{150, 170})) == (20L + 70L));
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 170})) == (20L + 70L));
 }
 
 SCENARIO("test A*") {

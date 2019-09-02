@@ -22,6 +22,7 @@ using namespace cpp_utils;
  * comparisons and a flag indicating if the state has been fully explored (hance it maybe put in close list) or not
  * 
  */
+template <typename PARENTSTATE>
 class IState : public IMemorable {
 public:
     friend std::ostream& operator <<(std::ostream& ss, const IState& s) {
@@ -32,23 +33,23 @@ public:
     virtual void setF(cost_t f) = 0;
     virtual void setG(cost_t g) = 0;
     virtual void setH(cost_t h) = 0;
-    virtual void setParent(const IState* parent) = 0;
+    virtual void setParent(PARENTSTATE* parent) = 0;
     virtual void setId(stateid_t id) = 0;
     virtual void setExpanded(bool expanded) = 0;
+    virtual cost_t getF() const = 0;
+    virtual cost_t getG() const = 0;
+    virtual cost_t getH() const = 0;
+    virtual PARENTSTATE* getParent() = 0;
+    virtual const PARENTSTATE* getParent() const = 0;
+    virtual stateid_t getId() const = 0;
+    virtual bool isExpanded() const = 0;
+public:
     void markAsExpanded() {
         this->setExpanded(true);
     }
     void markAsUnexpanded() {
         this->setExpanded(false);
     }
-public:
-    virtual cost_t getF() const = 0;
-    virtual cost_t getG() const = 0;
-    virtual cost_t getH() const = 0;
-    virtual const IState* getParent() const = 0;
-    virtual IState* getParent() = 0;
-    virtual stateid_t getId() const = 0;
-    virtual bool isExpanded() const = 0;
     /**
      * @brief check if the state is the initial state
      * 
@@ -60,7 +61,7 @@ public:
     }
 };
 
-template <EXTENDS(STATE, IState)>
+template <typename STATE>
 class SolutionPath : public std::vector<STATE> {
 };
 
@@ -76,7 +77,7 @@ class SolutionNotFoundException : public exceptions::GenericException {
  * @brief an algorithm that given a start state goes till a goal one
  * 
  */
-template <EXTENDS(STATE, IState)>
+template <typename STATE>
 class ISearchAlgorithm {
 protected:
     virtual const STATE& _search(stateid_t start, const stateid_t* goal) = 0;

@@ -21,13 +21,13 @@ namespace pathfinding::search {
  * 
  */
 class OctileHeuristic : IHeuristic<GridMapState> {
-
+public:
     virtual cost_t getHeuristic(const GridMapState& current, const GridMapState& goal) {
-        xyLoc distance = current.getDistance(goal);
+        xyLoc distance = current.getPosition().getDistance(goal.getPosition());
         auto minC = distance.getMinCoordinate();
         auto maxC = distance.getMaxCoordinate();
         //I use floor to ensure that the estimate is still admissible
-        return (maxC - minC) + floor(min * M_SQRT2);
+        return (maxC - minC) + floor(minC * M_SQRT2);
     }
     
     virtual bool isAdmissible() const {
