@@ -93,6 +93,51 @@ bool xyLoc::isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc mi
 	}
 }
 
+xyLoc xyLoc::getAdjacent(Direction dir) const {
+	switch (dir) {
+		case Direction::NORTH: {
+			return *this - xyLoc{0, 1};
+		}
+		case Direction::SOUTH: {
+			return *this + xyLoc{0, 1};
+		}
+		case Direction::EAST: {
+			return *this + xyLoc{1, 0};
+		}
+		case Direction::WEST: {
+			return *this - xyLoc{1, 0};
+		}
+		case Direction::NORTHWEST: {
+			return *this - xyLoc{1, 1};
+		}
+		case Direction::NORTHEAST: {
+			return *this - xyLoc{0, 1} + xyLoc{1, 0};
+		}
+		case Direction::SOUTHWEST: {
+			return *this + xyLoc{0, 1} - xyLoc{1, 0};
+		}
+		case Direction::SOUTHEAST: {
+			return *this + xyLoc{1, 1};
+		}
+		default: {
+			throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
+		}
+	}
+}
+
+std::ostream& operator<<(std::ostream& str, const xyLoc& v) {
+	str << "{" << v.x << ", " << v.y << "}";
+	return str;
+}
+
+bool operator ==(const xyLoc& a, const xyLoc& b) {
+	return a.x == b.x && a.y == b.y;
+}
+
+bool operator !=(const xyLoc& a, const xyLoc& b) {
+	return a.x != b.x || a.y != b.y;
+}
+
 xyLoc operator +(const xyLoc& a, const xyLoc& b) {
 	return xyLoc{a.x + b.x, a.y + b.y};
 }

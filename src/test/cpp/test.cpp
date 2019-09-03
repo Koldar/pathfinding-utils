@@ -37,6 +37,19 @@ SCENARIO("test xyLoc") {
 			REQUIRE(!xyLoc{6,8}.isAdjacentTo(xyLoc{5,6}));
 		}
 	}
+
+	GIVEN("testing fetching adjacent cells") {
+		xyLoc current{3, 6};
+
+		REQUIRE(current.getAdjacent(Direction::NORTH) == xyLoc{3, 5});
+		REQUIRE(current.getAdjacent(Direction::NORTHEAST) == xyLoc{4, 5});
+		REQUIRE(current.getAdjacent(Direction::NORTHWEST) == xyLoc{2, 5});
+		REQUIRE(current.getAdjacent(Direction::EAST) == xyLoc{4, 6});
+		REQUIRE(current.getAdjacent(Direction::WEST) == xyLoc{2, 6});
+		REQUIRE(current.getAdjacent(Direction::SOUTH) == xyLoc{3, 7});
+		REQUIRE(current.getAdjacent(Direction::SOUTHEAST) == xyLoc{4, 7});
+		REQUIRE(current.getAdjacent(Direction::SOUTHWEST) == xyLoc{2, 7});
+	}
 	
 	GIVEN("testing adjacent cells") {
 

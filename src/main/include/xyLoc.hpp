@@ -177,6 +177,17 @@ struct xyLoc {
 	}
 
 	/**
+	 * @brief get the adjacent cell of self by following a direction
+	 * 
+	 * @note
+	 * UB if you don't check with ::isThereLocationInDirectionOf if the direction might generate a result
+	 * 
+	 * @param dir ther direction to follow to obtain a new location
+	 * @return xyLoc the adjacent location by following a particular direction
+	 */
+	xyLoc getAdjacent(Direction dir) const;
+
+	/**
 	 * @brief Get the Min Coordinate object
 	 * 
 	 * @return ucood_t the coordinate which has the least value between x and y
