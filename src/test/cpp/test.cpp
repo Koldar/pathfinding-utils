@@ -2,6 +2,7 @@
 
 #include "xyLoc.hpp"
 #include "OctileHeuristic.hpp"
+#include "ManhattanHeuristic.hpp"
 #include "GridMapState.hpp"
 
 using namespace pathfinding;
@@ -50,6 +51,19 @@ SCENARIO("test octile") {
     REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 130})) == (20L + 42L));
 
     REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 170})) == (20L + 70L));
+}
+
+SCENARIO("test manhattan") {
+
+    search::ManhattanHeuristic h{search::GridBranching::FOUR_CONNECTED};
+
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 10})) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 0})) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{0, 10})) == 10L);
+    
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 130})) == (50L + 30L));
+
+    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 170})) == (50L + 70L));
 }
 
 SCENARIO("test A*") {
