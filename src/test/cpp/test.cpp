@@ -36,6 +36,7 @@ SCENARIO("test xyLoc") {
 			REQUIRE(!xyLoc{5,6}.isAdjacentTo(xyLoc{6,8}));
 			REQUIRE(!xyLoc{6,8}.isAdjacentTo(xyLoc{5,6}));
 		}
+	}
 	
 	GIVEN("testing adjacent cells") {
 

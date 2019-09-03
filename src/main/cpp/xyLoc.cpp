@@ -61,34 +61,34 @@ bool xyLoc::isAdjacentTo(const xyLoc& other) const {
 			((std::abs(static_cast<int>(this->y - other.y)) <= 1) || (std::abs(static_cast<int>(other.y - this->y)) <= 1));
 }
 
-bool xyLoc::isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc minPoint = xyLoc{0, 0}) const {
+bool xyLoc::isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc minPoint) const {
 	switch (dir) {
-		case NORTH: {
+		case Direction::NORTH: {
 			return this->y > minPoint.y;
 		}
-		case SOUTH: {
+		case Direction::SOUTH: {
 			return this->y < maxPoint.y;
 		}
-		case: EAST: {
-			return this->x > minPoint.x;
-		}
-		case: WEST: {
+		case Direction::EAST: {
 			return this->x < maxPoint.x;
 		}
-		case: NORTHWEST: {
+		case Direction::WEST: {
+			return this->x > minPoint.x;
+		}
+		case Direction::NORTHWEST: {
 			return this->y > minPoint.y && this->x > minPoint.x;
 		}
-		case: NORTHEAST: {
+		case Direction::NORTHEAST: {
 			return this->y > minPoint.y && this->x < maxPoint.x;
 		}
-		case: SOUTHWEST: {
+		case Direction::SOUTHWEST: {
 			return this->y < maxPoint.y && this->x > minPoint.x;
 		}
-		case: SOUTHEAST: {
+		case Direction::SOUTHEAST: {
 			return this->y < maxPoint.y && this->x < maxPoint.x;
 		}
 		default: {
-			throw cpp_utils::exceptions::InvalidArgumentException<Direction>{dir};
+			throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
 		}
 	}
 }
