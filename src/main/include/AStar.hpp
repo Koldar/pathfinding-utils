@@ -8,6 +8,22 @@
 
 namespace pathfinding::search {
 
+/**
+ * @brief a class whose job is to generate a new search state
+ * 
+ */
+class IStateSupplier {
+	/**
+	 * @brief get a search state with the given id
+	 * 
+	 * this function should generate a new IState instance if no state with `id` has never been generated or
+	 * the previously existent state with the given `id` otherwise
+	 * 
+	 * @param id the id of the state which uniquely identifies the state
+	 * @return IState& the state with such id
+	 */
+	virtual IState& getState(stateid_t id) = 0;
+}
 
 /**
  * @brief a class whose job is to compute all the successors of a given state
@@ -16,7 +32,6 @@ namespace pathfinding::search {
 class IStateExpander {
 public:
     virtual std::vector<std::pair<IState&, cost_t>> getSuccessors(IState& state) = 0;
-    virtual IState& getState(stateid_t id) = 0;
 };
 
 /**
@@ -28,10 +43,30 @@ public:
     virtual bool shouldPrune(IState& state) const = 0;
 };
 
+/**
+ * @brief Allows you to further refines the behavior of an A* algorithm
+ * 
+ */
 class AstarListener {
 public:
+	/**
+	 * @brief called whenever a new node is expanded from the open list
+	 * 
+	 * @param node 
+	 */
     virtual void onNodeExpanded(const IState& node) = 0;
+	/**
+	 * @brief called when the start state has been added in the open list
+	 * 
+	 * @param node 
+	 */
     virtual void onInitialNodeAddedInOpenList(const IState& node) = 0;
+	/**
+	 * @brief called when a state has been just added in the open list
+	 * 
+	 * @param parent 
+	 * @param node 
+	 */
     virtual void onNewNodeAddedInOpenList(const IState& parent, const IState& node) = 0;
     virtual void onNodeParentRevised(const IState& node, const IState& oldParent, const IState& newParent) = 0;
     virtual void onSolutionFound() = 0;
@@ -51,7 +86,7 @@ public:
  * A* implementation that allows arbitrary combinations of 
  * (weighted) heuristic functions and node expansion policies.
  * This implementation uses a binary heap for the open_ list
- * and a bit array for the closed_ list.
+ * and a bit array for the closed_ list (under the form of `expanded` flag in ::IState)
  * 
  * @author: dharabor
  * @created: 21/08/2012
@@ -59,8 +94,8 @@ public:
 template <typename STATE>
 class NoCloseListSingleGoalAstar: public ISearchAlgorithm, public IMemorable, public Listenable<AstarListener> {
 public:
-    AStarAlgorithm(IHeuristic<STATE>& heuristic, IStateExpander& expander, IStatePruner& pruner,  unsigned int openListCapacity = 1024) : Listenable{}, 
-        heuristic{heuristic}, expander{expander}, pruner{pruner},
+    AStarAlgorithm(IHeuristic<STATE>& heuristic, IStateSupplier& supplier, IStateExpander& expander, IStatePruner& pruner,  unsigned int openListCapacity = 1024) : Listenable{}, 
+        heuristic{heuristic}, supplier{supplier}, expander{expander}, pruner{pruner},
         openList{nullptr} {
             if (!heuristic.isConsistent()) {
                 throw cpp_utils::exceptions::InvalidArgumentException{"the heuristic is not consistent!"};
@@ -89,6 +124,7 @@ public:
 private:
     IHeuristic<STATE>& heuristic;
     IStateExpander& expander;
+	IStateSupplier& supplier;
     IStatePruner& pruner;
     StaticPriorityQueue<STATE>* openList;
 protected:
@@ -103,7 +139,7 @@ protected:
         info("starting A*! startId = ", startId, "goalId = ", ELVIS(goalId, "none"));
 
         STATE* goal = nullptr;
-        STATE& start = this->expander.getState(startId);
+        STATE& start = this->supplier.getState(startId);
 
         start.setG(0);
         start.setH(this->heuristic.getHeuristic(start, goalId));
