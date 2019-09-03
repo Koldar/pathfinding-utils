@@ -61,6 +61,37 @@ bool xyLoc::isAdjacentTo(const xyLoc& other) const {
 			((std::abs(static_cast<int>(this->y - other.y)) <= 1) || (std::abs(static_cast<int>(other.y - this->y)) <= 1));
 }
 
+bool xyLoc::isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc minPoint = xyLoc{0, 0}) const {
+	switch (dir) {
+		case NORTH: {
+			return this->y > minPoint.y;
+		}
+		case SOUTH: {
+			return this->y < maxPoint.y;
+		}
+		case: EAST: {
+			return this->x > minPoint.x;
+		}
+		case: WEST: {
+			return this->x < maxPoint.x;
+		}
+		case: NORTHWEST: {
+			return this->y > minPoint.y && this->x > minPoint.x;
+		}
+		case: NORTHEAST: {
+			return this->y > minPoint.y && this->x < maxPoint.x;
+		}
+		case: SOUTHWEST: {
+			return this->y < maxPoint.y && this->x > minPoint.x;
+		}
+		case: SOUTHEAST: {
+			return this->y < maxPoint.y && this->x < maxPoint.x;
+		}
+		default: {
+			throw cpp_utils::exceptions::InvalidArgumentException<Direction>{dir};
+		}
+	}
+}
 
 xyLoc operator +(const xyLoc& a, const xyLoc& b) {
 	return xyLoc{a.x + b.x, a.y + b.y};
@@ -72,7 +103,7 @@ xyLoc operator +(const xyLoc& a, int value) {
 
 xyLoc operator -(const xyLoc& a, const xyLoc& b) {
 	return xyLoc{a.x - b.x, a.y - b.y};
-};
+}
 
 xyLoc operator -(const xyLoc& a, int value) {
 	return xyLoc{a.x - value, a.y - value};

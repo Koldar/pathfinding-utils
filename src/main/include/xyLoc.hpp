@@ -1,5 +1,5 @@
 /*
- * xyLoc.h
+ * @file
  *
  *  Created on: Oct 8, 2018
  *      Author: koldar
@@ -117,6 +117,22 @@ struct xyLoc {
 	bool isAdjacentTo(const xyLoc& other) const;
 
 	/**
+	 * @brief check if, starting from this, we can go in a particular direction
+	 * 
+	 * @code
+	 * 	{5,3}.isThereLocationInDirectionOf(LEFT, {5,5}); //yes
+	 *  {5,3}.isThereLocationInDirectionOf(RIGHT, {5,5}); //no
+	 * @endcode
+	 * 
+	 * @param dir the direction we should follow to check if there is another xyLoc.
+	 * @param maxPoint coordinates representing the bottom right corner of an invisible rectangle we cannot escape from
+	 * @param minPoint coordinates representing the top left corner of an invisible rectangle we cannot escape from
+	 * @return true if there is a clocation adjacent to self by following @c dir
+	 * @return false 
+	 */
+	bool isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc minPoint = {0, 0}) const;
+
+	/**
 	 * The coordiante system is in the topLeft corner (0,0) while the infinity is in the bottomRight
 	 *
 	 * locationns within the border of the rectangle are considered as well
@@ -214,6 +230,6 @@ xyLoc min(const xyLoc& a, const xyLoc& b);
  */
 xyLoc max(const xyLoc& a, const xyLoc& b);
 
-};
+}
 
 #endif /* XYLOC_H_ */
