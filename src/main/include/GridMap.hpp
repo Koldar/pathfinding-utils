@@ -27,7 +27,6 @@ namespace pathfinding {
  * 
  * @tparam BRANCHING a GridMapBranching representing how the underlying graph is structured
  */
-template <typename BRANCHING>
 class GridMap: public IPathFindingMap<std::string, xyLoc, cost_t> {
 private:
     /**
@@ -45,9 +44,27 @@ private:
      * @endcode
      */
     std::unordered_map<char, cost_t> terrainCost;
+    /**
+     * @brief number of columns this map has
+     * 
+     */
     const cood_t width;
+    /**
+     * @brief number of rows this map has
+     * 
+     */
     const cood_t height;
+    /**
+     * @brief content of the map.
+     * 
+     * Costs are associated vcia ::terrainCost
+     * 
+     */
     cpp_utils::vectorplus<char> cells;
+    /**
+     * @brief number of cells which has their cost different than +infinity
+     * 
+     */
     size_t size;
 private:
     size_t computeSize() const {
@@ -124,41 +141,6 @@ public:
     }
     virtual size_t size() const {
         return this->size;
-    }
-    virtual IImmutableGraph<std::string,xyLoc,cost_t> toGraph() const {
-        ListGraph<std::string, xyLoc, cost_t> result{this->name};
-
-        //add vertices
-        for (auto y=0; y<this->height; ++y) {
-            for (auto x=0; x<this->width; ++x) {
-                if (this)
-                result.addVertex(xyLoc{x, y});
-            }
-        }
-
-        //add edges
-        for (auto y=0; y<this->height; ++y) {
-            for (auto x=0; x<this->width; ++x) {
-                if (!this->isTraversable(xyLoc{x, y})) {
-                    //untraversable cell. Ignore
-                    continue;
-                }
-
-                switch (BRANCHING) {
-                    case GridBranching::FOUR_CONNECTED: {
-                        
-                        break;
-                    }
-                    case GridBranching::EIGHT_CONNECTED: {
-                        break;
-                    }
-                    default: {
-                        throw cpp_utils::exceptions::InvalidScenarioException{BRANCHING};
-                    }
-                }
-            }
-        }
-
     }
 };
 

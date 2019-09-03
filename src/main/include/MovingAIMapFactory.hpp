@@ -44,7 +44,9 @@ public:
     }
 
     virtual GridMap load(const boost::filesystem::path& mapPath) {
-
+        //load the map
+        //TODO continue from here
+        //TODO make adjacent graph work!
     }
 };
 
