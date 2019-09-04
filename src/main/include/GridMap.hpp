@@ -4,6 +4,7 @@
 #include "types.hpp"
 #include "IPathFindingMap.hpp"
 #include "xyLoc.hpp"
+#include <cpp-utils/vectorplus.hpp>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -27,7 +28,7 @@ namespace pathfinding {
  * 
  * @tparam BRANCHING a GridMapBranching representing how the underlying graph is structured
  */
-class GridMap: public IPathFindingMap<std::string, xyLoc, cost_t> {
+class GridMap: public IPathFindingMap {
 private:
     /**
      * @brief name of the map
@@ -48,12 +49,12 @@ private:
      * @brief number of columns this map has
      * 
      */
-    const cood_t width;
+    const ucood_t width;
     /**
      * @brief number of rows this map has
      * 
      */
-    const cood_t height;
+    const ucood_t height;
     /**
      * @brief content of the map.
      * 
@@ -68,22 +69,22 @@ private:
     size_t size;
 private:
     size_t computeSize() const {
-        this->cells
-            .map<cost_t>([&](char x) {return terrainCost[x];})
-            .filter([&](cost_t x) { return x.isNotInfinity()})
+        return this->cells
+            .map<cost_t>([&](char x) {return this->terrainCost.at(x);})
+            .filter([&](cost_t x) { return x.isNotInfinity(); })
             .size();
     }
-    int toVectorCoord(xyLoc xy) {
+    int toVectorCoord(xyLoc xy) const {
         return toVectorCoord(xy.y, xy.x);
     }
-    int toVectorCoord(cood_t y, cood_t x) {
+    int toVectorCoord(ucood_t y, ucood_t x) const {
         return y * this->width + x;
     }
-    xyLoc toXyLoc(int x) {
+    xyLoc toXyLoc(ucood_t x) const {
         return xyLoc{x / this->width, x % this->width};
     }
 public:
-    GridMap(const std::string& name, const std::vector<char>& cells, cood_t width, cood_t height, std::unordered_map<char, cost_t> terrainCost): name{name}, cells{cells}, width{width}, height{height}, terrainCost{terrainCost} {
+    GridMap(const std::string& name, const std::vector<char>& cells, ucood_t width, ucood_t height, std::unordered_map<char, cost_t> terrainCost): name{name}, cells{cells}, width{width}, height{height}, terrainCost{terrainCost} {
         this->size = this->computeSize();
     }
 
@@ -96,25 +97,8 @@ public:
     GridMap(const GridMap&& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, size{other.size} {
     }
 
-    GridMap& operator= (const GridMap& map) {
-        this->name = map.name;
-        this->width = map.width;
-        this->height = map.height;
-        this->terrainCost = map.terrainCost;
-        this->cells = map.cells;
-        this->size = map.size;
-        return *this;
-    }
-
-    GridMap operator= (const GridMap&& map) {
-        this->name = map.name;
-        this->width = map.width;
-        this->height = map.height;
-        this->terrainCost = map.terrainCost;
-        this->cells = map.cells;
-        this->size = map.size;
-        return *this;
-    }
+    GridMap& operator= (const GridMap& map) = delete;
+    GridMap operator= (const GridMap&& map) = delete;
 
     cood_t getWidth() const {
         return this->width;
@@ -129,17 +113,17 @@ public:
     }
 
     cost_t getCellCost(xyLoc loc) const {
-        return this->terrainCost[this->cells[this->toVectorCoord(loc)]];
+        return this->terrainCost.at(this->cells[this->toVectorCoord(loc)]);
     }
 
     bool isTraversable(xyLoc loc) const {
         return getCellCost(loc).isNotInfinity();
     }
-
+public:
     virtual const std::string& getName() const {
         return this->name;
     }
-    virtual size_t size() const {
+    virtual size_t getSize() const {
         return this->size;
     }
 };

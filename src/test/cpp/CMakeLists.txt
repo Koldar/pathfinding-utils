@@ -35,7 +35,13 @@ set_target_properties(${TEST_NAME}
 
 #copy the contents of src/test/resources inside build/XXX
 add_custom_command(
-    TARGET ${TEST_NAME} 
+    TARGET ${TEST_NAME}
     POST_BUILD COMMAND 
     ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/../../src/test/resources $<TARGET_FILE_DIR:${THEPROJECT_NAME}>
 )
+
+add_custom_target(FinalMessage ALL
+    ${CMAKE_COMMAND} -E cmake_echo_color --green --bold "========================== Compilation is successful! =========================="
+    COMMENT "Final Message" 
+)
+add_dependencies(FinalMessage ${TEST_NAME} )

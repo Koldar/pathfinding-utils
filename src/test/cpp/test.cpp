@@ -5,8 +5,41 @@
 #include "ManhattanHeuristic.hpp"
 #include "GridMapState.hpp"
 #include "GridBranching.hpp"
+#include "types.hpp"
+#include <boost/filesystem.hpp>
+#include "IPathFindingMapReader.hpp"
+#include "GridMap.hpp"
+#include "MovingAIGridMapReader.hpp"
 
 using namespace pathfinding;
+
+SCENARIO("test moving ai gridmap loader") {
+
+	MovingAIGridMapReader reader{
+		'.', cost_t{1000},
+		'T', cost_t{1500},
+		'@', cost_t::INFTY
+	};
+
+	GIVEN("traversable map") {
+
+		GridMap map{reader.load(boost::filesystem::path{"./combat.map"})};
+
+		REQUIRE(map.getWidth() == 177);
+		REQUIRE(map.getHeight() == 193);
+		REQUIRE(map.getCellCost({0,0}) == 1000);
+		REQUIRE(map.getCellCost({12,15}) == 1500);
+		REQUIRE(map.getCellCost({12,14}) == 1000);
+	}
+
+	GIVEN("map with some untraversabnle cells") {
+		GridMap map{reader.load(boost::filesystem::path{"./den000d.map"})};
+
+		REQUIRE(map.getWidth() == 503);
+		REQUIRE(map.getHeight() == 351);
+		REQUIRE(map.getCellCost({0,0}) == cost_t::INFTY);
+	}
+}
 
 SCENARIO("test xyLoc") {
 

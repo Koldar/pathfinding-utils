@@ -25,7 +25,7 @@ public:
      * 
      * @return size_t the number of locations an agent can traverse
      */
-    virtual size_t size() const = 0;
+    virtual size_t getSize() const = 0;
 };
 
 }

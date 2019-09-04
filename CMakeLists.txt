@@ -11,7 +11,7 @@ set(THEPROJECT_VERSION 1.0)
 set(THEPROJECT_OUTPUT "SO")
 #a spaced separated list of shared libraries that will be used when linking the main project. Each library needs to be installed
 #on the system. Each library should be declared as a quoted string
-set(THEPROJECT_REQUIRED_SHARED_LIBRARIES "cpp-utils")
+set(THEPROJECT_REQUIRED_SHARED_LIBRARIES "cpp-utils" "boost_filesystem")
 #a spaced separated list of additional shared libraries that will be used when linking the test application. Each library needs to be installed
 #ignore it if you put "THEPROJECT_TEST_ENABLE_TEST_COMPILATION" to "false" 
 set(THEPROJECT_TEST_ADDITIONAL_SHARED_LIBRARIES "")
@@ -107,6 +107,7 @@ if(NOT WIN32)
     set(BoldRed     "${Esc}[1;31m")
     set(BoldCyan    "${Esc}[1;36m")
     set(BoldYellow  "${Esc}[1;33m")
+    set(BoldGreen   "${Esc}[1;32m")
 endif()
 
 # ******************** BUILDING SUMMARY ***************************
@@ -148,7 +149,7 @@ if(PARENTDIR STREQUAL "Debug")
     add_definitions(-DQUICK_LOG=${THEPROJECT_DEBUG_LOG_LEVEL} -DDEBUG -fno-stack-protector )
 endif(PARENTDIR STREQUAL "Debug")
 #add common definitions
-add_definitions(-Wfatal-errors -std=c++11 -Werror)
+add_definitions(-fmax-errors=1 -std=c++11 -Werror)
 
 # ****************** SUB DIRECTORIES *************************
 add_subdirectory(src/main/cpp)

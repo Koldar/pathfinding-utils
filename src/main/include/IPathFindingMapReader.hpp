@@ -1,5 +1,5 @@
-#ifndef _ABSTRACTMAPFACTORY_HEADER__
-#define _ABSTRACTMAPFACTORY_HEADER__
+#ifndef _IPATHFINDINGMAPREADER_HEADER__
+#define _IPATHFINDINGMAPREADER_HEADER__
 
 #include <string>
 #include <boost/filesystem.hpp>
@@ -7,11 +7,13 @@
 namespace pathfinding {
 
 /**
- * @brief allows you to load a map from the file system
+ * @brief allows you to load a map from the a data source
+ * 
+ * the data source is often the file system
  * 
  */
 template <typename PATHFINDINGMAP>
-class AbstractMapFactory {
+class IPathFindingMapReader {
 public:
     /**
      * @brief given a map path pointing to a map, it generates a instance of ::IPathFindingMap
