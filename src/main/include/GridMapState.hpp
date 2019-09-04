@@ -126,8 +126,19 @@ public:
     }
 };
 
-class GridMapStateSupplier: public IStateSupplier<GridMapState> {
+/* TODO continue from here: 
+ * we need to generate a AbstractStateSupplier which has as a backend a vector indexed by stateid_t
+ * yielding a pointer to the state.
+ */
 
+class GridMapStateSupplier: public IStateSupplier<GridMapState> {
+private:
+    cpp_utils::cpool<GridMapState> statePool;
+public:
+    GridMapStateSupplier(): statePool{50} {}
+    STATE& getState(stateid_t id) {
+
+    }
 }
 
 }
