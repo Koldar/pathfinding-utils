@@ -3,6 +3,7 @@
 
 #include "ISearchAlgorithm.hpp"
 #include "GridBranching.hpp"
+#include "IStateSupplier.hpp"
 
 namespace pathfinding::search {
 
@@ -124,6 +125,10 @@ public:
         return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
+
+class GridMapStateSupplier: public IStateSupplier<GridMapState> {
+
+}
 
 }
 

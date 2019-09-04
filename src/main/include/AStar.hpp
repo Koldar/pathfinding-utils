@@ -9,23 +9,6 @@
 namespace pathfinding::search {
 
 /**
- * @brief a class whose job is to generate a new search state
- * 
- */
-class IStateSupplier {
-	/**
-	 * @brief get a search state with the given id
-	 * 
-	 * this function should generate a new IState instance if no state with `id` has never been generated or
-	 * the previously existent state with the given `id` otherwise
-	 * 
-	 * @param id the id of the state which uniquely identifies the state
-	 * @return IState& the state with such id
-	 */
-	virtual IState& getState(stateid_t id) = 0;
-}
-
-/**
  * @brief a class whose job is to compute all the successors of a given state
  * 
  */

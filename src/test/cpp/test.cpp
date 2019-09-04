@@ -10,6 +10,7 @@
 #include "IPathFindingMapReader.hpp"
 #include "GridMap.hpp"
 #include "MovingAIGridMapReader.hpp"
+#include "AStar.hpp"
 
 using namespace pathfinding;
 
@@ -225,5 +226,7 @@ SCENARIO("test manhattan") {
 }
 
 SCENARIO("test A*") {
-    
+	search::OctileHeuristic heuristic{};
+	
+    search::NoCloseListSingleGoalAstar<GridMapState> astar{heuristic, };
 }
