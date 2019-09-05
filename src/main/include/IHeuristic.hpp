@@ -18,7 +18,11 @@ public:
      * @param goal the state which represents the goal. nullptr if the goal cannot be simply represented with a single state
      * @return cost_t the estimate of the cost of the path from @c currentState till @c goalState
      */
-    virtual cost_t getHeuristic(const STATE& current, const STATE& goal) = 0;
+    virtual cost_t getHeuristic(const STATE& current, const STATE* goal) = 0;
+
+    virtual cost_t getHeuristic(const STATE& current, const STATE& goal) {
+        return this->getHeuristic(current, &goal);
+    }
     /**
      * @brief 
      * 

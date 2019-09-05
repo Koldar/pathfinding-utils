@@ -11,12 +11,13 @@
 #include "GridMap.hpp"
 #include "MovingAIGridMapReader.hpp"
 #include "AStar.hpp"
+#include "GridMapGraphConverter.hpp"
 
 using namespace pathfinding;
 
 SCENARIO("test moving ai gridmap loader") {
 
-	MovingAIGridMapReader reader{
+	maps::MovingAIGridMapReader reader{
 		'.', cost_t{1000},
 		'T', cost_t{1500},
 		'@', cost_t::INFTY
@@ -24,7 +25,7 @@ SCENARIO("test moving ai gridmap loader") {
 
 	GIVEN("traversable map") {
 
-		GridMap map{reader.load(boost::filesystem::path{"./combat.map"})};
+		maps::GridMap map{reader.load(boost::filesystem::path{"./combat.map"})};
 
 		REQUIRE(map.getWidth() == 177);
 		REQUIRE(map.getHeight() == 193);
@@ -34,7 +35,7 @@ SCENARIO("test moving ai gridmap loader") {
 	}
 
 	GIVEN("map with some untraversabnle cells") {
-		GridMap map{reader.load(boost::filesystem::path{"./den000d.map"})};
+		maps::GridMap map{reader.load(boost::filesystem::path{"./den000d.map"})};
 
 		REQUIRE(map.getWidth() == 503);
 		REQUIRE(map.getHeight() == 351);
@@ -201,7 +202,7 @@ SCENARIO("test xyLoc") {
 
 SCENARIO("test octile") {
 
-    search::OctileHeuristic h{};
+    search::OctileHeuristic h{maps::GridBranching::EIGHT_CONNECTED};
 
     REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 10})) == 0L);
     REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 0})) == 10L);
@@ -214,7 +215,7 @@ SCENARIO("test octile") {
 
 SCENARIO("test manhattan") {
 
-    search::ManhattanHeuristic h{search::GridBranching::FOUR_CONNECTED};
+    search::ManhattanHeuristic h{maps::GridBranching::FOUR_CONNECTED};
 
     REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 10})) == 0L);
     REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 0})) == 10L);
@@ -226,7 +227,21 @@ SCENARIO("test manhattan") {
 }
 
 SCENARIO("test A*") {
-	search::OctileHeuristic heuristic{};
+
+	maps::MovingAIGridMapReader reader{
+		'.', cost_t{100},
+		'T', cost_t::INFTY,
+		'@', cost_t::INFTY
+	};
+	maps::GridMap map{reader.load(boost::filesystem::path{"./combat.map"})};
+	maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
+
+	search::OctileHeuristic heuristic{maps::GridBranching::EIGHT_CONNECTED};
+	search::SAPFGridMapGoalChecker goalChecker{};
+	search::GridMapStateSupplier supplier{};
+	search::GridMapStateExpander<std::string> expander{converter.toGraph(map)};
+	search::PruneIfExpanded<search::GridMapState> pruner{};
+    search::NoCloseListSingleGoalAstar<search::GridMapState, xyLoc> astar{heuristic, goalChecker, supplier, expander, pruner};
+
 	
-    search::NoCloseListSingleGoalAstar<GridMapState> astar{heuristic, };
 }

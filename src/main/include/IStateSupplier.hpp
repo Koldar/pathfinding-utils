@@ -1,9 +1,13 @@
-#ifndef _ISTATE_HEADER__
-#define _ISTATE_HEADER__
+#ifndef _ISTATESUPPLIER_HEADER__
+#define _ISTATESUPPLIER_HEADER__
 
 #include "IState.hpp"
+#include <cpp-utils/pool.hpp>
 
 namespace pathfinding::search {
+
+template <typename STATE, typename... OTHER>
+class IStateSupplier;
 
 /**
  * @brief a class whose job is to generate a new search state
@@ -13,6 +17,7 @@ namespace pathfinding::search {
  */
 template <typename STATE, typename... OTHER>
 class IStateSupplier {
+public:
 	/**
 	 * @brief get a search state with the given id
 	 * 
@@ -24,6 +29,61 @@ class IStateSupplier {
 	 * @return IState& the state with such id
 	 */
 	virtual STATE& getState(stateid_t id, OTHER... args) = 0;
+	/**
+	 * @brief get a search state without providing an id
+	 * 
+	 * This will likely to generate a new state almost always
+	 * 
+	 * @param args additional information required to generate states
+	 * @return STATE& the new state
+	 */
+	virtual STATE& getState(OTHER... args) = 0;
+	/**
+	 * @brief refresh all the data. This ensure it can be used again
+	 * 
+	 */
+	virtual void cleanup() = 0;
+};
+
+template<typename STATE, typename... OTHER>
+class AbstractStateSupplier: public IStateSupplier<STATE, OTHER...> {
+private:
+    cpp_utils::cpool<STATE> statePool;
+    std::vector<STATE*> stateIdToState;
+    stateid_t nextId;
+public:
+    AbstractStateSupplier(): statePool{20}, stateIdToState{}, nextId{0} {
+
+    }
+    AbstractStateSupplier(const AbstractStateSupplier& other) = delete;
+    ~AbstractStateSupplier() {
+    }
+protected:
+    /**
+	 * @brief generates a new state
+	 * 
+	 * @param id id of the state to generate
+	 * @param args additional information to build the state
+	 * @return STATE a new state
+	 */
+	virtual STATE&& fetchNewInstance(stateid_t id, OTHER... args) = 0;
+public:
+    virtual STATE& getState(stateid_t id, OTHER... args) {
+         if (stateIdToState[id] == nullptr || id >= nextId) {
+            stateIdToState[id] = new (this->statePool.allocate()) STATE{fetchNewInstance(id, args...)};
+         }
+         return *stateIdToState[id];
+    }
+    virtual STATE& getState(OTHER... args) {
+		nextId += 1;
+		return getState(nextId - 1, args...);
+    }
+    virtual void cleanup() {
+        nextId = 0;
+        this->statePool.reclaim();
+    }
+public:
+    AbstractStateSupplier& operator =(const AbstractStateSupplier<STATE>& other) = delete;
 };
 
 }

@@ -21,32 +21,32 @@ namespace pathfinding::search {
  * ```
  * 
  */
-class ManhattanHeuristic : IHeuristic<GridMapState> {
+class ManhattanHeuristic : public IHeuristic<GridMapState> {
 private:
-    const GridBranching branching;
+    const pathfinding::maps::GridBranching branching;
     bool admissible;
     bool consistent;
 public:
-    ManhattanHeuristic(const GridBranching branching) : branching{branching}, admissible{false}, consistent{false} {
+    ManhattanHeuristic(const pathfinding::maps::GridBranching branching) : branching{branching}, admissible{false}, consistent{false} {
         switch (branching) {
-            case GridBranching::FOUR_CONNECTED: {
+            case pathfinding::maps::GridBranching::FOUR_CONNECTED: {
                 admissible = true;
                 consistent = true;
                 break;
             }
-            case GridBranching::EIGHT_CONNECTED: {
+            case pathfinding::maps::GridBranching::EIGHT_CONNECTED: {
                 admissible = false;
                 consistent = true;
                 break;
             }
             default: {
-                throw cpp_utils::exceptions::InvalidScenarioException<GridBranching>(branching);
+                throw cpp_utils::exceptions::InvalidScenarioException<pathfinding::maps::GridBranching>(branching);
             }
         }
     }
 
-    virtual cost_t getHeuristic(const GridMapState& current, const GridMapState& goal) {
-        xyLoc distance = current.getPosition().getDistance(goal.getPosition());
+    virtual cost_t getHeuristic(const GridMapState& current, const GridMapState* goal) {
+        xyLoc distance = current.getPosition().getDistance(goal->getPosition());
         return distance.x + distance.y;
     }
     

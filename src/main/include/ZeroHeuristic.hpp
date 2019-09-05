@@ -13,7 +13,7 @@ namespace pathfinding::search {
 template <typename STATE>
 class ZeroHeuristic: public IHeuristic<STATE> {
 public:
-    virtual cost_t getHeuristic(const STATE& current, const STATE& goal) {
+    virtual cost_t getHeuristic(const STATE& current, const STATE* goal) {
         return 0;
     }
     virtual bool isAdmissible() const {

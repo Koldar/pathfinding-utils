@@ -20,10 +20,33 @@ namespace pathfinding::search {
  * ```
  * 
  */
-class OctileHeuristic : IHeuristic<GridMapState> {
+class OctileHeuristic : public IHeuristic<GridMapState> {
+    using IHeuristic<GridMapState>::getHeuristic;
+private:
+    const pathfinding::maps::GridBranching branching;
+    bool admissible;
+    bool consistent;
 public:
-    virtual cost_t getHeuristic(const GridMapState& current, const GridMapState& goal) {
-        xyLoc distance = current.getPosition().getDistance(goal.getPosition());
+    OctileHeuristic(pathfinding::maps::GridBranching branching): branching{branching} {
+        switch (branching) {
+            case pathfinding::maps::GridBranching::FOUR_CONNECTED: {
+                admissible = true;
+                consistent = true;
+                break;
+            }
+            case pathfinding::maps::GridBranching::EIGHT_CONNECTED: {
+                admissible = true;
+                consistent = true;
+                break;
+            }
+            default: {
+                throw cpp_utils::exceptions::InvalidScenarioException<pathfinding::maps::GridBranching>(branching);
+            }
+        }
+    }
+public:
+    virtual cost_t getHeuristic(const GridMapState& current, const GridMapState* goal) {
+        xyLoc distance = current.getPosition().getDistance(goal->getPosition());
         auto minC = distance.getMinCoordinate();
         auto maxC = distance.getMaxCoordinate();
         //I use floor to ensure that the estimate is still admissible
@@ -31,11 +54,11 @@ public:
     }
     
     virtual bool isAdmissible() const {
-        return true;
+        return admissible;
     }
     
     virtual bool isConsistent() const {
-        return true;
+        return consistent;
     }
 
 };

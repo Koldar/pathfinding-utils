@@ -4,7 +4,7 @@
 #include <string>
 #include <boost/filesystem.hpp>
 
-namespace pathfinding {
+namespace pathfinding::maps {
 
 /**
  * @brief allows you to load a map from the a data source

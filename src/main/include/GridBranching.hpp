@@ -1,7 +1,9 @@
 #ifndef _GRIDBRANCHING_HEADER__
 #define _GRIDBRANCHING_HEADER__
 
-namespace pathfinding::search {
+#include <cpp-utils/exceptions.hpp>
+
+namespace pathfinding::maps {
 
 /**
  * @brief represents how many connections a grid map cell has
@@ -51,6 +53,29 @@ enum class GridBranching {
      */
     SIX_CONNECTED
 };
+
+namespace GridBranchingMethods {
+
+template<GridBranching N>
+constexpr int getBranching() {
+    throw cpp_utils::exceptions::ImpossibleException{};
+}
+
+template <>
+constexpr int getBranching<GridBranching::FOUR_CONNECTED>() {
+    return 4;
+}
+template <>
+constexpr int getBranching<GridBranching::SIX_CONNECTED>() {
+    return 6;
+}
+template <>
+constexpr int getBranching<GridBranching::EIGHT_CONNECTED>() {
+    return 8;
+}
+
+
+}
 
 }
 

@@ -2,12 +2,18 @@
 #define _GRIDMAPSTATE_HEADER__
 
 #include "ISearchAlgorithm.hpp"
+#include "IState.hpp"
 #include "GridBranching.hpp"
 #include "IStateSupplier.hpp"
+#include "IStateExpander.hpp"
+#include "IGoalChecker.hpp"
+#include "xyLoc.hpp"
+#include <cpp-utils/StaticPriorityQueue.hpp>
+#include <cpp-utils/igraph.hpp>
+#include <cpp-utils/vectorplus.hpp>
+#include <utility>
 
 namespace pathfinding::search {
-
-class GridMapState;
 
 /**
  * @brief a search state over a map we know it's a grid map
@@ -15,7 +21,7 @@ class GridMapState;
  * In this state there is only x and y coordinates
  * 
  */
-class GridMapState : public IState<GridMapState> {
+class GridMapState : public IState<GridMapState>, cpp_utils::HasPriority {
 private:
     /**
      * @brief f value in A*
@@ -52,12 +58,27 @@ private:
      * 
      */
     const xyLoc position;
+    /**
+     * @brief field necessary if you want to put this instance in a queue
+     * 
+     */
+    priority_t priority;
 public:
-    GridMapState(cost_t f, cost_t g, cost_t h, GridMapState* parent, stateid_t id, bool expanded, xyLoc position): f{f}, g{g}, h{h}, parent{parent}, id{id}, expanded{expanded}, position{position} {
+    GridMapState(cost_t f, cost_t g, cost_t h, GridMapState* parent, stateid_t id, bool expanded, xyLoc position): f{f}, g{g}, h{h}, parent{parent}, id{id}, expanded{expanded}, position{position}, priority{0} {
+
+    }
+    GridMapState(stateid_t id, xyLoc position): f{0}, g{0}, h{0}, parent{nullptr}, id{id}, expanded{false}, position{position}, priority{0} {
 
     }
     xyLoc getPosition() const {
         return position;
+    }
+public:
+    priority_t getPriority() const {
+        return this->priority;
+    }
+    void setPriority(priority_t p) {
+        this->priority = p;
     }
 public:
     /**
@@ -73,15 +94,6 @@ public:
         return GridMapState{0L, 0L, 0L, nullptr, 0L, false, loc};
     }
 public:
-    // virtual void setId(stateid_t id) = 0;
-    // virtual void setExpanded(bool expanded) = 0;
-    // virtual cost_t getF() const = 0;
-    // virtual cost_t getG() const = 0;
-    // virtual cost_t getH() const = 0;
-    // virtual IState* getParent() = 0;
-    // virtual const IState* getParent() const = 0;
-    // virtual stateid_t getId() const = 0;
-    // virtual bool isExpanded() const = 0;
     virtual void setF(cost_t f) {
         this->f = f;
     }
@@ -121,25 +133,72 @@ public:
     virtual bool isExpanded() const {
         return this->expanded;
     }
+public:
     MemoryConsumption getByteMemoryOccupied() const {
         return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
 
-/* TODO continue from here: 
- * we need to generate a AbstractStateSupplier which has as a backend a vector indexed by stateid_t
- * yielding a pointer to the state.
- */
 
-class GridMapStateSupplier: public IStateSupplier<GridMapState> {
+class GridMapStateSupplier: public AbstractStateSupplier<GridMapState, xyLoc> {
+protected:
+    virtual GridMapState&& fetchNewInstance(stateid_t id, xyLoc position) {
+        return std::move(GridMapState{id, position});
+    }    
+};
+
+/**
+ * @brief an expander that uses an underlying graph to compute successors
+ * 
+ * The successors of a state are the successors of the vertex representing the state
+ * 
+ * @note
+ * Note that the state id of a search state is **the same** of the vertex id of a node. This
+ * means that the state space is as large as the underlying graph!
+ * 
+ * @tparam G paylaod of the whole graph
+ * @tparam V paylaod of each single vertex
+ */
+template <typename G>
+class GridMapStateExpander: public IStateExpander<GridMapState, xyLoc> {
 private:
-    cpp_utils::cpool<GridMapState> statePool;
+    const IImmutableGraph<G, xyLoc, cost_t>& graph;
 public:
-    GridMapStateSupplier(): statePool{50} {}
-    STATE& getState(stateid_t id) {
+    GridMapStateExpander(const IImmutableGraph<G, xyLoc, cost_t>& graph): graph{graph} {
 
     }
-}
+    virtual ~GridMapStateExpander() {
+
+    }
+    GridMapStateExpander(const GridMapStateExpander<G>& other) : graph{other.graph} {
+
+    }
+    GridMapStateExpander<G>& operator =(const GridMapStateExpander<G>& other) = delete;
+public:
+    virtual cpp_utils::vectorplus<std::pair<GridMapState&, cost_t>> getSuccessors(const GridMapState& state, IStateSupplier<GridMapState, xyLoc>& supplier) {
+        cpp_utils::vectorplus<std::pair<GridMapState&, cost_t>> result{};
+        for (auto outEdge : graph.getOutEdges(state.getId())) {
+            result.add(std::pair<GridMapState&, cost_t>{
+                supplier.getState(outEdge.getSinkId(), this->graph.getVertex(outEdge.getSinkId())),
+                outEdge.getPayload()
+            });
+        }
+        return result;
+    }
+    
+    virtual void cleanup() {
+
+    }
+};
+
+class SAPFGridMapGoalChecker: public IGoalChecker<GridMapState> {
+public:
+    virtual bool isGoal(const GridMapState& state, const GridMapState* goal) const {
+        return state.getPosition() == goal->getPosition();
+    }
+};
+
+
 
 }
 

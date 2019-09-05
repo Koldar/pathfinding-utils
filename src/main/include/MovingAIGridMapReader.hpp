@@ -8,7 +8,7 @@
 #include <iostream>
 #include <cpp-utils/mapplus.hpp>
 
-namespace pathfinding {
+namespace pathfinding::maps {
 
 /**
  * @brief A factory which loads gridmaps

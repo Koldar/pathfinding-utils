@@ -8,6 +8,7 @@
 #ifndef XYLOC_H_
 #define XYLOC_H_
 
+#include <boost/functional/hash.hpp>
 #include <cstdint>
 #include <iostream>
 #include "types.hpp"
@@ -28,6 +29,26 @@ enum class Direction {
 	SOUTHEAST
 };
 
+namespace DirectionMethods {
+
+/**
+ * @brief 
+ * 
+ * @param dir  the direction involved
+ * @return true if dir is either north, south, east or west
+ * @return false otherwise
+ */
+bool isStraight(Direction dir);
+
+/**
+ * @brief 
+ * 
+ * @param dir the direction involved
+ * @return true if dir is not straight
+ * @return false otherwise
+ */
+bool isDiagonal(Direction dir);
+
 
 /**
  * @param[in] dir a direction
@@ -35,6 +56,8 @@ enum class Direction {
  * ted to a direction
  */
 const char* getLabel(const Direction& dir);
+
+}
 
 /**
  * represent a position in the grid.
@@ -204,6 +227,14 @@ struct xyLoc {
 	ucood_t getMaxCoordinate() const {
 		return this->x > this->y ? this->x : this->y;
 	}
+
+	friend std::size_t hash_value(const xyLoc& p) {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, p.x);
+        boost::hash_combine(seed, p.y);
+
+        return seed;
+    }
 };
 
 std::ostream& operator<<(std::ostream& str, const xyLoc& v);
@@ -240,6 +271,21 @@ xyLoc min(const xyLoc& a, const xyLoc& b);
  * @return xyLoc maximum of coordinates
  */
 xyLoc max(const xyLoc& a, const xyLoc& b);
+
+}
+
+namespace std {
+
+template <>
+struct hash<pathfinding::xyLoc> {
+public:
+	size_t operator()(const pathfinding::xyLoc& l) const {
+		size_t seed = 0;
+        boost::hash_combine(seed, l.x);
+        boost::hash_combine(seed, l.y);
+        return seed;
+	}
+};
 
 }
 

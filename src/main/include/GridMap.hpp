@@ -10,7 +10,7 @@
 #include <vector>
 #include <cpp-utils/listGraph.hpp>
 
-namespace pathfinding {
+namespace pathfinding::maps {
 
 /**
  * @brief 
@@ -100,11 +100,11 @@ public:
     GridMap& operator= (const GridMap& map) = delete;
     GridMap operator= (const GridMap&& map) = delete;
 
-    cood_t getWidth() const {
+    ucood_t getWidth() const {
         return this->width;
     }
 
-    cood_t getHeight() const {
+    ucood_t getHeight() const {
         return this->height;
     }
 

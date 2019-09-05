@@ -1,35 +1,23 @@
 #ifndef _ASTAR_HEADER__
 #define _ASTAR_HEADER__
 
-#include "ISearchAlgorithm.hpp"
 #include <cpp-utils/StaticPriorityQueue.hpp>
 #include <cpp-utils/log.hpp>
+#include <cpp-utils/listeners.hpp>
 #include "IHeuristic.hpp"
+#include "ISearchAlgorithm.hpp"
+#include "IStateExpander.hpp"
+#include "IStatePruner.hpp"
+#include "IStateSupplier.hpp"
+#include <cpp-utils/commons.hpp>
 
 namespace pathfinding::search {
-
-/**
- * @brief a class whose job is to compute all the successors of a given state
- * 
- */
-class IStateExpander {
-public:
-    virtual std::vector<std::pair<IState&, cost_t>> getSuccessors(IState& state) = 0;
-};
-
-/**
- * @brief a class whose job is to check if a state under analysis should be pruned for search or not
- * 
- */
-class IStatePruner {
-public:
-    virtual bool shouldPrune(IState& state) const = 0;
-};
 
 /**
  * @brief Allows you to further refines the behavior of an A* algorithm
  * 
  */
+template <typename STATE>
 class AstarListener {
 public:
 	/**
@@ -37,21 +25,27 @@ public:
 	 * 
 	 * @param node 
 	 */
-    virtual void onNodeExpanded(const IState& node) = 0;
+    virtual void onNodeExpanded(const STATE& node) = 0;
 	/**
 	 * @brief called when the start state has been added in the open list
 	 * 
 	 * @param node 
 	 */
-    virtual void onInitialNodeAddedInOpenList(const IState& node) = 0;
+    virtual void onInitialNodeAddedInOpenList(const STATE& node) = 0;
 	/**
 	 * @brief called when a state has been just added in the open list
 	 * 
 	 * @param parent 
 	 * @param node 
 	 */
-    virtual void onNewNodeAddedInOpenList(const IState& parent, const IState& node) = 0;
-    virtual void onNodeParentRevised(const IState& node, const IState& oldParent, const IState& newParent) = 0;
+    virtual void onNewNodeAddedInOpenList(const STATE& parent, const STATE& node) = 0;
+    virtual void onNodeParentRevised(const STATE& node, const STATE& oldParent, const STATE& newParent) = 0;
+	/**
+	 * @brief called when a state is pruned from the search
+	 * 
+	 * @param state the state pruned
+	 */
+	virtual void onStatePruned(const STATE& state) = 0;
     virtual void onSolutionFound() = 0;
     virtual void onOpenListEmpty() = 0;
 };
@@ -74,11 +68,12 @@ public:
  * @author: dharabor
  * @created: 21/08/2012
  */
-template <typename STATE>
-class NoCloseListSingleGoalAstar: public ISearchAlgorithm, public IMemorable, public Listenable<AstarListener> {
+template <typename STATE, typename... OTHER>
+class NoCloseListSingleGoalAstar: public ISearchAlgorithm<STATE>, IMemorable, cpp_utils::Listenable<AstarListener<STATE>> {
 public:
-    AStarAlgorithm(IHeuristic<STATE>& heuristic, IStateSupplier& supplier, IStateExpander& expander, IStatePruner& pruner,  unsigned int openListCapacity = 1024) : Listenable{}, 
-        heuristic{heuristic}, supplier{supplier}, expander{expander}, pruner{pruner},
+    NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE> goalChecker, IStateSupplier<STATE, OTHER...>& supplier, IStateExpander<STATE, OTHER...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
+		cpp_utils::Listenable<AstarListener<STATE>>{}, 
+        heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
         openList{nullptr} {
             if (!heuristic.isConsistent()) {
                 throw cpp_utils::exceptions::InvalidArgumentException{"the heuristic is not consistent!"};
@@ -86,13 +81,13 @@ public:
             this->openList = new StaticPriorityQueue<STATE>{openListCapacity, true};
         }
 
-    ~AStarAlgorithm() {
+    ~NoCloseListSingleGoalAstar() {
         this->tearDownSearch();
         delete this->openList;
     }
     //the class cannot be copied whatsoever
-    AStarAlgorithm(const flexible_astar& other) = delete;
-	AStarAlgorithm& operator=(const flexible_astar& other) = delete;
+    NoCloseListSingleGoalAstar(const NoCloseListSingleGoalAstar& other) = delete;
+	NoCloseListSingleGoalAstar& operator=(const NoCloseListSingleGoalAstar& other) = delete;
 
 public:
     MemoryConsumption getByteMemoryOccupied() const {
@@ -106,51 +101,61 @@ public:
     }
 private:
     IHeuristic<STATE>& heuristic;
-    IStateExpander& expander;
-	IStateSupplier& supplier;
-    IStatePruner& pruner;
+	IGoalChecker<STATE>& goalChecker;
+    IStateExpander<STATE, OTHER...>& expander;
+	IStateSupplier<STATE, OTHER...>& supplier;
+    IStatePruner<STATE>& pruner;
     StaticPriorityQueue<STATE>* openList;
 protected:
     virtual cost_t computeF(cost_t g, cost_t h) const {
         return g + h;
     }
-
-    virtual const STATE& _search(stateid_t startId, const stateid_t* goalId) {
-        if (goalId == nullptr) {
-            throw cpp_utils::exceptions::InvalidArgumentException{"goalId must be not null!"};
-        }
-        info("starting A*! startId = ", startId, "goalId = ", ELVIS(goalId, "none"));
+protected:
+    virtual void setupSearch() {
+		//cleanup before running since at the end we may want to poll information on the other structures
+		this->heuristic.cleanup();
+		this->expander.cleanup();
+		this->supplier.cleanup();
+		this->pruner.cleanup();
+		this->openList.clear();
+	}
+    virtual void tearDownSearch() {
+	}
+    virtual const STATE& _search(STATE& startId, const STATE* expectedGoal) {
+        info("starting A*! startId = ", startId, "goalId = ", elvis(expectedGoal, "none"));
 
         STATE* goal = nullptr;
         STATE& start = this->supplier.getState(startId);
 
         start.setG(0);
-        start.setH(this->heuristic.getHeuristic(start, goalId));
+        start.setH(this->heuristic.getHeuristic(start, expectedGoal));
         start.setF(this->computeF(start.getG(), start.getH()));
 
         this->openList->push(start);
-        this->fireEvent([&current](const AstarListener& l) { l.onNewNodeAddedInOpenList(current); });
+		this->fireEvent([&start](const AstarListener<STATE>& l) { l.onInitialNodeAddedInOpenList(start); });
+        this->fireEvent([&start](const AstarListener<STATE>& l) { l.onNewNodeAddedInOpenList(start); });
         while (!this->openList->isEmpty()) {
             STATE& current = this->openList->peek();
 
-            if (current.getId() == *goalId) {
+            if (this->goalChecker.isGoal(current, expectedGoal)) {
                 goal = &current;
                 goto goal_found;
             }
 
-            this->fireEvent([&current](const AstarListener& l) -> { l.onNodeExpanded(current); });
+            this->fireEvent([&current](const AstarListener<STATE>& l) { l.onNodeExpanded(current); });
             this->openList->pop();
             info("state popped from open list f=", current.getF(), "g=", current.getG(), "h=", current.getH(), "state=", current);
 
             current.markAsExpanded();
 
             for(auto pair: this->expander.getSuccessors(current)) {
-                IState& successor = pair.first;
+                STATE& successor = pair.first;
                 cost_t current_to_successor_cost = pair.second;
 
-                this->fireEvent([&current, &successor](const AstarListener& l) {l.onSuccessorExpanded(current, successor)});
+                this->fireEvent([&current, &successor](const AstarListener<STATE>& l) {l.onSuccessorExpanded(current, successor); });
                 if (this->pruner.shouldPrune(successor)) {
                     //skip neighbours already expanded
+					this->fireEvent([&current, &successor](const AstarListener<STATE>& l) {l.onStatePruned(successor); });
                     continue;
                 }
 
@@ -162,17 +167,17 @@ protected:
                         //update successor information
                         successor.setG(gval);
                         successor.setF(this->computeF(gval, successor.getH()));
-                        State& oldParent = successor.getParent();
+                        STATE& oldParent = successor.getParent();
                         successor.setParent(current);
 
                         this->openList->decrease_key(successor);
 
-                        this->fireEvent([&current](const AstarListener& l) { l.onNodeParentRevised(successor, oldParent, current); });
+                        this->fireEvent([&current](const AstarListener<STATE>& l) { l.onNodeParentRevised(successor, oldParent, current); });
                     }
                 } else {
                     //state is not present in open list. Add to it
                     cost_t gval = current.getG() + current_to_successor_cost;
-                    cost_t hval = this->heuristic.getHeuristic(successor, goalId);
+                    cost_t hval = this->heuristic.getHeuristic(successor, expectedGoal);
                     successor.setG(gval);
                     successor.setH(hval);
                     successor.setF(this->computeF(gval, hval));
@@ -180,7 +185,7 @@ protected:
 
                     this->openList->push(successor);
                     
-                    this->fireEvent([&current, &successor](const AstarListener& l) {l.onNewNodeAddedInOpenList(current, successor); })
+                    this->fireEvent([&current, &successor](const AstarListener<STATE>& l) {l.onNewNodeAddedInOpenList(current, successor); });
                 }
             }
         }
@@ -191,6 +196,8 @@ protected:
         return goal;
 
     }
+
+
 
 };
 
@@ -204,303 +211,300 @@ protected:
 
 
 
-public:
-		flexible_astar(H* heuristic, E* expander)
-			: heuristic_(heuristic), expander_(expander)
-		{
-			open_ = new warthog::pqueue(1024, true);
-			verbose_ = false;
-            hscale_ = 1.0;
-		}
+// public:
+// 		flexible_astar(H* heuristic, E* expander)
+// 			: heuristic_(heuristic), expander_(expander)
+// 		{
+// 			open_ = new warthog::pqueue(1024, true);
+// 			verbose_ = false;
+//             hscale_ = 1.0;
+// 		}
 
-		~flexible_astar()
-		{
-			cleanup();
-			delete open_;
-		}
+// 		~flexible_astar()
+// 		{
+// 			cleanup();
+// 			delete open_;
+// 		}
 
-		inline std::stack<uint32_t>
-		get_path(uint32_t startid, uint32_t goalid)
-		{
-			std::stack<uint32_t> path;
-			warthog::search_node* goal = search(startid, goalid);
-			if(goal)
-			{
-				// follow backpointers to extract the path
-				assert(goal->get_id() == goalid);
-				for(warthog::search_node* cur = goal;
-						cur != 0;
-					    cur = cur->get_parent())
-				{
-					path.push(cur->get_id());
-				}
-				assert(path.top() == startid);
-			}
-			cleanup();
-			return path;
-		}
+// 		inline std::stack<uint32_t>
+// 		get_path(uint32_t startid, uint32_t goalid)
+// 		{
+// 			std::stack<uint32_t> path;
+// 			warthog::search_node* goal = search(startid, goalid);
+// 			if(goal)
+// 			{
+// 				// follow backpointers to extract the path
+// 				assert(goal->get_id() == goalid);
+// 				for(warthog::search_node* cur = goal;
+// 						cur != 0;
+// 					    cur = cur->get_parent())
+// 				{
+// 					path.push(cur->get_id());
+// 				}
+// 				assert(path.top() == startid);
+// 			}
+// 			cleanup();
+// 			return path;
+// 		}
 
-		double
-		get_length(uint32_t startid, uint32_t goalid)
-		{
-			warthog::search_node* goal = search(startid, goalid);
-			warthog::cost_t len = warthog::INF;
-			if(goal)
-			{
-				assert(goal->get_id() == goalid);
-				len = goal->get_g();
-			}
+// 		double
+// 		get_length(uint32_t startid, uint32_t goalid)
+// 		{
+// 			warthog::search_node* goal = search(startid, goalid);
+// 			warthog::cost_t len = warthog::INF;
+// 			if(goal)
+// 			{
+// 				assert(goal->get_id() == goalid);
+// 				len = goal->get_g();
+// 			}
 
-#ifndef NDEBUG
+// #ifndef NDEBUG
 
-			if(verbose_)
-			{
-				std::stack<warthog::search_node*> path;
-				warthog::search_node* current = goal;
-				while(current != 0)	
-				{
-					path.push(current);
-					current = current->get_parent();
-				}
+// 			if(verbose_)
+// 			{
+// 				std::stack<warthog::search_node*> path;
+// 				warthog::search_node* current = goal;
+// 				while(current != 0)	
+// 				{
+// 					path.push(current);
+// 					current = current->get_parent();
+// 				}
 
-				while(!path.empty())
-				{
-					warthog::search_node* n = path.top();
-					uint32_t x, y;
-					y = (n->get_id() / expander_->mapwidth());
-					x = n->get_id() % expander_->mapwidth();
-					std::cerr << "final path: ("<<x<<", "<<y<<")...";
-					n->print(std::cerr);
-					std::cerr << std::endl;
-					path.pop();
-				}
-			}
-#endif
-			cleanup();
-			return len / (double)warthog::ONE;
-		}
+// 				while(!path.empty())
+// 				{
+// 					warthog::search_node* n = path.top();
+// 					uint32_t x, y;
+// 					y = (n->get_id() / expander_->mapwidth());
+// 					x = n->get_id() % expander_->mapwidth();
+// 					std::cerr << "final path: ("<<x<<", "<<y<<")...";
+// 					n->print(std::cerr);
+// 					std::cerr << std::endl;
+// 					path.pop();
+// 				}
+// 			}
+// #endif
+// 			cleanup();
+// 			return len / (double)warthog::ONE;
+// 		}
 
-		inline size_t
-		mem()
-		{
-			size_t bytes = 
-				// memory for the priority quete
-				open_->mem() + 
-				// gridmap size and other stuff needed to expand nodes
-				expander_->mem() +
-				// misc
-				sizeof(*this);
-			return bytes;
-		}
+// 		inline size_t
+// 		mem()
+// 		{
+// 			size_t bytes = 
+// 				// memory for the priority quete
+// 				open_->mem() + 
+// 				// gridmap size and other stuff needed to expand nodes
+// 				expander_->mem() +
+// 				// misc
+// 				sizeof(*this);
+// 			return bytes;
+// 		}
 
-		inline uint32_t 
-		get_nodes_expanded() { return nodes_expanded_; }
+// 		inline uint32_t 
+// 		get_nodes_expanded() { return nodes_expanded_; }
 
-		inline uint32_t
-		get_nodes_generated() { return nodes_generated_; }
+// 		inline uint32_t
+// 		get_nodes_generated() { return nodes_generated_; }
 
-		inline uint32_t
-		get_nodes_touched() { return nodes_touched_; }
+// 		inline uint32_t
+// 		get_nodes_touched() { return nodes_touched_; }
 
-		inline double
-		get_search_time() { return search_time_; }
-
-
-		inline bool
-		get_verbose() { return verbose_; }
-
-		inline void
-		set_verbose(bool verbose) { verbose_ = verbose; } 
-
-        inline double
-        get_hscale() { return hscale_; } 
-
-        inline void
-        set_hscale(double hscale) { hscale_ = hscale; } 
+// 		inline double
+// 		get_search_time() { return search_time_; }
 
 
+// 		inline bool
+// 		get_verbose() { return verbose_; }
 
-	private:
-		H* heuristic_;
-		E* expander_;
-		warthog::pqueue* open_;
-		bool verbose_;
-		static uint32_t searchid_;
-		uint32_t nodes_expanded_;
-		uint32_t nodes_generated_;
-		uint32_t nodes_touched_;
-		double search_time_;
-        double hscale_; // heuristic scaling factor
+// 		inline void
+// 		set_verbose(bool verbose) { verbose_ = verbose; } 
 
-		// no copy
-		flexible_astar(const flexible_astar& other) { } 
-		flexible_astar& 
-		operator=(const flexible_astar& other) { return *this; }
+//         inline double
+//         get_hscale() { return hscale_; } 
 
-		warthog::search_node*
-		search(uint32_t startid, uint32_t goalid)
-		{
-			nodes_expanded_ = nodes_generated_ = nodes_touched_ = 0;
-			search_time_ = 0;
+//         inline void
+//         set_hscale(double hscale) { hscale_ = hscale; } 
 
-			warthog::timer mytimer;
-			mytimer.start();
 
-			#ifndef NDEBUG
-			if(verbose_)
-			{
-				std::cerr << "search: startid="<<startid<<" goalid=" <<goalid
-					<< std::endl;
-			}
-			#endif
 
-			warthog::problem_instance instance;
-			instance.set_goal(goalid);
-			instance.set_start(startid);
-			instance.set_searchid(searchid_++);
+// 	private:
+// 		H* heuristic_;
+// 		E* expander_;
+// 		warthog::pqueue* open_;
+// 		bool verbose_;
+// 		static uint32_t searchid_;
+// 		uint32_t nodes_expanded_;
+// 		uint32_t nodes_generated_;
+// 		uint32_t nodes_touched_;
+// 		double search_time_;
+//         double hscale_; // heuristic scaling factor
 
-			warthog::search_node* goal = 0;
-			warthog::search_node* start = expander_->generate(startid);
-			start->reset(instance.get_searchid());
-			start->set_g(0);
-			start->set_f(heuristic_->h(startid, goalid) * hscale_);
-			open_->push(start);
+// 		// no copy
+// 		flexible_astar(const flexible_astar& other) { } 
+// 		flexible_astar& 
+// 		operator=(const flexible_astar& other) { return *this; }
 
-			while(open_->size())
-			{
-				nodes_touched_++;
-				if(open_->peek()->get_id() == goalid)
-				{
-					#ifndef NDEBUG
-					if(verbose_)
-					{
-						uint32_t x, y;
-						warthog::search_node* current = open_->peek();
-						y = (current->get_id() / expander_->mapwidth());
-						x = current->get_id() % expander_->mapwidth();
-						std::cerr << "goal found ("<<x<<", "<<y<<")...";
-						current->print(std::cerr);
-						std::cerr << std::endl;
-					}
-					#endif
-					goal = open_->peek();
-					break;
-				}
-				nodes_expanded_++;
+// 		warthog::search_node*
+// 		search(uint32_t startid, uint32_t goalid)
+// 		{
+// 			nodes_expanded_ = nodes_generated_ = nodes_touched_ = 0;
+// 			search_time_ = 0;
 
-				warthog::search_node* current = open_->pop();
-				#ifndef NDEBUG
-				if(verbose_)
-				{
-					uint32_t x, y;
-					y = (current->get_id() / expander_->mapwidth());
-					x = current->get_id() % expander_->mapwidth();
-					std::cerr << "expanding ("<<x<<", "<<y<<")...";
-					current->print(std::cerr);
-					std::cerr << std::endl;
-				}
-				#endif
-				current->set_expanded(true); // NB: set this before calling expander_ 
-				assert(current->get_expanded());
-				expander_->expand(current, &instance);
+// 			warthog::timer mytimer;
+// 			mytimer.start();
 
-				warthog::search_node* n = 0;
-				warthog::cost_t cost_to_n = warthog::INF;
-				for(expander_->first(n, cost_to_n); 
-						n != 0;
-					   	expander_->next(n, cost_to_n))
-				{
-					nodes_touched_++;
-					if(n->get_expanded())
-					{
-						// skip neighbours already expanded
-						continue;
-					}
+// 			#ifndef NDEBUG
+// 			if(verbose_)
+// 			{
+// 				std::cerr << "search: startid="<<startid<<" goalid=" <<goalid
+// 					<< std::endl;
+// 			}
+// 			#endif
 
-					if(open_->contains(n))
-					{
-						// update a node from the fringe
-						warthog::cost_t gval = current->get_g() + cost_to_n;
-						if(gval < n->get_g())
-						{
-							n->relax(gval, current);
-							open_->decrease_key(n);
-							#ifndef NDEBUG
-							if(verbose_)
-							{
-								uint32_t x, y;
-								y = (n->get_id() / expander_->mapwidth());
-								x = n->get_id() % expander_->mapwidth();
-								std::cerr << "  updating ("<<x<<", "<<y<<")...";
-								n->print(std::cerr);
-								std::cerr << std::endl;
-							}
-							#endif
-						}
-						else
-						{
-							#ifndef NDEBUG
-							if(verbose_)
-							{
-								uint32_t x, y;
-								y = (n->get_id() / expander_->mapwidth());
-								x = n->get_id() % expander_->mapwidth();
-								std::cerr << "  updating ("<<x<<", "<<y<<")...";
-								n->print(std::cerr);
-								std::cerr << std::endl;
-							}
-							#endif
-						}
-					}
-					else
-					{
-						// add a new node to the fringe
-						warthog::cost_t gval = current->get_g() + cost_to_n;
-						n->set_g(gval);
-						n->set_f(gval + heuristic_->h(n->get_id(), goalid) * hscale_);
-					   	n->set_parent(current);
-						open_->push(n);
-						#ifndef NDEBUG
-						if(verbose_)
-						{
-							uint32_t x, y;
-							y = (n->get_id() / expander_->mapwidth());
-							x = n->get_id() % expander_->mapwidth();
-							std::cerr << "  generating ("<<x<<", "<<y<<")...";
-							n->print(std::cerr);
-							std::cerr << std::endl;
-						}
-						#endif
-						nodes_generated_++;
-					}
-				}
-				#ifndef NDEBUG
-				if(verbose_)
-				{
-					uint32_t x, y;
-					y = (current->get_id() / expander_->mapwidth());
-					x = current->get_id() % expander_->mapwidth();
-					std::cerr <<"closing ("<<x<<", "<<y<<")...";
-					current->print(std::cerr);
-					std::cerr << std::endl;
-			}
-			#endif
-			}
+// 			warthog::problem_instance instance;
+// 			instance.set_goal(goalid);
+// 			instance.set_start(startid);
+// 			instance.set_searchid(searchid_++);
 
-			mytimer.stop();
-			search_time_ = mytimer.elapsed_time_micro();
-			return goal;
-		}
+// 			warthog::search_node* goal = 0;
+// 			warthog::search_node* start = expander_->generate(startid);
+// 			start->reset(instance.get_searchid());
+// 			start->set_g(0);
+// 			start->set_f(heuristic_->h(startid, goalid) * hscale_);
+// 			open_->push(start);
 
-		void
-		cleanup()
-		{
-			open_->clear();
-			expander_->clear();
-		}
+// 			while(open_->size())
+// 			{
+// 				nodes_touched_++;
+// 				if(open_->peek()->get_id() == goalid)
+// 				{
+// 					#ifndef NDEBUG
+// 					if(verbose_)
+// 					{
+// 						uint32_t x, y;
+// 						warthog::search_node* current = open_->peek();
+// 						y = (current->get_id() / expander_->mapwidth());
+// 						x = current->get_id() % expander_->mapwidth();
+// 						std::cerr << "goal found ("<<x<<", "<<y<<")...";
+// 						current->print(std::cerr);
+// 						std::cerr << std::endl;
+// 					}
+// 					#endif
+// 					goal = open_->peek();
+// 					break;
+// 				}
+// 				nodes_expanded_++;
 
-};
+// 				warthog::search_node* current = open_->pop();
+// 				#ifndef NDEBUG
+// 				if(verbose_)
+// 				{
+// 					uint32_t x, y;
+// 					y = (current->get_id() / expander_->mapwidth());
+// 					x = current->get_id() % expander_->mapwidth();
+// 					std::cerr << "expanding ("<<x<<", "<<y<<")...";
+// 					current->print(std::cerr);
+// 					std::cerr << std::endl;
+// 				}
+// 				#endif
+// 				current->set_expanded(true); // NB: set this before calling expander_ 
+// 				assert(current->get_expanded());
+// 				expander_->expand(current, &instance);
 
+// 				warthog::search_node* n = 0;
+// 				warthog::cost_t cost_to_n = warthog::INF;
+// 				for(expander_->first(n, cost_to_n); 
+// 						n != 0;
+// 					   	expander_->next(n, cost_to_n))
+// 				{
+// 					nodes_touched_++;
+// 					if(n->get_expanded())
+// 					{
+// 						// skip neighbours already expanded
+// 						continue;
+// 					}
+
+// 					if(open_->contains(n))
+// 					{
+// 						// update a node from the fringe
+// 						warthog::cost_t gval = current->get_g() + cost_to_n;
+// 						if(gval < n->get_g())
+// 						{
+// 							n->relax(gval, current);
+// 							open_->decrease_key(n);
+// 							#ifndef NDEBUG
+// 							if(verbose_)
+// 							{
+// 								uint32_t x, y;
+// 								y = (n->get_id() / expander_->mapwidth());
+// 								x = n->get_id() % expander_->mapwidth();
+// 								std::cerr << "  updating ("<<x<<", "<<y<<")...";
+// 								n->print(std::cerr);
+// 								std::cerr << std::endl;
+// 							}
+// 							#endif
+// 						}
+// 						else
+// 						{
+// 							#ifndef NDEBUG
+// 							if(verbose_)
+// 							{
+// 								uint32_t x, y;
+// 								y = (n->get_id() / expander_->mapwidth());
+// 								x = n->get_id() % expander_->mapwidth();
+// 								std::cerr << "  updating ("<<x<<", "<<y<<")...";
+// 								n->print(std::cerr);
+// 								std::cerr << std::endl;
+// 							}
+// 							#endif
+// 						}
+// 					}
+// 					else
+// 					{
+// 						// add a new node to the fringe
+// 						warthog::cost_t gval = current->get_g() + cost_to_n;
+// 						n->set_g(gval);
+// 						n->set_f(gval + heuristic_->h(n->get_id(), goalid) * hscale_);
+// 					   	n->set_parent(current);
+// 						open_->push(n);
+// 						#ifndef NDEBUG
+// 						if(verbose_)
+// 						{
+// 							uint32_t x, y;
+// 							y = (n->get_id() / expander_->mapwidth());
+// 							x = n->get_id() % expander_->mapwidth();
+// 							std::cerr << "  generating ("<<x<<", "<<y<<")...";
+// 							n->print(std::cerr);
+// 							std::cerr << std::endl;
+// 						}
+// 						#endif
+// 						nodes_generated_++;
+// 					}
+// 				}
+// 				#ifndef NDEBUG
+// 				if(verbose_)
+// 				{
+// 					uint32_t x, y;
+// 					y = (current->get_id() / expander_->mapwidth());
+// 					x = current->get_id() % expander_->mapwidth();
+// 					std::cerr <<"closing ("<<x<<", "<<y<<")...";
+// 					current->print(std::cerr);
+// 					std::cerr << std::endl;
+// 			}
+// 			#endif
+// 			}
+
+// 			mytimer.stop();
+// 			search_time_ = mytimer.elapsed_time_micro();
+// 			return goal;
+// 		}
+
+// 		void
+// 		cleanup()
+// 		{
+// 			open_->clear();
+// 			expander_->clear();
+// 		}
 
 }
 

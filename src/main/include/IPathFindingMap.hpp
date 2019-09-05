@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace pathfinding {
+namespace pathfinding::maps {
 
 /**
  * @brief represents a map where the agents traverse in order to reach an objective

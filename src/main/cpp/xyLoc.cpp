@@ -13,6 +13,8 @@
 
 namespace pathfinding {
 
+namespace DirectionMethods {
+
 const char* getLabel(const Direction& dir) {
 	switch (dir) {
 	case Direction::NORTHWEST: { return "NW"; }
@@ -26,6 +28,32 @@ const char* getLabel(const Direction& dir) {
 	default:
 		throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
 	}
+}
+
+bool isStraight(Direction dir) {
+	switch (dir) {
+		case Direction::NORTH:
+		case Direction::EAST:
+		case Direction::WEST:
+		case Direction::SOUTH: {
+			return true;
+		}
+		case Direction::NORTHEAST:
+		case Direction::NORTHWEST:
+		case Direction::SOUTHEAST:
+		case Direction::SOUTHWEST: {
+			return false;
+		}
+		default: {
+			throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
+		}
+	}
+}
+
+bool isDiagonal(Direction dir) {
+	return !isStraight(dir);
+}
+
 }
 
 Direction xyLoc::getDirectionTo(const xyLoc& to) const {
