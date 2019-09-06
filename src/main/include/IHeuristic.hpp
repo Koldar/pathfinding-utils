@@ -1,7 +1,12 @@
 #ifndef _IHEURISTIC_HEADER__
 #define _IHEURISTIC_HEADER__
 
+#include <cpp-utils/ICleanable.hpp>
+#include <cpp-utils/imemory.hpp>
+
 namespace pathfinding::search {
+
+    using namespace cpp_utils;
 
 /**
  * @brief All classes implementing this interface will be considered heuristics
@@ -9,7 +14,9 @@ namespace pathfinding::search {
  * @tparam STATE the type of state the heuristic can operate on. not all heuristic can work on all state representations
  */
 template<typename STATE>
-class IHeuristic {
+class IHeuristic: public ICleanable, public IMemorable {
+public:
+    using IMemorable::getByteMemoryOccupied;
 public:
     /**
      * @brief Get the Heuristic object

@@ -1,6 +1,9 @@
 #ifndef _ISTATEPRUNER_HEADER__
 #define _ISTATEPRUNER_HEADER__
 
+#include <cpp-utils/ICleanable.hpp>
+#include <cpp-utils/imemory.hpp>
+
 namespace pathfinding::search {
 
  /**
@@ -8,7 +11,7 @@ namespace pathfinding::search {
  * 
  */
 template <typename STATE>
-class IStatePruner {
+class IStatePruner: public ICleanable, IMemorable {
 public:
     /**
      * @brief check if we should keep the search state of such search should be discarded since it cannot reach the solution
@@ -27,8 +30,17 @@ public:
  */
 template <typename STATE>
 class NoPruning: public IStatePruner<STATE> {
+public:
     virtual bool shouldPrune(const STATE& state) const {
         return false;
+    }
+public:
+    virtual void cleanup() {
+        
+    }
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
 
@@ -39,8 +51,17 @@ class NoPruning: public IStatePruner<STATE> {
  */
 template <typename STATE>
 class PruneIfExpanded: public IStatePruner<STATE> {
+public:
     virtual bool shouldPrune(const STATE& state) const {
         return state.isExpanded();
+    }
+public:
+    virtual void cleanup() {
+        
+    }
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
 

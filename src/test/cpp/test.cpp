@@ -12,8 +12,10 @@
 #include "MovingAIGridMapReader.hpp"
 #include "AStar.hpp"
 #include "GridMapGraphConverter.hpp"
+#include <cpp-utils/adjacentGraph.hpp>
 
 using namespace pathfinding;
+using namespace cpp_utils;
 
 SCENARIO("test moving ai gridmap loader") {
 
@@ -233,15 +235,19 @@ SCENARIO("test A*") {
 		'T', cost_t::INFTY,
 		'@', cost_t::INFTY
 	};
-	maps::GridMap map{reader.load(boost::filesystem::path{"./combat.map"})};
+	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 	maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
+	graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{converter.toGraph(map)};
 
 	search::OctileHeuristic heuristic{maps::GridBranching::EIGHT_CONNECTED};
 	search::SAPFGridMapGoalChecker goalChecker{};
 	search::GridMapStateSupplier supplier{};
-	search::GridMapStateExpander<std::string> expander{converter.toGraph(map)};
+	search::GridMapStateExpander<std::string> expander{graph};
 	search::PruneIfExpanded<search::GridMapState> pruner{};
     search::NoCloseListSingleGoalAstar<search::GridMapState, xyLoc> astar{heuristic, goalChecker, supplier, expander, pruner};
 
-	
+	search::GridMapState start{graph.idOfVertex({0,0}), {0,0}};
+	search::GridMapState goal{graph.idOfVertex({0,0}), {0,0}};
+	REQUIRE(astar.search(start, goal) == search::SolutionPath<const search::GridMapState*>{});
+	REQUIRE(astar.getSolutionCost(start, goal) == 0);
 }

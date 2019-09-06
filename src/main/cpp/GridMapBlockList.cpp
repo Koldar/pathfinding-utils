@@ -67,11 +67,17 @@ void GridMapBlockList<GRIDBRANCHING>::clear() {
 }
 
 template <maps::GridBranching GRIDBRANCHING>
-uint32_t GridMapBlockList<GRIDBRANCHING>::mem() const {
-	uint32_t bytes = sizeof(*this) + blockspool_->mem() +
-		pool_->mem() + num_blocks_*sizeof(GridMapState**);
+void GridMapBlockList<GRIDBRANCHING>::cleanup() {
+	this->clear();
+}
 
-	return bytes;
+template <maps::GridBranching GRIDBRANCHING>
+MemoryConsumption GridMapBlockList<GRIDBRANCHING>::getByteMemoryOccupied() const {
+	return 
+		sizeof(*this) 
+		+ blockspool_->getByteMemoryOccupied()
+		+ pool_->getByteMemoryOccupied() 
+		+ num_blocks_ * sizeof(GridMapState**);
 }
 
 }

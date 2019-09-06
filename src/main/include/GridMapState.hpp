@@ -73,6 +73,19 @@ public:
     xyLoc getPosition() const {
         return position;
     }
+    friend bool operator <(const GridMapState& a, const GridMapState& b) {
+        if(a.f < b.f) {
+            return true;
+        } else if (b.f < a.f) {
+            return false;
+        }
+        //ok, it appeans that a and b have the same f. We need some tie breaking mechanism
+		// break ties in favour of larger g
+        if(a.g > b.g) {
+            return true;
+        }
+        return false;
+    }
 public:
     priority_t getPriority() const {
         return this->priority;
@@ -185,9 +198,13 @@ public:
         }
         return result;
     }
-    
+public:
     virtual void cleanup() {
 
+    }
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
 
@@ -195,6 +212,14 @@ class SAPFGridMapGoalChecker: public IGoalChecker<GridMapState> {
 public:
     virtual bool isGoal(const GridMapState& state, const GridMapState* goal) const {
         return state.getPosition() == goal->getPosition();
+    }
+public:
+    virtual void cleanup() {
+
+    }
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
 

@@ -5,6 +5,8 @@
 
 namespace pathfinding::maps {
 
+    using namespace cpp_utils;
+
 /**
  * @brief a class which allows you to convert a IPathFindingMap into a graph
  * 

@@ -3,6 +3,8 @@
 
 #include "IState.hpp"
 #include <cpp-utils/pool.hpp>
+#include <cpp-utils/imemory.hpp>
+#include <cpp-utils/ICleanable.hpp>
 
 namespace pathfinding::search {
 
@@ -16,7 +18,7 @@ class IStateSupplier;
  * @tparam OTHER additional parameters required to generate a state
  */
 template <typename STATE, typename... OTHER>
-class IStateSupplier {
+class IStateSupplier: public ICleanable, IMemorable {
 public:
 	/**
 	 * @brief get a search state with the given id
@@ -38,11 +40,6 @@ public:
 	 * @return STATE& the new state
 	 */
 	virtual STATE& getState(OTHER... args) = 0;
-	/**
-	 * @brief refresh all the data. This ensure it can be used again
-	 * 
-	 */
-	virtual void cleanup() = 0;
 };
 
 template<typename STATE, typename... OTHER>
@@ -81,6 +78,12 @@ public:
     virtual void cleanup() {
         nextId = 0;
         this->statePool.reclaim();
+    }
+public:
+	virtual MemoryConsumption getByteMemoryOccupied() const {
+		//TODO update this
+        return 
+			MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 public:
     AbstractStateSupplier& operator =(const AbstractStateSupplier<STATE>& other) = delete;

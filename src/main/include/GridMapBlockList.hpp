@@ -39,7 +39,7 @@ namespace pathfinding::search {
  * 
  */
 template <maps::GridBranching GRIDBRANCHING>
-class GridMapBlockList {
+class GridMapBlockList: public ICleanable, public IMemorable {
 public:
     /**
      * @brief node block size
@@ -64,62 +64,59 @@ public:
      */
 	static const uint32_t NBS_MASK = (0xFFFFFFFF << static_cast<uint32_t>(log2(NBS) + 1) ^ ~NBS); //63;
 private:
-        /**
-         * @brief size of the array ::blocks_
-         * 
-         */
-		uint32_t num_blocks_;
-        /**
-         * @brief array where at each cell contains an array of GridMapState pointers aggregated by GRIDBRANCHING blocks
-         * 
-         */
-		GridMapState*** blocks_;
-        /**
-         * @brief pool where the several lists of super sqaures are saved
-         * 
-         * In each cell of the pool there is an array NBS cell long, containing NBS/max successors number
-         * 
-         */
-		cpp_utils::cpool<GridMapState*[NBS]>* blockspool_;
-        /**
-         * @brief pool where all the GridMapState are saved
-         * 
-         */
-		cpp_utils::cpool<GridMapState>* pool_;
+    /**
+     * @brief size of the array ::blocks_
+     * 
+     */
+    uint32_t num_blocks_;
+    /**
+     * @brief array where at each cell contains an array of GridMapState pointers aggregated by GRIDBRANCHING blocks
+     * 
+     */
+    GridMapState*** blocks_;
+    /**
+     * @brief pool where the several lists of super sqaures are saved
+     * 
+     * In each cell of the pool there is an array NBS cell long, containing NBS/max successors number
+     * 
+     */
+    cpp_utils::cpool<GridMapState*[NBS]>* blockspool_;
+    /**
+     * @brief pool where all the GridMapState are saved
+     * 
+     */
+    cpp_utils::cpool<GridMapState>* pool_;
 public:
-        /**
-         * @brief Construct a new Block List object
-         * 
-         * @param mapWidth width of the grid map
-         * @param mapHeight height of the grid map
-         */
-		GridMapBlockList(ucood_t mapWidth, ucood_t mapHeight);
-		~GridMapBlockList();
- 
-        /**
-         * @brief fetch the search state with the given state id or creates a new one from scratch
-         * 
-         * if the node has already been generated, return a pointer to the 
-		 * previous instance; otherwise allocate memory for a new object.
-         * 
-         * @param stateId the id of the search state to generate
-         * @param log the location of this grid state
-         * @return warthog::search_node* address of the involved state.
-         */
-		GridMapState& generate(stateid_t stateId, xyLoc loc);
+    /**
+     * @brief Construct a new Block List object
+     * 
+     * @param mapWidth width of the grid map
+     * @param mapHeight height of the grid map
+     */
+    GridMapBlockList(ucood_t mapWidth, ucood_t mapHeight);
+    ~GridMapBlockList();
 
-        /**
-         * @brief remove all the GridMapState saved up until now
-         * 
-         */
-		void clear();
+    /**
+     * @brief fetch the search state with the given state id or creates a new one from scratch
+     * 
+     * if the node has already been generated, return a pointer to the 
+     * previous instance; otherwise allocate memory for a new object.
+     * 
+     * @param stateId the id of the search state to generate
+     * @param log the location of this grid state
+     * @return warthog::search_node* address of the involved state.
+     */
+    GridMapState& generate(stateid_t stateId, xyLoc loc);
 
-        /**
-         * @brief number of bytes occupied by this structure
-         * 
-         * @return uint32_t 
-         */
-		uint32_t mem() const;
+    /**
+     * @brief remove all the GridMapState saved up until now
+     * 
+     */
+    void clear();
+public:
+    virtual void cleanup();
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const;
 
 	
 };

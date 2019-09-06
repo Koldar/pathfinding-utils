@@ -57,6 +57,7 @@ public:
                     Direction::NORTH, Direction::SOUTH, Direction::EAST, Direction::WEST,
                     Direction::NORTHEAST, Direction::NORTHWEST, Direction::SOUTHEAST, Direction::SOUTHWEST
                 );
+                break;
             }
             default: {
                 throw cpp_utils::exceptions::InvalidScenarioException<GridBranching>{this->branching};

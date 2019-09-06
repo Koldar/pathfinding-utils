@@ -22,6 +22,14 @@ public:
     virtual bool isConsistent() const {
         return false;
     }
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
+    }
+public:
+    virtual void cleanup() {
+        
+    }
 };
 
 }

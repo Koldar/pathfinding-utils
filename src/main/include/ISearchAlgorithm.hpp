@@ -7,24 +7,37 @@
 #include <vector>
 #include <cpp-utils/exceptions.hpp>
 #include <cpp-utils/macros.hpp>
+#include <cpp-utils/vectorplus.hpp>
 #include "types.hpp"
 
 
-namespace pathfinding::search
-{
+namespace pathfinding::search {
 
 using namespace cpp_utils;
 
 template <typename STATE>
-class SolutionPath : public std::vector<STATE> {
+class SolutionPath : public cpp_utils::vectorplus<STATE> {
+public:
+    const STATE& getStart() const {
+        return this[0];
+    }
+    const STATE& getGoal() const {
+        return this[-1];
+    }
+    STATE& getStart() {
+        return this[0];
+    }
+    STATE& getGoal() {
+        return this->at(-1);
+    }
 };
 
 /**
  * @brief thrown when the solution couldn't be found in the 
  * 
  */
-class SolutionNotFoundException : public exceptions::GenericException {
-
+class SolutionNotFoundException : public exceptions::AbstractException {
+    
 };
 
 /**
@@ -42,7 +55,7 @@ protected:
      * @return const STATE& the goal we have retrieved.
      * @throw SolutionNotFoundException if we were unable to fetch the goal
      */
-    virtual const STATE& _search(STATE& start, const STATE* goal) = 0;
+    virtual const STATE& performSearch(STATE& start, const STATE* goal) = 0;
     /**
      * @brief steps to execute before starting the search
      * 
@@ -60,7 +73,7 @@ public:
      * @param start the start state
      * @return STATE& the goal found
      */
-    STATE& _search(const STATE& start) {
+    SolutionPath<const STATE*> search(const STATE& start) {
         return this->_search(start.get_id(), nullptr);
     }
     /**
@@ -70,9 +83,16 @@ public:
      * @param goal the goal state we want to achieve.
      * @return STATE& the goal found
      */
-    STATE& _search(const STATE& start, const STATE& goal) {
+    SolutionPath<const STATE*> search(STATE& start, const STATE& goal) {
         return this->_search(start, &goal);
     }
+    cost_t getSolutionCost(STATE& start) {
+        return this->_getSolutionCost(start, nullptr);
+    }
+    cost_t getSolutionCost(STATE& start, const STATE& goal) {
+        return this->_getSolutionCost(start, &goal);
+    }
+protected:
     /**
      * @brief search for a solution
      * 
@@ -81,16 +101,16 @@ public:
      * @throws SolutionNotFoundException if a solution cannot be reached
      * @return SolutionPath<STATE> 
      */
-    SolutionPath<const STATE&> search(STATE& start, const STATE* goal) {
-        SolutionPath<const STATE&> result{};
+    SolutionPath<const STATE*> _search(STATE& start, const STATE* goal) {
+        SolutionPath<const STATE*> result{};
         try {
             this->setupSearch();
-            const STATE& goalFetched = this->_search(start, goal);
+            const STATE& goalFetched = this->performSearch(start, goal);
             this->tearDownSearch();
             //goal found!
             const STATE* tmp = &goalFetched;
             while (tmp != nullptr) {
-                result.push_back(*tmp);
+                result.push_back(tmp);
                 tmp = tmp->getParent();
             }
             return result;
@@ -100,7 +120,6 @@ public:
         }
 
     }
-
     /**
      * @brief get the cost of the solution found. Does not generate the solution itself
      * 
@@ -109,14 +128,14 @@ public:
      * @return cost_t the cost of the solution found by the algorithm
      * @throws SolutionNotFoundException if a solution cannot be reached
      */
-    cost_t getSolutionCost(stateid_t start, const stateid_t* goal) {
+    cost_t _getSolutionCost(STATE& start, const STATE* goal) {
         cost_t result = 0;
         try {
             this->setupSearch();
-            const STATE& goal = this->_search(start, goal);
+            SolutionPath<const STATE*> solution{this->_search(start, goal)};
             this->tearDownSearch();
             //goal found!
-            return goal.getG();
+            return solution.getGoal()->getG();
         } catch (const SolutionNotFoundException& e) {
             this->tearDownSearch();
             throw e;

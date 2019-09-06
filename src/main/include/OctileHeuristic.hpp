@@ -21,7 +21,9 @@ namespace pathfinding::search {
  * 
  */
 class OctileHeuristic : public IHeuristic<GridMapState> {
-    using IHeuristic<GridMapState>::getHeuristic;
+public:
+    using IHeuristic::getHeuristic;
+    using IMemorable::getByteMemoryOccupied;
 private:
     const pathfinding::maps::GridBranching branching;
     bool admissible;
@@ -60,7 +62,14 @@ public:
     virtual bool isConsistent() const {
         return consistent;
     }
-
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
+    }
+public:
+    virtual void cleanup() {
+        
+    }
 };
 
 }

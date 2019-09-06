@@ -27,6 +27,8 @@ private:
     bool admissible;
     bool consistent;
 public:
+    using IHeuristic<GridMapState>::getHeuristic;
+public:
     ManhattanHeuristic(const pathfinding::maps::GridBranching branching) : branching{branching}, admissible{false}, consistent{false} {
         switch (branching) {
             case pathfinding::maps::GridBranching::FOUR_CONNECTED: {
@@ -57,7 +59,14 @@ public:
     virtual bool isConsistent() const {
         return consistent;
     }
-
+public:
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
+    }
+public:
+    virtual void cleanup() {
+        
+    }
 };
 
 }

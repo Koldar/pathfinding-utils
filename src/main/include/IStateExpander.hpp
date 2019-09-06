@@ -3,6 +3,7 @@
 
 #include <cpp-utils/vectorplus.hpp>
 #include <cpp-utils/ICleanable.hpp>
+#include <cpp-utils/imemory.hpp>
 #include "IStateSupplier.hpp"
 
 namespace pathfinding::search {
@@ -15,7 +16,7 @@ class IStateExpander;
  * 
  */
 template <typename STATE, typename... OTHER>
-class IStateExpander: public ICleanable {
+class IStateExpander: public ICleanable, IMemorable {
 public:
     /**
      * @brief compute the list of successors from a given one

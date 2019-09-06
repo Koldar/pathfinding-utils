@@ -9,9 +9,12 @@
 #include "IStateExpander.hpp"
 #include "IStatePruner.hpp"
 #include "IStateSupplier.hpp"
+#include <cpp-utils/imemory.hpp>
 #include <cpp-utils/commons.hpp>
 
 namespace pathfinding::search {
+
+    using namespace cpp_utils;
 
 /**
  * @brief Allows you to further refines the behavior of an A* algorithm
@@ -39,7 +42,8 @@ public:
 	 * @param node 
 	 */
     virtual void onNewNodeAddedInOpenList(const STATE& parent, const STATE& node) = 0;
-    virtual void onNodeParentRevised(const STATE& node, const STATE& oldParent, const STATE& newParent) = 0;
+	virtual void onSuccessorExpanded(const STATE& current, const STATE& successor) = 0;
+    virtual void onNodeParentRevised(const STATE& node, const STATE* oldParent, const STATE& newParent) = 0;
 	/**
 	 * @brief called when a state is pruned from the search
 	 * 
@@ -69,10 +73,10 @@ public:
  * @created: 21/08/2012
  */
 template <typename STATE, typename... OTHER>
-class NoCloseListSingleGoalAstar: public ISearchAlgorithm<STATE>, IMemorable, cpp_utils::Listenable<AstarListener<STATE>> {
+class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE>, public Listenable<AstarListener<STATE>> {
 public:
-    NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE> goalChecker, IStateSupplier<STATE, OTHER...>& supplier, IStateExpander<STATE, OTHER...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
-		cpp_utils::Listenable<AstarListener<STATE>>{}, 
+    NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, OTHER...>& supplier, IStateExpander<STATE, OTHER...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
+		Listenable<AstarListener<STATE>>{}, 
         heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
         openList{nullptr} {
             if (!heuristic.isConsistent()) {
@@ -90,14 +94,19 @@ public:
 	NoCloseListSingleGoalAstar& operator=(const NoCloseListSingleGoalAstar& other) = delete;
 
 public:
-    MemoryConsumption getByteMemoryOccupied() const {
-        return
+    virtual MemoryConsumption getByteMemoryOccupied() const {
+        throw cpp_utils::exceptions::NotYetImplementedException{__func__};
+        //return
             // memory for the priority quete
-            this->openList->getByteMemoryOccupied() + 
+            //this->openList->getByteMemoryOccupied() + 
             // gridmap size and other stuff needed to expand nodes
-            this->expander->getByteMemoryOccupied() +
-            // misc
-            MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
+			//this->heuristic.getByteMemoryOccupied() +
+            // this->goalChecker.getByteMemoryOccupied() +
+			// this->expander.getByteMemoryOccupied() +
+			// this->supplier.getByteMemoryOccupied() +
+			// this->pruner.getByteMemoryOccupied() +
+            // // misc
+            // MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 private:
     IHeuristic<STATE>& heuristic;
@@ -117,23 +126,21 @@ protected:
 		this->expander.cleanup();
 		this->supplier.cleanup();
 		this->pruner.cleanup();
-		this->openList.clear();
+		this->openList->clear();
 	}
     virtual void tearDownSearch() {
 	}
-    virtual const STATE& _search(STATE& startId, const STATE* expectedGoal) {
-        info("starting A*! startId = ", startId, "goalId = ", elvis(expectedGoal, "none"));
+    virtual const STATE& performSearch(STATE& start, const STATE* expectedGoal) {
+        info("starting A*! start = ", start, "goal = ", elvis(expectedGoal, "none"));
 
-        STATE* goal = nullptr;
-        STATE& start = this->supplier.getState(startId);
+		STATE* goal = nullptr;
 
         start.setG(0);
         start.setH(this->heuristic.getHeuristic(start, expectedGoal));
         start.setF(this->computeF(start.getG(), start.getH()));
 
         this->openList->push(start);
-		this->fireEvent([&start](const AstarListener<STATE>& l) { l.onInitialNodeAddedInOpenList(start); });
-        this->fireEvent([&start](const AstarListener<STATE>& l) { l.onNewNodeAddedInOpenList(start); });
+		this->fireEvent([&,start](AstarListener<STATE>& l) { l.onInitialNodeAddedInOpenList(start); });
         while (!this->openList->isEmpty()) {
             STATE& current = this->openList->peek();
 
@@ -142,20 +149,20 @@ protected:
                 goto goal_found;
             }
 
-            this->fireEvent([&current](const AstarListener<STATE>& l) { l.onNodeExpanded(current); });
+            this->fireEvent([&current](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
             this->openList->pop();
             info("state popped from open list f=", current.getF(), "g=", current.getG(), "h=", current.getH(), "state=", current);
 
             current.markAsExpanded();
 
-            for(auto pair: this->expander.getSuccessors(current)) {
+            for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
                 STATE& successor = pair.first;
                 cost_t current_to_successor_cost = pair.second;
 
-                this->fireEvent([&current, &successor](const AstarListener<STATE>& l) {l.onSuccessorExpanded(current, successor); });
+                this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onSuccessorExpanded(current, successor); });
                 if (this->pruner.shouldPrune(successor)) {
                     //skip neighbours already expanded
-					this->fireEvent([&current, &successor](const AstarListener<STATE>& l) {l.onStatePruned(successor); });
+					this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onStatePruned(successor); });
                     continue;
                 }
 
@@ -167,12 +174,12 @@ protected:
                         //update successor information
                         successor.setG(gval);
                         successor.setF(this->computeF(gval, successor.getH()));
-                        STATE& oldParent = successor.getParent();
-                        successor.setParent(current);
+                        const STATE* oldParent = successor.getParent();
+                        successor.setParent(&current);
 
                         this->openList->decrease_key(successor);
 
-                        this->fireEvent([&current](const AstarListener<STATE>& l) { l.onNodeParentRevised(successor, oldParent, current); });
+                        this->fireEvent([&current,oldParent,&successor](AstarListener<STATE>& l) { l.onNodeParentRevised(successor, oldParent, current); });
                     }
                 } else {
                     //state is not present in open list. Add to it
@@ -181,11 +188,11 @@ protected:
                     successor.setG(gval);
                     successor.setH(hval);
                     successor.setF(this->computeF(gval, hval));
-                    successor.setParent(current);
+                    successor.setParent(&current);
 
                     this->openList->push(successor);
                     
-                    this->fireEvent([&current, &successor](const AstarListener<STATE>& l) {l.onNewNodeAddedInOpenList(current, successor); });
+                    this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onNewNodeAddedInOpenList(current, successor); });
                 }
             }
         }
@@ -193,7 +200,7 @@ protected:
         throw SolutionNotFoundException{};
 
         goal_found:
-        return goal;
+        return *goal;
 
     }
 
