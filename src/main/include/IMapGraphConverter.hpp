@@ -18,7 +18,7 @@ class IMapGraphConverter: public ICleanable {
      * 
      * @return GRAPH the graph generated
      */
-    virtual GRAPH&& toGraph(const MAP& map) const = 0;
+    virtual std::unique_ptr<GRAPH> toGraph(const MAP& map) const = 0;
 };
 
 }

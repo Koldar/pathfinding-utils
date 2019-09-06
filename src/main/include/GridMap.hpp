@@ -113,6 +113,7 @@ public:
     }
 
     cost_t getCellCost(xyLoc loc) const {
+        debug("xyLoc is", loc, "cell is", this->cells[this->toVectorCoord(loc)]);
         return this->terrainCost.at(this->cells[this->toVectorCoord(loc)]);
     }
 

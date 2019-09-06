@@ -79,8 +79,10 @@ public:
         // MAP BODY
         char cellSymbol;
         cpp_utils::vectorplus<char> cells{};
+        critical("width is", width, "height is", height);
         for (auto y=0; y<height; ++y) {
             for (auto x=0; x<width; ++x) {
+                critical("reading cell x=", x, "y=", y);
                 ifs >> cellSymbol;
                 if (!this->terrainCost.containsKey(cellSymbol)) {
                     throw cpp_utils::exceptions::ElementNotFoundException<char, cpp_utils::MapPlus<char, cost_t>>{cellSymbol, this->terrainCost};

@@ -1,11 +1,13 @@
 #ifndef _GRIDMAPGRAPHCONVERTER_HEADER__
 #define _GRIDMAPGRAPHCONVERTER_HEADER__
 
+#include <boost/smart_ptr/make_unique.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "xyLoc.hpp"
 #include "IMapGraphConverter.hpp"
 #include <cpp-utils/listGraph.hpp>
 #include <cpp-utils/exceptions.hpp>
+
 
 namespace pathfinding::maps {
 
@@ -29,8 +31,10 @@ public:
     virtual void cleanup() {
 
     }
-    virtual cpp_utils::IImmutableGraph<std::string,xyLoc,cost_t>&& toGraph(const GridMap& map) const {
+    virtual std::unique_ptr<cpp_utils::IImmutableGraph<std::string,xyLoc,cost_t>> toGraph(const GridMap& map) const {
+        critical("name is", map.getName(), &map.getName());
         cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t> result{map.getName()};
+        critical("result name is", result.getPayload(), &result.getPayload());
 
         std::unordered_map<xyLoc, cpp_utils::nodeid_t> xyToId{};
         //add vertices
@@ -43,7 +47,7 @@ public:
         }
 
         //add edges
-        xyLoc limits{map.getWidth(), map.getHeight()};
+        xyLoc limits{map.getWidth() - 1, map.getHeight() - 1};
         cpp_utils::vectorplus<Direction> availableDirections{};
         switch (this->branching) {
             case GridBranching::FOUR_CONNECTED: {
@@ -72,7 +76,9 @@ public:
             }
 
             for (auto dir : availableDirections) {
+                debug("xyLoc is", current, "dir is", DirectionMethods::getLabel(dir),"and limits is", limits);
                 if (current.isThereLocationInDirectionOf(dir, limits)) {
+                    debug("the location should exist!");
                     xyLoc adjacent{current.getAdjacent(dir)};
                     if (!map.isTraversable(adjacent)) {
                         continue;
@@ -85,7 +91,10 @@ public:
                 }
             }
         }
-        return std::move(result);
+        //return std::unique_ptr<>(new T(std::forward<Args>(args)...));
+        //cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>
+        return std::unique_ptr<cpp_utils::IImmutableGraph<std::string, xyLoc, cost_t>>{new cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>{result}};
+        //return boost::make_unique<cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>>{result};
     }
 
 };

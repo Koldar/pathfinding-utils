@@ -148,8 +148,8 @@ struct xyLoc {
 	 * @endcode
 	 * 
 	 * @param dir the direction we should follow to check if there is another xyLoc.
-	 * @param maxPoint coordinates representing the bottom right corner of an invisible rectangle we cannot escape from
-	 * @param minPoint coordinates representing the top left corner of an invisible rectangle we cannot escape from
+	 * @param maxPoint coordinates representing the bottom right corner of an invisible rectangle we cannot escape from. You can have a location set to this point
+	 * @param minPoint coordinates representing the top left corner of an invisible rectangle we cannot escape from. You can have a location set to this point
 	 * @return true if there is a clocation adjacent to self by following @c dir
 	 * @return false 
 	 */

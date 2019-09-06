@@ -197,6 +197,11 @@ SCENARIO("test xyLoc") {
 			REQUIRE(loc.isThereLocationInDirectionOf(Direction::SOUTHEAST, xyLoc{10,10}) == true);
 			REQUIRE(loc.isThereLocationInDirectionOf(Direction::SOUTHWEST, xyLoc{10,10}) == true);
 		}
+
+		WHEN("other cases") {
+			xyLoc loc{4,4};
+			REQUIRE(loc.isThereLocationInDirectionOf(Direction::SOUTH, xyLoc{4,4}) == false);
+		}
 	}
 
 }
@@ -237,7 +242,7 @@ SCENARIO("test A*") {
 	};
 	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 	maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
-	graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{converter.toGraph(map)};
+	graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
 
 	search::OctileHeuristic heuristic{maps::GridBranching::EIGHT_CONNECTED};
 	search::SAPFGridMapGoalChecker goalChecker{};
