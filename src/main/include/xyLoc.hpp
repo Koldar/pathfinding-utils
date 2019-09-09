@@ -156,6 +156,25 @@ struct xyLoc {
 	bool isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc minPoint = {0, 0}) const;
 
 	/**
+	 * @brief Get the Nearby Diagonale Cells object
+	 * 
+	 * If `loc1` and `loc2` are marked as `1` and `2` the out locations will be "a" and "b"
+	 * @code
+	 * 1|a
+	 * -|-
+	 * b|2
+	 * @endcode
+	 * 
+	 * @pre
+	 *  @li loc1 adjacent to loc2
+	 * 
+	 * @param loc1 first location
+	 * @param loc2 second location
+	 * @return a pair representing the adjacent cells
+	 */
+	static std::pair<xyLoc, xyLoc> getNearbyDiagonalCells(const xyLoc& loc1, const xyLoc& loc2);
+
+	/**
 	 * The coordiante system is in the topLeft corner (0,0) while the infinity is in the bottomRight
 	 *
 	 * locationns within the border of the rectangle are considered as well

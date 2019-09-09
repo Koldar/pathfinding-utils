@@ -70,6 +70,8 @@ public:
     GridMapState(stateid_t id, xyLoc position): f{0}, g{0}, h{0}, parent{nullptr}, id{id}, expanded{false}, position{position}, priority{0} {
 
     }
+    GridMapState(const GridMapState& other): f{other.f}, g{other.g}, h{other.h}, parent{other.parent}, id{other.id}, expanded{other.expanded}, position{other.position}, priority{other.priority} {
+    }
     xyLoc getPosition() const {
         return position;
     }
@@ -152,11 +154,21 @@ public:
     }
 };
 
+std::ostream& operator <<(std::ostream& out, const GridMapState& state) {
+    out 
+        << "{id: " 
+        << state.getId() 
+        << " xy: " 
+        << state.getPosition() 
+        << "}";
+    return out;
+}
+
 
 class GridMapStateSupplier: public AbstractStateSupplier<GridMapState, xyLoc> {
 protected:
-    virtual GridMapState&& fetchNewInstance(stateid_t id, xyLoc position) {
-        return std::move(GridMapState{id, position});
+    virtual std::unique_ptr<GridMapState> fetchNewInstance(stateid_t id, xyLoc position) {
+        return std::unique_ptr<GridMapState>{new GridMapState{id, position}};
     }    
 };
 
@@ -191,9 +203,10 @@ public:
     virtual cpp_utils::vectorplus<std::pair<GridMapState&, cost_t>> getSuccessors(const GridMapState& state, IStateSupplier<GridMapState, xyLoc>& supplier) {
         cpp_utils::vectorplus<std::pair<GridMapState&, cost_t>> result{};
         for (auto outEdge : graph.getOutEdges(state.getId())) {
+            fine("an outedge ", outEdge, " of ", state, "(", &state, ") goes to", outEdge.getSinkId(), "edge payload of", outEdge.getPayload());
             result.add(std::pair<GridMapState&, cost_t>{
-                supplier.getState(outEdge.getSinkId(), this->graph.getVertex(outEdge.getSinkId())),
-                outEdge.getPayload()
+                 supplier.getState(outEdge.getSinkId(), this->graph.getVertex(outEdge.getSinkId())),
+                 outEdge.getPayload()
             });
         }
         return result;

@@ -52,6 +52,7 @@ public:
         auto minC = distance.getMinCoordinate();
         auto maxC = distance.getMaxCoordinate();
         //I use floor to ensure that the estimate is still admissible
+        finest("current=", current, " goal", *goal, "maxC", maxC, "minC", minC);
         return (maxC - minC) + floor(minC * M_SQRT2);
     }
     

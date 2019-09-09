@@ -5,6 +5,7 @@
 #include <cpp-utils/pool.hpp>
 #include <cpp-utils/imemory.hpp>
 #include <cpp-utils/ICleanable.hpp>
+#include <memory>
 
 namespace pathfinding::search {
 
@@ -49,8 +50,8 @@ private:
     std::vector<STATE*> stateIdToState;
     stateid_t nextId;
 public:
-    AbstractStateSupplier(): statePool{20}, stateIdToState{}, nextId{0} {
-
+    AbstractStateSupplier(size_t maxStates = 10000): statePool{20}, stateIdToState{maxStates}, nextId{0} {
+		std::fill(stateIdToState.begin(), stateIdToState.end(), nullptr);
     }
     AbstractStateSupplier(const AbstractStateSupplier& other) = delete;
     ~AbstractStateSupplier() {
@@ -63,13 +64,20 @@ protected:
 	 * @param args additional information to build the state
 	 * @return STATE a new state
 	 */
-	virtual STATE&& fetchNewInstance(stateid_t id, OTHER... args) = 0;
+	virtual std::unique_ptr<STATE> fetchNewInstance(stateid_t id, OTHER... args) = 0;
 public:
     virtual STATE& getState(stateid_t id, OTHER... args) {
-         if (stateIdToState[id] == nullptr || id >= nextId) {
-            stateIdToState[id] = new (this->statePool.allocate()) STATE{fetchNewInstance(id, args...)};
-         }
-         return *stateIdToState[id];
+		debug("requesting state id=", id);
+		if (id >= stateIdToState.size()) {
+			debug("increase state index...");
+			stateIdToState.resize(2*stateIdToState.size());
+		}
+		if (stateIdToState[id] == nullptr) {
+			info("allocating new space for state", id, "...");
+			stateIdToState[id] = new (this->statePool.allocate()) STATE{*fetchNewInstance(id, args...)};
+		}
+		debug("yielding id", id, "(", stateIdToState[id], ")");
+		return *stateIdToState[id];
     }
     virtual STATE& getState(OTHER... args) {
 		nextId += 1;
@@ -77,6 +85,7 @@ public:
     }
     virtual void cleanup() {
         nextId = 0;
+		std::fill(stateIdToState.begin(), stateIdToState.end(), nullptr);
         this->statePool.reclaim();
     }
 public:

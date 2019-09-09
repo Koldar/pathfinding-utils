@@ -26,7 +26,7 @@ set(THEPROJECT_POSITION_INDEPENDENT_CODE "true")
 #The log level of the debug build for this project.
 # Values go from 0(debug) till 7 (critical)
 #Can be overriden by using "cmake -U_DEBUG_LOG_LEVEL:STRING=<newvalue>" command  
-set(THEPROJECT_DEBUG_LOG_LEVEL "0")
+set(THEPROJECT_DEBUG_LOG_LEVEL "3")
 #put true if you have changed something inside this cmake standard building process; false otherwise
 set(STANDARD_CMAKE_FILE_ALTERED "false")
 #If you have altered the standard CMAKE file standard process, consider explaining in this variable what have you changed to help future maintainers!

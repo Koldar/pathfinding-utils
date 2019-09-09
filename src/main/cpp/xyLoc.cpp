@@ -121,6 +121,13 @@ bool xyLoc::isThereLocationInDirectionOf(Direction dir, xyLoc maxPoint, xyLoc mi
 	}
 }
 
+std::pair<xyLoc, xyLoc> xyLoc::getNearbyDiagonalCells(const xyLoc& loc1, const xyLoc& loc2) {
+	return std::pair<xyLoc, xyLoc>{
+		xyLoc{loc1.x, loc2.y},
+		xyLoc{loc2.x, loc1.y}
+	};
+}
+
 xyLoc xyLoc::getAdjacent(Direction dir) const {
 	switch (dir) {
 		case Direction::NORTH: {

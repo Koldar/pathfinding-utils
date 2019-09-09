@@ -26,15 +26,16 @@ public:
     }
 
     cost_t computeCost(Direction dir, cost_t sourceCost, cost_t sinkCost) const {
-        return (DirectionMethods::isDiagonal(dir) ? M_SQRT2 : 1) * ((sourceCost + sinkCost)/2);
+        debug("dir is", DirectionMethods::getLabel(dir), "diagonal: ", DirectionMethods::isDiagonal(dir), "multiplier", (DirectionMethods::isDiagonal(dir) ? M_SQRT2 : 1.0));
+        return (DirectionMethods::isDiagonal(dir) ? M_SQRT2 : 1.0) * static_cast<float>((sourceCost + sinkCost)/2);
     }
     virtual void cleanup() {
 
     }
     virtual std::unique_ptr<cpp_utils::IImmutableGraph<std::string,xyLoc,cost_t>> toGraph(const GridMap& map) const {
-        critical("name is", map.getName(), &map.getName());
+        debug("name is", map.getName(), &map.getName());
         cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t> result{map.getName()};
-        critical("result name is", result.getPayload(), &result.getPayload());
+        debug("result name is", result.getPayload(), &result.getPayload());
 
         std::unordered_map<xyLoc, cpp_utils::nodeid_t> xyToId{};
         //add vertices
@@ -83,6 +84,19 @@ public:
                     if (!map.isTraversable(adjacent)) {
                         continue;
                     }
+                    
+                    if (DirectionMethods::isDiagonal(dir)) {
+                        // if the direction is diagonal we need to check if the nearby cells are traversable as well
+                        std::pair<xyLoc, xyLoc> adjacentsCells{xyLoc::getNearbyDiagonalCells(current, adjacent)};
+                        if (!map.isTraversable(adjacentsCells.first)) {
+                            continue;
+                        }
+                        if (!map.isTraversable(adjacentsCells.second)) {
+                            continue;
+                        }
+                    }
+
+                    finest("adding ", nodeId, "->", xyToId[adjacent], "cost: ", this->computeCost(dir, map.getCellCost(current), map.getCellCost(adjacent)));
                     result.addEdge(
                         nodeId, 
                         xyToId[adjacent], 

@@ -131,7 +131,12 @@ protected:
     virtual void tearDownSearch() {
 	}
     virtual const STATE& performSearch(STATE& start, const STATE* expectedGoal) {
-        info("starting A*! start = ", start, "goal = ", elvis(expectedGoal, "none"));
+        if (expectedGoal != nullptr) {
+            info("starting A*! start = ", start, "goal = ", *expectedGoal);
+        } else {
+            info("starting A*! start = ", start, "goal = ", "none");
+        }
+        
 
 		STATE* goal = nullptr;
 
@@ -143,24 +148,27 @@ protected:
 		this->fireEvent([&,start](AstarListener<STATE>& l) { l.onInitialNodeAddedInOpenList(start); });
         while (!this->openList->isEmpty()) {
             STATE& current = this->openList->peek();
+            info("state ", current, "popped from open list f=", current.getF(), "g=", current.getG(), "h=", current.getH());
 
             if (this->goalChecker.isGoal(current, expectedGoal)) {
+                info("state ", current, "is a goal!");
                 goal = &current;
                 goto goal_found;
             }
 
             this->fireEvent([&current](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
             this->openList->pop();
-            info("state popped from open list f=", current.getF(), "g=", current.getG(), "h=", current.getH(), "state=", current);
 
             current.markAsExpanded();
 
+            info("computing successors of state ", current, "...");
             for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
                 STATE& successor = pair.first;
                 cost_t current_to_successor_cost = pair.second;
 
                 this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onSuccessorExpanded(current, successor); });
                 if (this->pruner.shouldPrune(successor)) {
+                    info("child", successor, "of state ", current, "should be pruned!");
                     //skip neighbours already expanded
 					this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onStatePruned(successor); });
                     continue;
@@ -170,6 +178,7 @@ protected:
                     //state inside the open list. Check if we need to update the path
                     cost_t gval = current.getG() + current_to_successor_cost;
                     if (gval < successor.getG()) {
+                        info("child", successor, "of state ", current, "present in open list and has a lower g. update its parent!");
 
                         //update successor information
                         successor.setG(gval);
@@ -190,13 +199,14 @@ protected:
                     successor.setF(this->computeF(gval, hval));
                     successor.setParent(&current);
 
+                    info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                     this->openList->push(successor);
                     
                     this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onNewNodeAddedInOpenList(current, successor); });
                 }
             }
         }
-
+        info("found no solutions!");
         throw SolutionNotFoundException{};
 
         goal_found:
