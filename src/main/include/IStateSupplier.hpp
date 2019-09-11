@@ -1,7 +1,7 @@
 #ifndef _ISTATESUPPLIER_HEADER__
 #define _ISTATESUPPLIER_HEADER__
 
-#include "IState.hpp"
+#include "ISearchState.hpp"
 #include <cpp-utils/pool.hpp>
 #include <cpp-utils/imemory.hpp>
 #include <cpp-utils/ICleanable.hpp>

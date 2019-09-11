@@ -2,7 +2,7 @@
 #define _GRIDMAPSTATE_HEADER__
 
 #include "ISearchAlgorithm.hpp"
-#include "IState.hpp"
+#include "ISearchState.hpp"
 #include "GridBranching.hpp"
 #include "IStateSupplier.hpp"
 #include "IStateExpander.hpp"
@@ -21,7 +21,7 @@ namespace pathfinding::search {
  * In this state there is only x and y coordinates
  * 
  */
-class GridMapState : public IState<GridMapState>, cpp_utils::HasPriority {
+class GridMapState : public IAstarState<GridMapState>, cpp_utils::HasPriority {
 private:
     /**
      * @brief f value in A*
@@ -153,6 +153,16 @@ public:
         return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
     }
 };
+
+bool operator ==(const GridMapState& a, const GridMapState& b) {
+    if (&a == &b) {
+        return true;
+    }
+    if (a.getId() != b.getId()) {
+        return false;
+    }
+    return a.getPosition() == b.getPosition();
+}
 
 std::ostream& operator <<(std::ostream& out, const GridMapState& state) {
     out 

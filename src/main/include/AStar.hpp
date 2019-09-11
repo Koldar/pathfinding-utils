@@ -73,7 +73,7 @@ public:
  * @created: 21/08/2012
  */
 template <typename STATE, typename... OTHER>
-class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE>, public Listenable<AstarListener<STATE>> {
+class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public Listenable<AstarListener<STATE>> {
 public:
     NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, OTHER...>& supplier, IStateExpander<STATE, OTHER...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
 		Listenable<AstarListener<STATE>>{}, 
@@ -120,7 +120,7 @@ protected:
         return g + h;
     }
 protected:
-    virtual void setupSearch() {
+    virtual void setupSearch(const STATE& start, const STATE* goal) {
 		//cleanup before running since at the end we may want to poll information on the other structures
 		this->heuristic.cleanup();
 		this->expander.cleanup();
@@ -130,6 +130,18 @@ protected:
 	}
     virtual void tearDownSearch() {
 	}
+    virtual std::unique_ptr<ISolutionPath<const STATE*, const STATE&>> buildSolutionFromGoalFetched(const STATE& start, const STATE& actualGoal, const STATE* goal) {
+        auto result = new StateSolutionPath<STATE>{};
+        const STATE* tmp = &actualGoal;
+        while (tmp != nullptr) {
+            result->addHead(tmp);
+            tmp = tmp->getParent();
+        }
+        return std::unique_ptr<StateSolutionPath<STATE>>{result};
+    }
+    virtual cost_t getSolutionCostFromGoalFetched(const STATE& start, const STATE& actualGoal, const STATE* goal) const {
+        return actualGoal.getCost();
+    }
     virtual const STATE& performSearch(STATE& start, const STATE* expectedGoal) {
         if (expectedGoal != nullptr) {
             info("starting A*! start = ", start, "goal = ", *expectedGoal);
