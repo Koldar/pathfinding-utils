@@ -342,49 +342,49 @@ SCENARIO("test search algorithms") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,0};
 
-			nodeid_t start = graph.idOfVertex(startLoc);
-			nodeid_t goal = graph.idOfVertex(goalLoc);
+			cpp_utils::graphs::nodeid_t start = graph.idOfVertex(startLoc);
+			cpp_utils::graphs::nodeid_t goal = graph.idOfVertex(goalLoc);
 			info("testing dijkstra", start, goal);
 			auto solution{searchAlgorithm.search(start, goal)};
-			REQUIRE(solution->map<xyLoc>([&,graph](const nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
+			REQUIRE(solution->map<xyLoc>([&,graph](const cpp_utils::graphs::nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
 			REQUIRE(solution->getCost() == 0);
 		}
 
 		WHEN("goal is just below start") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,1};
-			nodeid_t start = graph.idOfVertex(startLoc);
-			nodeid_t goal = graph.idOfVertex(goalLoc);
+			cpp_utils::graphs::nodeid_t start = graph.idOfVertex(startLoc);
+			cpp_utils::graphs::nodeid_t goal = graph.idOfVertex(goalLoc);
 			auto solution{searchAlgorithm.search(start, goal)};
-			REQUIRE(solution->map<xyLoc>([&,graph](const nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
+			REQUIRE(solution->map<xyLoc>([&,graph](const cpp_utils::graphs::nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
 			REQUIRE(solution->getCost() == 100);
 		}
 
 		WHEN("goal is just diagonally reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{1,1};
-			nodeid_t start = graph.idOfVertex(startLoc);
-			nodeid_t goal = graph.idOfVertex(goalLoc);
+			cpp_utils::graphs::nodeid_t start = graph.idOfVertex(startLoc);
+			cpp_utils::graphs::nodeid_t goal = graph.idOfVertex(goalLoc);
 			auto solution{searchAlgorithm.search(start, goal)};
-			REQUIRE(solution->map<xyLoc>([&,graph](const nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
+			REQUIRE(solution->map<xyLoc>([&,graph](const cpp_utils::graphs::nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
 			REQUIRE(solution->getCost() == 141);
 		}
 
 		WHEN("goal is far but reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{4,4};
-			nodeid_t start = graph.idOfVertex(startLoc);
-			nodeid_t goal = graph.idOfVertex(goalLoc);
+			cpp_utils::graphs::nodeid_t start = graph.idOfVertex(startLoc);
+			cpp_utils::graphs::nodeid_t goal = graph.idOfVertex(goalLoc);
 			auto solution{searchAlgorithm.search(start, goal)};
-			REQUIRE(solution->map<xyLoc>([&,graph](const nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
+			REQUIRE(solution->map<xyLoc>([&,graph](const cpp_utils::graphs::nodeid_t x) {return graph.getVertex(x);}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
 			REQUIRE(solution->getCost() == (4*100 + 2*141));
 		}
 
 		WHEN("goal is un reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{4,2};
-			nodeid_t start = graph.idOfVertex(startLoc);
-			nodeid_t goal = graph.idOfVertex(goalLoc);
+			cpp_utils::graphs::nodeid_t start = graph.idOfVertex(startLoc);
+			cpp_utils::graphs::nodeid_t goal = graph.idOfVertex(goalLoc);
 			REQUIRE_THROWS(searchAlgorithm.search(start, goal));
 		}
 	}

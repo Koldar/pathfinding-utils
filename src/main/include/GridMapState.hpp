@@ -197,9 +197,9 @@ protected:
 template <typename G>
 class GridMapStateExpander: public IStateExpander<GridMapState, xyLoc> {
 private:
-    const IImmutableGraph<G, xyLoc, cost_t>& graph;
+    const cpp_utils::graphs::IImmutableGraph<G, xyLoc, cost_t>& graph;
 public:
-    GridMapStateExpander(const IImmutableGraph<G, xyLoc, cost_t>& graph): graph{graph} {
+    GridMapStateExpander(const cpp_utils::graphs::IImmutableGraph<G, xyLoc, cost_t>& graph): graph{graph} {
 
     }
     virtual ~GridMapStateExpander() {

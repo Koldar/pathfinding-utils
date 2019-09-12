@@ -60,18 +60,18 @@ public:
  * @tparam V payload of an vertex
  */
 template <typename G, typename V>
-class GraphSolutionPath: public ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t> {
+class GraphSolutionPath: public ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t> {
 public:
-    using ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t>::vectorplus;
-    using ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t>::make;
-    using ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t>::map;
-    using ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t>::addHead;
-    using ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t>::addTail;
-    using ISolutionPath<cpp_utils::nodeid_t, cpp_utils::nodeid_t>::filter;
+    using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::vectorplus;
+    using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::make;
+    using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::map;
+    using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::addHead;
+    using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::addTail;
+    using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::filter;
 private:
-    const cpp_utils::IImmutableGraph<G, V, cost_t>& g;
+    const cpp_utils::graphs::IImmutableGraph<G, V, cost_t>& g;
 public:
-    GraphSolutionPath(const cpp_utils::IImmutableGraph<G, V, cost_t>& g): g{g} {
+    GraphSolutionPath(const cpp_utils::graphs::IImmutableGraph<G, V, cost_t>& g): g{g} {
 
     }
 public:

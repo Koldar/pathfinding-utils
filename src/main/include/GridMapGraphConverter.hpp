@@ -17,7 +17,7 @@ namespace pathfinding::maps {
  * The costs of each edge is obtained by averagin the endpoints of the involved edge
  * 
  */
-class GridMapGraphConverter: public IMapGraphConverter<GridMap, cpp_utils::IImmutableGraph<std::string, xyLoc, cost_t>> {
+class GridMapGraphConverter: public IMapGraphConverter<GridMap, cpp_utils::graphs::IImmutableGraph<std::string, xyLoc, cost_t>> {
 private:
     GridBranching branching;
 public:
@@ -32,12 +32,12 @@ public:
     virtual void cleanup() {
 
     }
-    virtual std::unique_ptr<cpp_utils::IImmutableGraph<std::string,xyLoc,cost_t>> toGraph(const GridMap& map) const {
+    virtual std::unique_ptr<cpp_utils::graphs::IImmutableGraph<std::string,xyLoc,cost_t>> toGraph(const GridMap& map) const {
         debug("name is", map.getName(), &map.getName());
         cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t> result{map.getName()};
         debug("result name is", result.getPayload(), &result.getPayload());
 
-        std::unordered_map<xyLoc, cpp_utils::nodeid_t> xyToId{};
+        std::unordered_map<xyLoc, cpp_utils::graphs::nodeid_t> xyToId{};
         //add vertices
         for (ucood_t y=0; y<map.getHeight(); ++y) {
             for (ucood_t x=0; x<map.getWidth(); ++x) {
@@ -107,7 +107,7 @@ public:
         }
         //return std::unique_ptr<>(new T(std::forward<Args>(args)...));
         //cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>
-        return std::unique_ptr<cpp_utils::IImmutableGraph<std::string, xyLoc, cost_t>>{new cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>{result}};
+        return std::unique_ptr<cpp_utils::graphs::IImmutableGraph<std::string, xyLoc, cost_t>>{new cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>{result}};
         //return boost::make_unique<cpp_utils::graphs::ListGraph<std::string, xyLoc, cost_t>>{result};
     }
 

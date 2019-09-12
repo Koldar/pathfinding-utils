@@ -6,6 +6,8 @@
 
 namespace pathfinding::search {
 
+using namespace cpp_utils::graphs;
+
 template <typename G, typename V>
 class DijkstraSearchAlgorithm: public ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t> {
 public:
