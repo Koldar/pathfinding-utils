@@ -5,6 +5,7 @@
 #include <boost/range/adaptor/map.hpp>
 #include "xyLoc.hpp"
 #include "IMapGraphConverter.hpp"
+#include "GridBranching.hpp"
 #include <cpp-utils/listGraph.hpp>
 #include <cpp-utils/exceptions.hpp>
 

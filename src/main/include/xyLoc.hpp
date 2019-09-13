@@ -64,7 +64,6 @@ const char* getLabel(const Direction& dir);
  *
  * Inside the grid, "x" is the column while "y" is the row.
  * 
- * This structure follows the value object pattern
  */
 struct xyLoc {
 	///x coordinate
@@ -88,7 +87,16 @@ struct xyLoc {
 
 	}
 
-	xyLoc& operator =(const xyLoc& other) = delete;
+	xyLoc& operator =(const xyLoc& other) {
+		this->x = other.x;
+		this->y = other.y;
+		return *this;
+	};
+	xyLoc& operator =(const xyLoc&& other) {
+		this->x = other.x;
+		this->y = other.y;
+		return *this;
+	};
 	xyLoc& operator +=(const xyLoc& other) = delete;
 	xyLoc& operator -=(const xyLoc& other) = delete;
 	xyLoc& operator *=(const xyLoc& other) = delete;
