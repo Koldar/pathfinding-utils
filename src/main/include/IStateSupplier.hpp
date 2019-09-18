@@ -66,6 +66,7 @@ protected:
 	 */
 	virtual std::unique_ptr<STATE> fetchNewInstance(stateid_t id, OTHER... args) = 0;
 public:
+	//FIXME this should be deprecated!
     virtual STATE& getState(stateid_t id, OTHER... args) {
 		debug("requesting state id=", id);
 		if (id >= stateIdToState.size()) {
