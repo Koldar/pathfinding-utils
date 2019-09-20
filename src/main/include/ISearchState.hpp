@@ -3,10 +3,12 @@
 
 #include <cpp-utils/imemory.hpp>
 #include <iostream>
+#include "types.hpp"
 
 namespace pathfinding::search {
 
     using namespace cpp_utils;
+    using namespace pathfinding;
 
 /**
  * @brief an abstract search state. 
