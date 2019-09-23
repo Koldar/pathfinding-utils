@@ -8,6 +8,7 @@
 namespace pathfinding::search {
 
     using namespace cpp_utils;
+    using namespace pathfinding;
 
     /**
      * @brief an abstract search state. 
