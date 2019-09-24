@@ -94,11 +94,11 @@ public:
     GridMap(const GridMap& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost} {
     }
 
-    GridMap(const GridMap&& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, size{other.size} {
+    GridMap(GridMap&& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, size{other.size} {
     }
 
     GridMap& operator= (const GridMap& map) = delete;
-    GridMap operator= (const GridMap&& map) = delete;
+    GridMap operator= (GridMap&& map) = delete;
 
     ucood_t getWidth() const {
         return this->width;

@@ -87,12 +87,16 @@ struct xyLoc {
 
 	}
 
+	xyLoc(xyLoc&& other): x{other.x}, y{other.y} {
+
+	}
+
 	xyLoc& operator =(const xyLoc& other) {
 		this->x = other.x;
 		this->y = other.y;
 		return *this;
 	};
-	xyLoc& operator =(const xyLoc&& other) {
+	xyLoc& operator =(xyLoc&& other) {
 		this->x = other.x;
 		this->y = other.y;
 		return *this;
