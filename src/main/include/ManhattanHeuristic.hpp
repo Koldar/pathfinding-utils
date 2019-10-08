@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include "IHeuristic.hpp"
-#include "GridMapState.hpp"
+#include "GraphlessState.hpp"
 #include <cpp-utils/exceptions.hpp>
 
 namespace pathfinding::search {
@@ -21,13 +21,13 @@ namespace pathfinding::search {
  * ```
  * 
  */
-class ManhattanHeuristic : public IHeuristic<GridMapState> {
+class ManhattanHeuristic : public IHeuristic<GraphlessState<xyLoc>> {
 private:
     const pathfinding::maps::GridBranching branching;
     bool admissible;
     bool consistent;
 public:
-    using IHeuristic<GridMapState>::getHeuristic;
+    using IHeuristic<GraphlessState<xyLoc>>::getHeuristic;
 public:
     ManhattanHeuristic(const pathfinding::maps::GridBranching branching) : branching{branching}, admissible{false}, consistent{false} {
         switch (branching) {
@@ -47,8 +47,8 @@ public:
         }
     }
 
-    virtual cost_t getHeuristic(const GridMapState& current, const GridMapState* goal) {
-        xyLoc distance = current.getPosition().getDistance(goal->getPosition());
+    virtual cost_t getHeuristic(const GraphlessState<xyLoc>& current, const GraphlessState<xyLoc>* goal) {
+        xyLoc distance = current.getFirstData().getDistance(goal->getFirstData());
         return distance.x + distance.y;
     }
     

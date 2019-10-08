@@ -8,14 +8,14 @@
 
 namespace pathfinding::search {
 
-template <typename STATE, typename... OTHER>
+template <typename STATE, typename... STATE_IMPORTANT_TYPES>
 class IStateExpander;
 
 /**
  * @brief a class whose job is to compute all the successors of a given state
  * 
  */
-template <typename STATE, typename... OTHER>
+template <typename STATE, typename... STATE_IMPORTANT_TYPES>
 class IStateExpander: public ICleanable, IMemorable {
 public:
     /**
@@ -25,7 +25,7 @@ public:
      * @param supplier a class whose job is to generate states. It's likely that we will need them
      * @return std::vector<std::pair<STATE&, cost_t>>  a vector containing the successors
      */
-    virtual cpp_utils::vectorplus<std::pair<STATE&, cost_t>> getSuccessors(const STATE& state, IStateSupplier<STATE, OTHER...>& supplier) = 0;
+    virtual cpp_utils::vectorplus<std::pair<STATE&, cost_t>> getSuccessors(const STATE& state, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier) = 0;
 };
 
 }

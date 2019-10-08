@@ -3,6 +3,8 @@
 
 #include <climits>
 #include <cstdint>
+#include <cpp-utils/imemory.hpp>
+#include <cpp-utils/ICleanable.hpp>
 #include "GridBranching.hpp"
 #include "GridMapState.hpp"
 #include <cpp-utils/math.hpp>
@@ -31,7 +33,10 @@ namespace pathfinding::search {
  * The class works only in grid maps 8-connected in order to exploit such spatial relation among nodes.
  * 
  * @note
- * this class has been copied from Daniele Harabor source code of Warthog and tweaked a little bit.
+ * The class can only work when the state id of a state is the same as the vertex id
+ * 
+ * @note
+ * this class has been copied from Daniel Harabor source code of Warthog and tweaked a little bit.
  * Hence the author name will remain the same.
  *
  * @author: dharabor
@@ -39,7 +44,7 @@ namespace pathfinding::search {
  * 
  */
 template <maps::GridBranching GRIDBRANCHING>
-class GridMapBlockList: public ICleanable, public IMemorable {
+class GridMapBlockList: public cpp_utils::ICleanable, public cpp_utils::IMemorable {
 public:
     /**
      * @brief node block size

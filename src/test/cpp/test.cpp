@@ -219,28 +219,28 @@ SCENARIO("test octile") {
 
     search::OctileHeuristic h{maps::GridBranching::EIGHT_CONNECTED};
 
-	REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{0,0}), search::GridMapState::make(xyLoc{0, 1})) == 1L);
-	REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{0,1}), search::GridMapState::make(xyLoc{0, 1})) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 10})) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 0})) == 10L);
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{0, 10})) == 10L);
+	REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{0,0}}, search::GridMapState{0, 0, xyLoc{0, 1}}) == 1L);
+	REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{0,1}}, search::GridMapState{0, 0, xyLoc{0, 1}}) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 10}}) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 0}}) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{0, 10}}) == 10L);
     
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 130})) == (20L + 42L));
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 130}}) == (20L + 42L));
 
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 170})) == (20L + 70L));
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 170}}) == (20L + 70L));
 }
 
 SCENARIO("test manhattan") {
 
     search::ManhattanHeuristic h{maps::GridBranching::FOUR_CONNECTED};
 
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 10})) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{10, 0})) == 10L);
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{10,10}), search::GridMapState::make(xyLoc{0, 10})) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 10}}) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 0}}) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{0, 10}}) == 10L);
     
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 130})) == (50L + 30L));
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 130}}) == (50L + 30L));
 
-    REQUIRE(h.getHeuristic(search::GridMapState::make(xyLoc{100,100}), search::GridMapState::make(xyLoc{150, 170})) == (50L + 70L));
+    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 170}}) == (50L + 70L));
 }
 
 SCENARIO("test search algorithms") {
@@ -276,60 +276,66 @@ SCENARIO("test search algorithms") {
 		//goal checker
 		search::SAPFGridMapGoalChecker goalChecker{};
 		//state generator
-		search::GridMapStateSupplier supplier{};
+		search::GridMapStateSupplier<std::string> supplier{graph};
 		//successor generator
-		search::GridMapStateExpander<std::string> expander{graph};
+		search::SimpleGridMapStateExpander<std::string> expander{graph};
 		//pruner
 		search::PruneIfExpanded<search::GridMapState> pruner{};
 		//meta heuristic search
-		search::NoCloseListSingleGoalAstar<search::GridMapState, xyLoc> searchAlgorithm{heuristic, goalChecker, supplier, expander, pruner};
+		search::NoCloseListSingleGoalAstar<search::GridMapState, graphs::nodeid_t> searchAlgorithm{
+			heuristic, 
+			goalChecker, 
+			supplier, 
+			expander, 
+			pruner
+		};
 
 		WHEN("start is the same of goal") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,0};
 
-			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc), startLoc);
-			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc), goalLoc);
+			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc));
+			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getPosition();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
+			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
 			REQUIRE(solution->getCost() == 0);
 		}
 
 		WHEN("goal is just below start") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,1};
-			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc), startLoc);
-			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc), goalLoc);
+			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc));
+			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getPosition();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
+			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
 			REQUIRE(solution->getCost() == 100);
 		}
 
 		WHEN("goal is just diagonally reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{1,1};
-			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc), startLoc);
-			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc), goalLoc);
+			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc));
+			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getPosition();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
+			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
 			REQUIRE(solution->getCost() == 141);
 		}
 
 		WHEN("goal is far but reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{4,4};
-			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc), startLoc);
-			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc), goalLoc);
+			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc));
+			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getPosition();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
+			REQUIRE(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
 			REQUIRE(solution->getCost() == (4*100 + 2*141));
 		}
 
 		WHEN("goal is un reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{4,2};
-			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc), startLoc);
-			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc), goalLoc);
+			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc));
+			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc));
 			REQUIRE_THROWS(searchAlgorithm.search(start, goal, false));
 		}
 	}

@@ -72,10 +72,10 @@ public:
  * @author: dharabor
  * @created: 21/08/2012
  */
-template <typename STATE, typename... OTHER>
+template <typename STATE, typename... STATE_IMPORTANT_TYPES>
 class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public Listenable<AstarListener<STATE>> {
 public:
-    NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, OTHER...>& supplier, IStateExpander<STATE, OTHER...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
+    NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
 		Listenable<AstarListener<STATE>>{}, 
         heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
         openList{nullptr} {
@@ -111,8 +111,8 @@ public:
 private:
     IHeuristic<STATE>& heuristic;
 	IGoalChecker<STATE>& goalChecker;
-    IStateExpander<STATE, OTHER...>& expander;
-	IStateSupplier<STATE, OTHER...>& supplier;
+    IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander;
+	IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier;
     IStatePruner<STATE>& pruner;
     StaticPriorityQueue<STATE>* openList;
 protected:

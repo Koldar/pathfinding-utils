@@ -22,7 +22,7 @@ namespace pathfinding::search {
  */
 class OctileHeuristic : public IHeuristic<GridMapState> {
 public:
-    using IHeuristic::getHeuristic;
+    using IHeuristic<GridMapState>::getHeuristic;
     using IMemorable::getByteMemoryOccupied;
 private:
     const pathfinding::maps::GridBranching branching;
@@ -48,7 +48,7 @@ public:
     }
 public:
     virtual cost_t getHeuristic(const GridMapState& current, const GridMapState* goal) {
-        xyLoc distance = current.getPosition().getDistance(goal->getPosition());
+        xyLoc distance = current.getFirstData().getDistance(goal->getFirstData());
         auto minC = distance.getMinCoordinate();
         auto maxC = distance.getMaxCoordinate();
         //I use floor to ensure that the estimate is still admissible

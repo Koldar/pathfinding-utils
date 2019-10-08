@@ -40,7 +40,7 @@ GridMapState& GridMapBlockList<GRIDBRANCHING>::generate(stateid_t stateId, xyLoc
             }
 		}
 		// generate node_id
-		GridMapState* result = new (pool_->allocate()) GridMapState{stateId, loc};
+		GridMapState* result = new (pool_->allocate()) GridMapState{stateId, stateId, loc};
 		stateArray[list_id] = result;
 		this->blocks_[block_id] = stateArray;
 	} else {
@@ -48,7 +48,7 @@ GridMapState& GridMapBlockList<GRIDBRANCHING>::generate(stateid_t stateId, xyLoc
         GridMapState* result = blocks_[block_id][list_id];
         if(result == nullptr) {
             // not in any existing block; generate it
-            result = new (pool_->allocate()) GridMapState{stateId, loc};
+            result = new (pool_->allocate()) GridMapState{stateId, stateId, loc};
             this->blocks_[block_id][list_id] = result;
         }
     }
