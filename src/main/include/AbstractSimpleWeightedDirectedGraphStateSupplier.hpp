@@ -6,6 +6,8 @@
 
 namespace pathfinding::search {
 
+    using namespace cpp_utils::graphs;
+
      /**
      * @brief generates states which are based over a direct weighted graph
      * 
@@ -16,8 +18,9 @@ namespace pathfinding::search {
      * @tparam V paylaod type of each vertex
      * @tparam STATE_OTHER_IMPORTANT_TYPES additional types necessary (along the nodeid_t) to generate a new state
      */
-    template <typename STATE, typename G, typename V, typename... STATE_OTHER_IMPORTANT_TYPES>
+    template <typename STATE, typename G, typename V, typename E, typename... STATE_OTHER_IMPORTANT_TYPES>
     class AbstractSimpleWeightedDirectedGraphStateSupplier: public IStateSupplier<STATE, nodeid_t, STATE_OTHER_IMPORTANT_TYPES...> {
+        typedef AbstractSimpleWeightedDirectedGraphStateSupplier<STATE,G, V, E, STATE_OTHER_IMPORTANT_TYPES...> AbstractSimpleWeightedDirectedGraphStateSupplierInstance;
     protected:
         /**
          * @brief heap memory where the states are concretely saved
@@ -35,25 +38,25 @@ namespace pathfinding::search {
          * @brief the graph that will be used to construct GraphState
          * 
          */
-        const IImmutableGraph<G, V, cost_t>& graph;
+        const IImmutableGraph<G, V, E>& graph;
     public:
         /**
          * @brief Construct a new Graph State Supplier object
          * 
          * @param graph the graph that will be put in ever state generated in this structure
          */
-        AbstractSimpleWeightedDirectedGraphStateSupplier(const IImmutableGraph<G, V, cost_t>& graph): graph{graph}, statePointers{graph.numberOfVertices(), nullptr}, statePool{graph.numberOfVertices()} {
+        AbstractSimpleWeightedDirectedGraphStateSupplier(const IImmutableGraph<G, V, E>& graph): graph{graph}, statePointers{graph.numberOfVertices(), nullptr}, statePool{graph.numberOfVertices()} {
 
         }
         ~AbstractSimpleWeightedDirectedGraphStateSupplier() {
             this->cleanup();
         }
-        AbstractSimpleWeightedDirectedGraphStateSupplier(const AbstractSimpleWeightedDirectedGraphStateSupplier<STATE, G, V, STATE_OTHER_IMPORTANT_TYPES...>& other) = delete;
-        AbstractSimpleWeightedDirectedGraphStateSupplier(AbstractSimpleWeightedDirectedGraphStateSupplier<STATE, G, V, STATE_OTHER_IMPORTANT_TYPES...>&& other) : statePointers{::std::move(other.statePointers)}, statePool{::std::move(other.statePool)}, graph{other.graph} {
+        AbstractSimpleWeightedDirectedGraphStateSupplier(const AbstractSimpleWeightedDirectedGraphStateSupplierInstance& other) = delete;
+        AbstractSimpleWeightedDirectedGraphStateSupplier(AbstractSimpleWeightedDirectedGraphStateSupplierInstance&& other) : statePointers{::std::move(other.statePointers)}, statePool{::std::move(other.statePool)}, graph{other.graph} {
 
         }
-        AbstractSimpleWeightedDirectedGraphStateSupplier<STATE, G, V, STATE_OTHER_IMPORTANT_TYPES...>& operator = (const AbstractSimpleWeightedDirectedGraphStateSupplier<STATE, G, V, STATE_OTHER_IMPORTANT_TYPES...>& other) = delete;
-        AbstractSimpleWeightedDirectedGraphStateSupplier<STATE, G, V, STATE_OTHER_IMPORTANT_TYPES...>& operator = (AbstractSimpleWeightedDirectedGraphStateSupplier<STATE, G, V, STATE_OTHER_IMPORTANT_TYPES...>&& other) {
+        AbstractSimpleWeightedDirectedGraphStateSupplierInstance& operator = (const AbstractSimpleWeightedDirectedGraphStateSupplierInstance& other) = delete;
+        AbstractSimpleWeightedDirectedGraphStateSupplierInstance& operator = (AbstractSimpleWeightedDirectedGraphStateSupplierInstance&& other) {
             this->statePointers = ::std::move(other.statePointers);
             this->statePool = ::std::move(other.statePool);
             this->graph = other.graph;
@@ -88,8 +91,6 @@ namespace pathfinding::search {
         virtual MemoryConsumption getByteMemoryOccupied() const {
             throw cpp_utils::exceptions::NotYetImplementedException{""};
         }
-    private:
-
     };
 
     

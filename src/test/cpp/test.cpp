@@ -14,9 +14,35 @@
 #include "GridMapGraphConverter.hpp"
 #include <cpp-utils/adjacentGraph.hpp>
 #include "DijkstraSearchAlgorithm.hpp"
+#include "GraphState.hpp"
 
 using namespace pathfinding;
 using namespace cpp_utils;
+
+SCENARIO("test GraphState") {
+
+	maps::MovingAIGridMapReader reader{
+		'.', cost_t{1000},
+		'T', cost_t{1500},
+		'@', cost_t::INFTY
+	};
+
+	GIVEN("traversable map") {
+
+		maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
+		maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
+		graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
+
+		WHEN("GrapState with cost_t") {
+			search::GraphState<std::string, xyLoc, cost_t> state{0, graph, 0};
+			search::GraphStateSupplier<std::string, xyLoc, cost_t> supplier{graph}; 
+			search::GraphStateExpander<std::string, xyLoc, cost_t> expander{graph};
+			REQUIRE(state.getId() == 0);
+		}
+		
+	}
+
+}
 
 SCENARIO("test moving ai gridmap loader") {
 

@@ -9,7 +9,7 @@
 #include "IStateExpander.hpp"
 #include "IGoalChecker.hpp"
 #include "xyLoc.hpp"
-#include "GraphState.hpp"
+#include "GraphlessState.hpp"
 #include "AbstractSimpleWeightedDirectedGraphStateSupplier.hpp"
 #include <cpp-utils/StaticPriorityQueue.hpp>
 #include <cpp-utils/igraph.hpp>
@@ -27,7 +27,7 @@ namespace pathfinding::search {
     using GridMapState = GraphlessState<xyLoc>;
 
     template <typename G>
-    class GridMapStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc> {
+    class GridMapStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t> {
     protected:
         virtual stateid_t generateStateId(nodeid_t location) {
             return location;
@@ -37,24 +37,24 @@ namespace pathfinding::search {
             return GridMapState{id, location, this->graph.getVertex(location)};
         }
     public:
-        GridMapStateSupplier(const IImmutableGraph<G, xyLoc, cost_t>& graph): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc>{graph} {
+        GridMapStateSupplier(const IImmutableGraph<G, xyLoc, cost_t>& graph): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{graph} {
 
         }
-        GridMapStateSupplier(const GridMapStateSupplier<G>& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc>{other} {
+        GridMapStateSupplier(const GridMapStateSupplier<G>& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{other} {
 
         }
-        GridMapStateSupplier(const GridMapStateSupplier<G>&& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc>{::std::move(other)} {
+        GridMapStateSupplier(const GridMapStateSupplier<G>&& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{::std::move(other)} {
             
         }
         ~GridMapStateSupplier() {
 
         }
         GridMapStateSupplier& operator =(const GridMapStateSupplier<G>& other) {
-            AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc>::operator=(other);
+            AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>::operator=(other);
             return *this;
         }
         GridMapStateSupplier& operator =(GridMapStateSupplier<G>&& other) {
-            AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc>::operator=(other);
+            AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>::operator=(other);
             return *this;
         }
     };
@@ -107,6 +107,10 @@ namespace pathfinding::search {
                 });
             }
             return result;
+        }
+        virtual std::pair<GridMapState&, cost_t> getSuccessor(const GridMapState& state, int successorNumber, IStateSupplier<GridMapState, nodeid_t>& supplier) {
+            auto outEdge = this->graph.getOutEdge(state.getId(), static_cast<moveid_t>(successorNumber));
+            return std::pair<GridMapState&, cost_t>{supplier.getState(outEdge.getSinkId()), outEdge.getPayload()};
         }
     public:
         virtual void cleanup() {
