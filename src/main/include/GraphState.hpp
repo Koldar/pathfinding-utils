@@ -25,6 +25,7 @@
 #include <tuple>
 #include <functional>
 #include <boost/compute/functional/identity.hpp>
+#include <cpp-utils/functional.hpp>
 
 namespace pathfinding::search {
 
@@ -38,7 +39,7 @@ namespace pathfinding::search {
      * 
      */
     template <typename G, typename V, typename E = cost_t>
-    class GraphState: public AbstractGraphState<GraphState<G,V>, V> {
+    class GraphState: public AbstractGraphState<V> {
         typedef GraphState<G,V,E> GraphStateInstance;
     protected:
         /**
@@ -46,23 +47,23 @@ namespace pathfinding::search {
          */
         const cpp_utils::graphs::IImmutableGraph<G, V, E>& graph;
     public:
-        GraphState(stateid_t id, const IImmutableGraph<G, V, E>& graph, nodeid_t position): AbstractGraphState<GraphStateInstance, V>{id, position}, graph{graph} {
+        GraphState(stateid_t id, const IImmutableGraph<G, V, E>& graph, nodeid_t position): AbstractGraphState<V>{id, position}, graph{graph} {
 
         }
 
-        GraphState(const GraphStateInstance& other): AbstractGraphState<GraphStateInstance, V>{other}, graph{other.graph} {
+        GraphState(const GraphStateInstance& other): AbstractGraphState<V>{other}, graph{other.graph} {
         }
         GraphStateInstance& operator =(const GraphStateInstance& other) {
             assert(this->graph == other.graph);
-            AbstractGraphState<GraphState<G,V>, V>::operator =(other);
+            AbstractGraphState<V>::operator =(other);
             this->graph = other.graph;
             return *this;
         }
-        GraphState(GraphStateInstance&& other): AbstractGraphState<GraphStateInstance, V>{::std::move(other)}, graph{other.graph} {
+        GraphState(GraphStateInstance&& other): AbstractGraphState<V>{::std::move(other)}, graph{other.graph} {
         }
         GraphStateInstance& operator =(GraphStateInstance&& other) {
             assert(this->graph == other.graph);
-            AbstractGraphState<GraphStateInstance, V>::operator =(::std::move(other));
+            AbstractGraphState<V>::operator =(::std::move(other));
             this->graph = other.graph;
             return *this;
         }
@@ -117,6 +118,11 @@ namespace pathfinding::search {
             return GraphState<G, V, E>{id, this->graph, location};
         }
     public:
+        /**
+         * @brief Construct a new Graph State Supplier object
+         * 
+         * @param graph the graph that will be blindly for each search node we're going to create
+         */
         GraphStateSupplier(const IImmutableGraph<G, V, E>& graph): AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E>{graph} {
 
         }
@@ -131,85 +137,6 @@ namespace pathfinding::search {
             return *this;
         }
     };
-
-    /**
-     * @brief allows to generate the successors of a GraphState
-     * 
-     * @tparam G payload of the underlying weighted directed graph
-     */
-    template <typename G, typename V, typename E=cost_t, typename GET_COST=boost::compute::identity<cost_t>()>
-    class GraphStateExpander: public IStateExpander<GraphState<G,V>, nodeid_t> {
-    private:
-        const cpp_utils::graphs::IImmutableGraph<G, V, E>& graph;
-    public:
-        GraphStateExpander(const cpp_utils::graphs::IImmutableGraph<G, V, E>& graph): graph{graph} {
-
-        }
-        virtual ~GraphStateExpander() {
-
-        }
-        GraphStateExpander(const GraphStateExpander<G, V>& other) : graph{other.graph} {
-
-        }
-        GraphStateExpander<G, V>& operator =(const GraphStateExpander<G, V>& other) = delete;
-        GraphStateExpander(GraphStateExpander<G, V>&& other) : graph{other.graph} {
-
-        }
-        GraphStateExpander<G, V>& operator =(GraphStateExpander<G, V>&& other) {
-            this->graph = other.graph;
-            return *this;
-        }
-    public:
-        virtual cpp_utils::vectorplus<std::pair<GraphState<G,V>&, cost_t>> getSuccessors(const GraphState<G,V>& state, IStateSupplier<GraphState<G,V>, nodeid_t>& supplier) {
-            cpp_utils::vectorplus<std::pair<GraphState<G,V>&, cost_t>> result{};
-            //****************** MOVING *********************
-            for (auto outEdge : graph.getOutEdges(state.getPosition())) {
-                fine("an outedge ", outEdge, " of ", state, "(", &state, ") goes to", outEdge.getSinkId(), "edge payload of", outEdge.getPayload());
-                result.add(std::pair<GraphState<G,V>&, cost_t>{
-                    supplier.getState(outEdge.getSinkId()),
-                    GET_COST(outEdge.getPayload())
-                });
-            }
-
-            return result;
-        }
-        virtual std::pair<GraphState<G,V>&, cost_t> getSuccessor(const GraphState<G,V>& state, int successorNumber, IStateSupplier<GraphState<G,V>, nodeid_t>& supplier) {
-            auto outEdge = this->graph.getOutEdge(state.getPosition(), successorNumber);
-            return std::pair<GraphState<G,V>&, cost_t>{
-                supplier.getState(outEdge.getSinkId()),
-                GET_COST(outEdge.getPayload())
-            };
-        }
-    public:
-        virtual void cleanup() {
-
-        }
-    public:
-        virtual MemoryConsumption getByteMemoryOccupied() const {
-            return sizeof(*this);
-        }
-    };
-
-    /**
-     * @brief true if the state position is the same as the goal one
-     * 
-     */
-    template <typename G, typename V>
-    class GraphStateGoalChecker: public IGoalChecker<GraphState<G, V>> {
-    public:
-        virtual bool isGoal(const GraphState<G,V>& state, const GraphState<G,V>* goal) const {
-            return state.getPosition() == goal->getPosition();
-        }
-    public:
-        virtual void cleanup() {
-
-        }
-    public:
-        virtual MemoryConsumption getByteMemoryOccupied() const {
-            return sizeof(*this);
-        }
-};
-
 
 
 }

@@ -19,19 +19,19 @@ namespace pathfinding::search {
      *  @li a cost of the state associated
      * 
      */
-    template <typename PARENTSTATE>
+
     class ISearchState : public IMemorable {
     public:
-        friend std::ostream& operator <<(std::ostream& ss, const ISearchState<PARENTSTATE>& s) {
-            ss << "{g=" << s.getG() << " h=" << s.getH() << " f=" << s.getF();
+        friend std::ostream& operator <<(std::ostream& ss, const ISearchState& s) {
+            ss << "{id=" << s.getId() << "}";
             return ss;
         }
     public:
         virtual void setId(stateid_t id) = 0;
         virtual stateid_t getId() const = 0;
-        virtual PARENTSTATE* getParent() = 0;
-        virtual const PARENTSTATE* getParent() const = 0;
-        virtual void setParent(PARENTSTATE* parent) = 0;
+        virtual ISearchState* getParent() = 0;
+        virtual const ISearchState* getParent() const = 0;
+        virtual void setParent(ISearchState* parent) = 0;
         /**
          * @brief cost of reaching this state
          * 
@@ -60,10 +60,9 @@ namespace pathfinding::search {
      * comparisons and a flag indicating if the state has been fully explored (hance it maybe put in close list) or not
      * 
      */
-    template <typename PARENTSTATE>
-    class IAstarState: public ISearchState<PARENTSTATE> {
+    class IAstarState: public ISearchState {
     public:
-        friend std::ostream& operator << (std::ostream& ss, const IAstarState<PARENTSTATE>& s) {
+        friend std::ostream& operator << (std::ostream& ss, const IAstarState& s) {
             ss << "{id=" << s.getId() << " g=" << s.getG() << " h=" << s.getH() << " f=" << s.getF();
             return ss;
         }

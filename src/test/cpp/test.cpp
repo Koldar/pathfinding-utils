@@ -14,10 +14,33 @@
 #include "GridMapGraphConverter.hpp"
 #include <cpp-utils/adjacentGraph.hpp>
 #include "DijkstraSearchAlgorithm.hpp"
+#include "StandardLocationGoalChecker.hpp"
+#include "StandardStateExpander.hpp"
 #include "GraphState.hpp"
+#include <functional>
 
 using namespace pathfinding;
 using namespace cpp_utils;
+
+struct OtherCost {
+	cost_t cost;
+	bool isDirty;
+
+	static cost_t getCost(const OtherCost& c) {
+		return c.cost;
+	}
+
+	friend bool operator ==(const OtherCost& a, const OtherCost& b) {
+		return a.cost == b.cost && a.isDirty == b.isDirty;
+	}
+	friend std::ostream& operator <<(std::ostream& ss, const OtherCost& a) {
+		ss << "{" << a.cost  <<", " << a.isDirty << "}";
+		return ss;
+	}
+};
+
+
+
 
 SCENARIO("test GraphState") {
 
@@ -32,11 +55,29 @@ SCENARIO("test GraphState") {
 		maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 		maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
 		graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
+		graphs::ListGraph<std::string, xyLoc, OtherCost> graph2{"hello"};
 
 		WHEN("GrapState with cost_t") {
 			search::GraphState<std::string, xyLoc, cost_t> state{0, graph, 0};
 			search::GraphStateSupplier<std::string, xyLoc, cost_t> supplier{graph}; 
-			search::GraphStateExpander<std::string, xyLoc, cost_t> expander{graph};
+			search::StandardStateExpander<search::GraphState<std::string, xyLoc, cost_t>, std::string, xyLoc, cost_t> expander{graph};
+			search::GraphLocationGoalChecker<search::GraphState<std::string, xyLoc, cost_t>> goalChecker{};
+			REQUIRE(state.getId() == 0);
+		}
+
+		WHEN("GrapState with default") {
+			search::GraphState<std::string, xyLoc> state{0, graph, 0};
+			search::GraphStateSupplier<std::string, xyLoc, cost_t> supplier{graph}; 
+			search::StandardStateExpander<search::GraphState<std::string, xyLoc>, std::string, xyLoc, cost_t> expander{graph};
+			search::GraphLocationGoalChecker<search::GraphState<std::string, xyLoc>> goalChecker{};
+			REQUIRE(state.getId() == 0);
+		}
+
+		WHEN("GrapState with other") {
+			search::GraphState<std::string, xyLoc, OtherCost> state{0, graph2, 0};
+			search::GraphStateSupplier<std::string, xyLoc, OtherCost> supplier{graph2}; 
+			search::StandardStateExpander<search::GraphState<std::string, xyLoc>, std::string, xyLoc, OtherCost, OtherCost::getCost> expander{graph2};
+			search::GraphLocationGoalChecker<search::GraphState<std::string, xyLoc, OtherCost>> goalChecker{};
 			REQUIRE(state.getId() == 0);
 		}
 		

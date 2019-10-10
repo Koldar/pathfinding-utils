@@ -36,8 +36,9 @@ namespace pathfinding::search {
      * This state contains the value of the vertex payload it intend to represents
      * 
      */
-    template <typename PARENT_STATE, typename... IMPORTANT_STUFF>
-    class AbstractGraphState: public IAstarState<PARENT_STATE>, cpp_utils::HasPriority {
+    template <typename... IMPORTANT_STUFF>
+    class AbstractGraphState: public IAstarState, cpp_utils::HasPriority {
+        typedef AbstractGraphState<IMPORTANT_STUFF...> AbstractGraphStateInstance;
     protected:
         /**
          * @brief f value in A*
@@ -82,7 +83,7 @@ namespace pathfinding::search {
          */
         nodeid_t position;
     public:
-        AbstractGraphState(cost_t f, cost_t g, cost_t h, const PARENT_STATE* parent, stateid_t id, bool expanded, nodeid_t position): f{f}, g{g}, h{h}, parent{static_cast<void*>(parent)}, id{id}, expanded{expanded}, position{position}, priority{0} {
+        AbstractGraphState(cost_t f, cost_t g, cost_t h, const AbstractGraphStateInstance* parent, stateid_t id, bool expanded, nodeid_t position): f{f}, g{g}, h{h}, parent{static_cast<void*>(parent)}, id{id}, expanded{expanded}, position{position}, priority{0} {
 
         }
 
@@ -90,9 +91,9 @@ namespace pathfinding::search {
 
         }
 
-        AbstractGraphState(const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& other): f{other.f}, g{other.g}, h{other.h}, parent{other.parent}, id{other.id}, expanded{other.expanded}, position{other.position}, priority{other.priority} {
+        AbstractGraphState(const AbstractGraphStateInstance& other): f{other.f}, g{other.g}, h{other.h}, parent{other.parent}, id{other.id}, expanded{other.expanded}, position{other.position}, priority{other.priority} {
         }
-        AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& operator =(const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& other) {
+        AbstractGraphStateInstance& operator =(const AbstractGraphStateInstance& other) {
             this->f = other.f;
             this->g = other.g;
             this->h = other.h;
@@ -103,9 +104,9 @@ namespace pathfinding::search {
             this->priority = other.priority;
             return *this;
         }
-        AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>(AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>&& other): f{other.f}, g{other.g}, h{other.h}, parent{other.parent}, id{other.id}, expanded{other.expanded}, position{other.position}, priority{other.priority} {
+        AbstractGraphState(AbstractGraphStateInstance&& other): f{other.f}, g{other.g}, h{other.h}, parent{other.parent}, id{other.id}, expanded{other.expanded}, position{other.position}, priority{other.priority} {
         }
-        AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& operator =(AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>&& other) {
+        AbstractGraphStateInstance& operator =(AbstractGraphStateInstance&& other) {
             this->f = other.f;
             this->g = other.g;
             this->h = other.h;
@@ -123,7 +124,7 @@ namespace pathfinding::search {
 
         virtual std::tuple<const IMPORTANT_STUFF&...> getPayload() const = 0;
     public:
-        friend bool operator <(const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& a, const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& b) {
+        friend bool operator <(const AbstractGraphStateInstance& a, const AbstractGraphStateInstance& b) {
             if(a.f < b.f) {
                 return true;
             } else if (b.f < a.f) {
@@ -136,7 +137,7 @@ namespace pathfinding::search {
             }
             return false;
         }
-        friend bool operator ==(const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& a, const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& b) {
+        friend bool operator ==(const AbstractGraphStateInstance& a, const AbstractGraphStateInstance& b) {
             if (&a == &b) {
                 return true;
             }
@@ -145,7 +146,7 @@ namespace pathfinding::search {
             }
             return a.getPosition() == b.getPosition();
         }
-        friend std::ostream& operator <<(std::ostream& out, const AbstractGraphState<PARENT_STATE, IMPORTANT_STUFF...>& state) {
+        friend std::ostream& operator <<(std::ostream& out, const AbstractGraphStateInstance& state) {
             out 
                 << "{id: " 
                 << state.getId() 
@@ -155,10 +156,10 @@ namespace pathfinding::search {
             return out;
         }
     public:
-        priority_t getPriority() const {
+        priority_t getPriority(const void* q) const {
             return this->priority;
         }
-        void setPriority(priority_t p) {
+        void setPriority(const void* q, priority_t p) {
             this->priority = p;
         }
     public:
@@ -171,7 +172,7 @@ namespace pathfinding::search {
         virtual void setH(cost_t h) {
             this->h = h;
         }
-        virtual void setParent(PARENT_STATE* parent) {
+        virtual void setParent(ISearchState* parent) {
             this->parent = parent;
         }
         virtual void setId(stateid_t id) {
@@ -189,11 +190,11 @@ namespace pathfinding::search {
         virtual cost_t getH() const {
             return this->h;
         }
-        virtual PARENT_STATE* getParent() {
-            return static_cast<PARENT_STATE*>(this->parent);
+        virtual AbstractGraphStateInstance* getParent() {
+            return static_cast<AbstractGraphStateInstance*>(this->parent);
         }
-        virtual const PARENT_STATE* getParent() const {
-            return static_cast<const PARENT_STATE*>(this->parent);
+        virtual const AbstractGraphStateInstance* getParent() const {
+            return static_cast<const AbstractGraphStateInstance*>(this->parent);
         }
         virtual stateid_t getId() const {
         return this->id;
