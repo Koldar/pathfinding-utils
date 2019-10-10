@@ -9,7 +9,7 @@ namespace pathfinding::search {
      * 
      */
     template <typename STATE>
-    class GraphLocationGoalChecker: public IGoalChecker<STATE> {
+    class StandardLocationGoalChecker: public IGoalChecker<STATE> {
     public:
         virtual bool isGoal(const STATE& state, const STATE* goal) const {
             return state.getPosition() == goal->getPosition();

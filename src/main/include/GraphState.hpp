@@ -41,6 +41,8 @@ namespace pathfinding::search {
     template <typename G, typename V, typename E = cost_t>
     class GraphState: public AbstractGraphState<V> {
         typedef GraphState<G,V,E> GraphStateInstance;
+    public:
+        using AbstractGraphState<V>::getPayload;
     protected:
         /**
          * @brief the graph where the state will be located
@@ -81,7 +83,7 @@ namespace pathfinding::search {
          * 
          * @return a tuple containing n the first index the node id in the graph ajnd the second value is the timestamp
          */
-        std::tuple<const V&> getPayload() const {
+        virtual std::tuple<const V&> getPayload() const {
             return std::tuple<const V&>{this->graph.getVertex(this->getPosition())};
         }
     public:
