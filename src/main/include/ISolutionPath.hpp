@@ -54,6 +54,30 @@ public:
 };
 
 /**
+ * @brief a solution over states over a grpah.
+ * 
+ * We can use it to check if the solution path is valid or not
+ * 
+ * @tparam STATE 
+ */
+template <typename STATE>
+class GraphStateSolutionPath: public StateSolutionPath<STATE> {
+public:
+    virtual bool isSolutionValid() const {
+
+        const STATE* prev = nullptr;
+        for (int i=0; i<this->size(); ++i) {
+            if (i == 0) {
+                prev = (*this)[i];
+            } else {
+                if (prev->getGraph().containsVertex(prev->getPayload()))
+            }
+
+        }
+    }
+}
+
+/**
  * @brief A solution which is a sequence of vertices inside a graph
  * 
  * @tparam G payload of the whole graph

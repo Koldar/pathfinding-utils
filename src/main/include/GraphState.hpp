@@ -87,6 +87,10 @@ namespace pathfinding::search {
             return std::tuple<const V&>{this->graph.getVertex(this->getPosition())};
         }
     public:
+        const cpp_utils::graphs::IImmutableGraph<G, V, E>& getGraph() const {
+            return this->graph;
+        }
+    public:
         friend std::ostream& operator <<(std::ostream& out, const GraphStateInstance& state) {
             out 
                 << "{id: " 
