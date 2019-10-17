@@ -17,6 +17,7 @@
 #include "StandardLocationGoalChecker.hpp"
 #include "StandardStateExpander.hpp"
 #include "GraphState.hpp"
+#include "ISolutionPath.hpp"
 #include <functional>
 
 using namespace pathfinding;
@@ -462,4 +463,56 @@ SCENARIO("test search algorithms") {
 		}
 	}
 
+}
+
+SCENARIO("test validator") {
+
+	maps::MovingAIGridMapReader reader{
+		'.', cost_t{100},
+		'T', cost_t::INFTY,
+		'@', cost_t::INFTY
+	};
+	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
+
+	/*
+	* MAP
+	* 
+	*	.....
+	*  ...@@
+	*  ..@@.
+	*  ...@@
+	*  .....
+	* 
+	*/
+
+
+	maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
+	graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
+
+	GIVEN("optimality") {
+		search::GraphSolutionPath<std::string, xyLoc> path{graph};
+		path.add(
+			graph.idOfVertex(xyLoc{0,0}),
+			graph.idOfVertex(xyLoc{1,0}),
+			graph.idOfVertex(xyLoc{2,0}),
+			graph.idOfVertex(xyLoc{3,0})
+		);
+
+		search::checkPathValid<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(graph, path, [&](graphs::nodeid_t id) { return id; });
+		search::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			graph, 
+			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
+			path,
+			[&](const cost_t& c) { return c; },
+			[&](const graphs::nodeid_t& v) { return v; }
+		);
+
+		REQUIRE_THROWS(search::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			graph, 
+			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{4,0}), 
+			path,
+			[&](const cost_t& c) { return c; },
+			[&](const graphs::nodeid_t& v) { return v; }
+		));
+	}
 }
