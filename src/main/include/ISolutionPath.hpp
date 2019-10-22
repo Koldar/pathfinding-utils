@@ -123,16 +123,13 @@ namespace pathfinding::search {
      * @return false otherwise
      */
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, const nodeid_t& start, const nodeid_t& goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(CONST_REF)>& mapper) {
+    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
         
         auto costGraph = graph.mapEdges(edgeWeightConverter);
         auto realActualPath = actualPath.map(mapper);
 
-        nodeid_t astart = start;
-        nodeid_t agoal = goal;
-
         DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
-        auto expectedPath = dijkstra.search(astart, agoal);
+        auto expectedPath = dijkstra.search(start, goal);
         
         if (expectedPath->getCost() != actualPath.getCost()) {
             error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a path which costs", actualPath.getCost());
@@ -143,11 +140,15 @@ namespace pathfinding::search {
     }
 
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal2(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter){//, std::function<nodeid_t(const STATE&)> mapper) {
+    void checkIfPathOptimal3(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
     }
 
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal3(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(const STATE&)>& mapper) {
+    void checkIfPathOptimal2(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter) {
+    }
+
+    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
+    void checkIfPathOptimal1(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath) {
     }
 
     /**

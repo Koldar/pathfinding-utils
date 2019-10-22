@@ -504,7 +504,7 @@ SCENARIO("test validator") {
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 			path,
 			[&](const cost_t& c) { return c; },
-			[&](const graphs::nodeid_t& v) { return v; }
+			[&](graphs::nodeid_t v) { return v; }
 		);
 
 		REQUIRE_THROWS(search::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
@@ -512,7 +512,7 @@ SCENARIO("test validator") {
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{4,0}), 
 			path,
 			[&](const cost_t& c) { return c; },
-			[&](const graphs::nodeid_t& v) { return v; }
+			[&](graphs::nodeid_t v) { return v; }
 		));
 	}
 }

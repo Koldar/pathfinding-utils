@@ -3,6 +3,7 @@
 
 #include "ISearchAlgorithm.hpp"
 #include <cpp-utils/KHeaps.hpp>
+#include <cpp-utils/igraph.hpp>
 
 namespace pathfinding::search {
 
@@ -46,7 +47,7 @@ namespace pathfinding::search {
             this->distancesFromSource.resize(g.numberOfVertices());
             this->bestPreviousNode.resize(g.numberOfVertices());
             queue.cleanup();
-            info("distancesFromSource", distancesFromSource);
+            debug("distancesFromSource", distancesFromSource);
             std::fill(this->distancesFromSource.begin(), this->distancesFromSource.end(), cost_t::INFTY);
             std::fill(this->bestPreviousNode.begin(), this->bestPreviousNode.end(), 0);
         }
@@ -60,7 +61,7 @@ namespace pathfinding::search {
             this->distancesFromSource[start] = 0;
             nodeid_t actualGoal = *goal;
 
-            info("Starting DIJKSTRA start is", start, "goal is", actualGoal);
+            finest("Starting DIJKSTRA start is", start, "goal is", actualGoal);
             if (start == actualGoal) {
                 return actualGoal;
             }
@@ -72,16 +73,16 @@ namespace pathfinding::search {
 
             while(!queue.isEmpty()) {
                 nodeid_t v = queue.pop();
-                info("popped from queue", v);
+                finest("popped from queue", v);
 
                 if (v == actualGoal) {
-                    info(v, "is equal to the goal", actualGoal);
+                    finest(v, "is equal to the goal", actualGoal);
                     //goal found
                     return actualGoal;
                 }
 
                 for(auto edge : g.getOutEdges(v)) {
-                    info("edge is", edge);
+                    finest("edge is", edge);
                     this->reach(edge.getSinkId(), distancesFromSource[v] + edge.getPayload(), v);
                 }
             }
@@ -94,7 +95,7 @@ namespace pathfinding::search {
                         cost_t ab = distancesFromSource[b];
                         cost_t ac = distancesFromSource[c];
                         cost_t bc = edge.getPayload();
-                        info(ab, bc, ac, ((ab + bc) >= (ac)));
+                        finest(ab, bc, ac, ((ab + bc) >= (ac)));
                         if (!((ab + bc) >= (ac))) {
                             error("nodes A=", start, ", B=", b, ", C=", c, ": triangular disequality not verified: AB=", ab, " BC=", bc, " AC=", ac, "(AB + BC) >= AC");
                             throw cpp_utils::exceptions::ImpossibleException{};
@@ -135,7 +136,7 @@ namespace pathfinding::search {
     private:
         void reach(nodeid_t v, cost_t d, nodeid_t bestPrevious) {
             if(d < distancesFromSource[v]) {
-                info(v, "could be reached in", distancesFromSource[v], " but now we can reach it via ", bestPrevious, " in ", d, "! update!!!");
+                finest(v, "could be reached in", distancesFromSource[v], " but now we can reach it via ", bestPrevious, " in ", d, "! update!!!");
                 queue.pushOrDecrease(v, d);
                 distancesFromSource[v] = d;
                 this->bestPreviousNode[v] = bestPrevious;
