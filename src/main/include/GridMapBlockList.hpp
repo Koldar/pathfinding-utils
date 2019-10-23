@@ -8,6 +8,7 @@
 #include "GridBranching.hpp"
 #include "GridMapState.hpp"
 #include <cpp-utils/math.hpp>
+#include <cpp-utils/pool.hpp>
 
 namespace pathfinding::search {
 
@@ -99,7 +100,7 @@ public:
      * @param mapHeight height of the grid map
      */
     GridMapBlockList(ucood_t mapWidth, ucood_t mapHeight);
-    ~GridMapBlockList();
+    virtual ~GridMapBlockList();
 
     /**
      * @brief fetch the search state with the given state id or creates a new one from scratch

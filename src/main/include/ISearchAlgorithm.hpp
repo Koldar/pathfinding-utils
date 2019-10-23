@@ -36,22 +36,6 @@ template <typename STATE, typename STATE_IN_SOLUTION=const STATE*, typename CONS
 class ISearchAlgorithm {
 protected:
     /**
-     * @brief steps to execute before starting the search
-     * 
-     * @param start the start state the search start into
-     * @param goal the goal we want to reach. If the goal cannot be represented via a state, you can set it to null
-     * 
-     */
-    virtual void setupSearch(CONST_REF start, const STATE* goal) = 0;
-    /**
-     * @brief steps to execute after terminating the search, regardless of the outcome (solution found or not)
-     * 
-     * @param start the start state the search start into
-     * @param goal the goal we want to reach. If the goal cannot be represented via a state, you can set it to null
-     * 
-     */
-    virtual void tearDownSearch() = 0;
-    /**
      * @brief after a search have been completed, this instruction tells how to effectively build a solution path starting from the goal fetched
      * 
      * @param start the start state of the search
@@ -79,6 +63,22 @@ protected:
      */
     virtual CONST_REF performSearch(STATE& start, const STATE* goal) = 0;
 public:
+    /**
+     * @brief steps to execute before starting the search
+     * 
+     * @param start pointer of the start state the search start into. Can be null
+     * @param goal the goal we want to reach. If the goal cannot be represented via a state, you can set it to null
+     * 
+     */
+    virtual void setupSearch(const STATE* start, const STATE* goal) = 0;
+    /**
+     * @brief steps to execute after terminating the search, regardless of the outcome (solution found or not)
+     * 
+     * @param start the start state the search start into
+     * @param goal the goal we want to reach. If the goal cannot be represented via a state, you can set it to null
+     * 
+     */
+    virtual void tearDownSearch() = 0;
     /**
      * @brief find a solution when the goal cannot be represented whatsoever
      * 
@@ -116,7 +116,7 @@ protected:
     std::unique_ptr<ISolutionPath<STATE_IN_SOLUTION, CONST_REF>> _search(STATE& start, const STATE* goal, bool performSetup, bool performTearDown) {
         try {
             if (performSetup) {
-                this->setupSearch(start, goal);
+                this->setupSearch(&start, goal);
             }
             CONST_REF goalFetched = this->performSearch(start, goal);
             if (performTearDown) {
@@ -144,7 +144,7 @@ protected:
         cost_t result = 0;
         try {
             if (performSetup) {
-                this->setupSearch(start, goal);
+                this->setupSearch(&start, goal);
             }
             CONST_REF goalFetched = this->performSearch(start, goal);
             if (performTearDown) {

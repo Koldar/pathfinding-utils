@@ -88,7 +88,7 @@ public:
         this->size = this->computeSize();
     }
 
-    ~GridMap() {
+    virtual ~GridMap() {
     }
 
     GridMap(const GridMap& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost} {

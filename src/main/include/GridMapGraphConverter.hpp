@@ -24,7 +24,7 @@ private:
     GridBranching branching;
 public:
     GridMapGraphConverter(GridBranching branching);
-    ~GridMapGraphConverter();
+    virtual ~GridMapGraphConverter();
     GridMapGraphConverter(const GridMapGraphConverter& o);
     GridMapGraphConverter(GridMapGraphConverter&& o);
     GridMapGraphConverter& operator = (const GridMapGraphConverter& o);

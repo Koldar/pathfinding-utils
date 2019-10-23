@@ -1,6 +1,9 @@
 #ifndef _PATHFINDING_UTILS_STANDARD_STATE_EXPANDER_HEADER__
 #define _PATHFINDING_UTILS_STANDARD_STATE_EXPANDER_HEADER__
 
+#include <cpp-utils/log.hpp>
+#include "IStateExpander.hpp"
+
 namespace pathfinding::search {
 
     /**
@@ -20,7 +23,7 @@ namespace pathfinding::search {
          * @param graph the graph we're goingto use to generate the successors
          */ 
         StandardStateExpander(const cpp_utils::graphs::IImmutableGraph<G, V, E>& graph): graph{graph} {
-
+            debug("StandardStateExpander called");
         }
         virtual ~StandardStateExpander() {
 

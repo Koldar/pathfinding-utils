@@ -46,7 +46,7 @@ namespace pathfinding::search {
         GridMapStateSupplier(const GridMapStateSupplier<G>&& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{::std::move(other)} {
             
         }
-        ~GridMapStateSupplier() {
+        virtual ~GridMapStateSupplier() {
 
         }
         GridMapStateSupplier& operator =(const GridMapStateSupplier<G>& other) {

@@ -56,7 +56,7 @@ SCENARIO("test GraphState") {
 		maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 		maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
 		graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
-		graphs::ListGraph<std::string, xyLoc, OtherCost> graph2{"hello"};
+		graphs::ListGraph<std::string, xyLoc, OtherCost> graph2{*graph.mapEdges<OtherCost>([&] (const cost_t& c) { return OtherCost{c, false};})};
 
 		WHEN("GrapState with cost_t") {
 			search::GraphState<std::string, xyLoc, cost_t> state{0, graph, 0};

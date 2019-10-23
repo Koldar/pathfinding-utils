@@ -115,6 +115,7 @@ namespace pathfinding::search {
     template <typename G, typename V, typename E = cost_t>
     class GraphStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E> {
         typedef GraphStateSupplier<G, V, E> GraphStateSupplierInstance;
+        typedef AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E> Super;
     protected:
         virtual stateid_t generateStateId(nodeid_t location) {
             return location;
@@ -129,19 +130,22 @@ namespace pathfinding::search {
          * 
          * @param graph the graph that will be blindly for each search node we're going to create
          */
-        GraphStateSupplier(const IImmutableGraph<G, V, E>& graph): AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E>{graph} {
-
+        GraphStateSupplier(const IImmutableGraph<G, V, E>& graph): Super{graph} {
+            debug("GraphStateSupplier called");
         }
-        GraphStateSupplier(GraphStateSupplierInstance&& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E>{::std::move(other)} {
-            
+        GraphStateSupplier(const GraphStateSupplierInstance& other) = delete;
+        GraphStateSupplier(GraphStateSupplierInstance&& other): Super{::std::move(other)} {
+            debug("GraphStateSupplierInstance MOVED");
         }
-        ~GraphStateSupplier() {
-
+        virtual ~GraphStateSupplier() {
+            debug("GraphStateSupplier destroyed!");
         }
         GraphStateSupplierInstance& operator =(GraphStateSupplierInstance&& other) {
             AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E>::operator=(::std::move(other));
+            debug("GraphStateSupplierInstance MOVED");
             return *this;
         }
+        GraphStateSupplierInstance& operator =(const GraphStateSupplierInstance& other) = delete;
     };
 
 

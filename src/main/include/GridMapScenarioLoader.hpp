@@ -126,7 +126,11 @@ namespace pathfinding::maps {
 		 *  @li -1 if the scenario file didn't advertise the sizeof the map
 		 */
 		int GetYScale() const {return scaleY;}
-		
+	public:
+		friend std::ostream& operator<<(std::ostream& ss, const GridMapScenarioExperiment& g) {
+			ss << "{ map=" << g.map << " bucket=" << g.bucket << " start=" << g.getStart() << " goal=" << g.getGoal() << " distance=" << g.distance << " }";
+			return ss;
+		}
 	private:
 		friend class GridMapScenarioLoader;
 		ucood_t startx, starty, goalx, goaly;

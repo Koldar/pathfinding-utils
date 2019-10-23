@@ -38,7 +38,7 @@ namespace pathfinding::search {
     public:
         DijkstraSearchAlgorithm(const IImmutableGraph<G,V,cost_t>& g): g{g}, distancesFromSource{}, bestPreviousNode{}, queue{g.numberOfVertices()} {
         }
-        ~DijkstraSearchAlgorithm() {
+        virtual ~DijkstraSearchAlgorithm() {
 
         }
         DijkstraSearchAlgorithm& operator =(const DijkstraSearchAlgorithm& other) = delete;
@@ -51,12 +51,13 @@ namespace pathfinding::search {
             std::fill(this->distancesFromSource.begin(), this->distancesFromSource.end(), cost_t::INFTY);
             std::fill(this->bestPreviousNode.begin(), this->bestPreviousNode.end(), 0);
         }
-    protected:
-        virtual void setupSearch(nodeid_t start, const nodeid_t* goal) {
+    public:
+        virtual void setupSearch(const nodeid_t* start, const nodeid_t* goal) {
             this->cleanup();
         }
         virtual void tearDownSearch() {
         }
+    protected:
         virtual nodeid_t performSearch(nodeid_t& start, const nodeid_t* goal) {
             this->distancesFromSource[start] = 0;
             nodeid_t actualGoal = *goal;

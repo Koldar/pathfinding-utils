@@ -26,7 +26,7 @@ namespace pathfinding::search {
          * @brief heap memory where the states are concretely saved
          * 
          */
-        cpp_utils::cpool<STATE> statePool;
+        cpp_utils::cpool<STATE>* statePool;
         /**
          * @brief vector containing as many cell as vertices in the graph, a pointer where the state is
          * 
@@ -45,21 +45,28 @@ namespace pathfinding::search {
          * 
          * @param graph the graph that will be put in ever state generated in this structure
          */
-        AbstractSimpleWeightedDirectedGraphStateSupplier(const IImmutableGraph<G, V, E>& graph): graph{graph}, statePointers{graph.numberOfVertices(), nullptr}, statePool{graph.numberOfVertices()} {
-
+        AbstractSimpleWeightedDirectedGraphStateSupplier(const IImmutableGraph<G, V, E>& graph): graph{graph}, statePointers{graph.numberOfVertices(), nullptr}, statePool{nullptr} {
+            this->statePool = new cpp_utils::cpool<STATE>{graph.numberOfVertices()};
         }
-        ~AbstractSimpleWeightedDirectedGraphStateSupplier() {
-            this->cleanup();
+        virtual ~AbstractSimpleWeightedDirectedGraphStateSupplier() {
+            debug("AbstractSimpleWeightedDirectedGraphStateSupplier destroyed!");
+            //this->cleanup();
+            debug("AbstractSimpleWeightedDirectedGraphStateSupplier cleanup called!");
+            delete this->statePool;
         }
         AbstractSimpleWeightedDirectedGraphStateSupplier(const AbstractSimpleWeightedDirectedGraphStateSupplierInstance& other) = delete;
         AbstractSimpleWeightedDirectedGraphStateSupplier(AbstractSimpleWeightedDirectedGraphStateSupplierInstance&& other) : statePointers{::std::move(other.statePointers)}, statePool{::std::move(other.statePool)}, graph{other.graph} {
-
+            debug("AbstractSimpleWeightedDirectedGraphStateSupplier MOVED");
         }
         AbstractSimpleWeightedDirectedGraphStateSupplierInstance& operator = (const AbstractSimpleWeightedDirectedGraphStateSupplierInstance& other) = delete;
         AbstractSimpleWeightedDirectedGraphStateSupplierInstance& operator = (AbstractSimpleWeightedDirectedGraphStateSupplierInstance&& other) {
+            debug("AbstractSimpleWeightedDirectedGraphStateSupplier MOVED");
             this->statePointers = ::std::move(other.statePointers);
-            this->statePool = ::std::move(other.statePool);
+            this->statePool = other.statePool;
             this->graph = other.graph;
+
+            other.statePool = nullptr;
+
             return *this;
         }
     protected:
@@ -78,13 +85,13 @@ namespace pathfinding::search {
             //let's check if we have the requested timestamp in fromTimestampToLocationMap
             if (this->statePointers[location] == nullptr) {
                 stateid_t newId = this->generateStateId(location, args...);
-                this->statePointers[location] = new (this->statePool.allocate()) STATE{generateNewInstance(newId, location, args...)};
+                this->statePointers[location] = new (this->statePool->allocate()) STATE{generateNewInstance(newId, location, args...)};
             }
             return *this->statePointers[location];
         }
     public:
         virtual void cleanup() {
-            this->statePool.cleanup();
+            this->statePool->cleanup();
             this->statePointers.fill(nullptr);
         }
     public:

@@ -85,7 +85,7 @@ public:
             this->openList = new StaticPriorityQueue<STATE>{openListCapacity, true};
         }
 
-    ~NoCloseListSingleGoalAstar() {
+    virtual ~NoCloseListSingleGoalAstar() {
         this->tearDownSearch();
         delete this->openList;
     }
@@ -119,8 +119,8 @@ protected:
     virtual cost_t computeF(cost_t g, cost_t h) const {
         return g + h;
     }
-protected:
-    virtual void setupSearch(const STATE& start, const STATE* goal) {
+public:
+    virtual void setupSearch(const STATE* start, const STATE* goal) {
 		//cleanup before running since at the end we may want to poll information on the other structures
 		this->heuristic.cleanup();
 		this->expander.cleanup();
@@ -130,6 +130,7 @@ protected:
 	}
     virtual void tearDownSearch() {
 	}
+protected:
     virtual std::unique_ptr<ISolutionPath<const STATE*, const STATE&>> buildSolutionFromGoalFetched(const STATE& start, const STATE& actualGoal, const STATE* goal) {
         auto result = new StateSolutionPath<STATE>{};
         const STATE* tmp = &actualGoal;
