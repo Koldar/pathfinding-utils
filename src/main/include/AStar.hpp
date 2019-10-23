@@ -120,6 +120,9 @@ protected:
         return g + h;
     }
 public:
+    virtual std::string getName() const {
+        return "A*";
+    }
     virtual void setupSearch(const STATE* start, const STATE* goal) {
 		//cleanup before running since at the end we may want to poll information on the other structures
 		this->heuristic.cleanup();

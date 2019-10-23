@@ -64,6 +64,12 @@ protected:
     virtual CONST_REF performSearch(STATE& start, const STATE* goal) = 0;
 public:
     /**
+     * @brief The informal name of the algorithm
+     * 
+     * @return std::string name of the algorithm
+     */
+    virtual std::string getName() const = 0;
+    /**
      * @brief steps to execute before starting the search
      * 
      * @param start pointer of the start state the search start into. Can be null

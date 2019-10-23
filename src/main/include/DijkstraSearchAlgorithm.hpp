@@ -52,6 +52,9 @@ namespace pathfinding::search {
             std::fill(this->bestPreviousNode.begin(), this->bestPreviousNode.end(), 0);
         }
     public:
+        virtual std::string getName() const {
+            return "Dijkstra";
+        }
         virtual void setupSearch(const nodeid_t* start, const nodeid_t* goal) {
             this->cleanup();
         }
