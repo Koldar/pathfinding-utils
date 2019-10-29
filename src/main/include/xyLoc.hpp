@@ -59,6 +59,8 @@ namespace pathfinding {
 
 	}
 
+	std::ostream& operator <<(std::ostream& ss, const Direction& dir);
+
 	/**
 	 * represent a position in the grid.
 	 *
