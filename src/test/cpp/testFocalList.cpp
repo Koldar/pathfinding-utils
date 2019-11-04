@@ -47,6 +47,7 @@ class Foo {
 
 struct FooBaseOrdered {
     bool operator() (const Foo& a, const Foo& b) {
+        info("calling < over ", a, " and ", b);
         return a.getOpenValue() < b.getOpenValue();
     }
 };
@@ -71,7 +72,7 @@ SCENARIO("test FocalList") {
     auto foob = Foo{10, 10, 10, 'b'};
     auto fooc = Foo{20, 20, 5, 'c'};
     auto food = Foo{30, 30, 0, 'd'};
-    auto fooe = Foo{40, 40, 0, 'e'};
+    auto fooe = Foo{40, 40, 40, 'e'};
 
     GIVEN("pushing") {
 
@@ -147,6 +148,28 @@ SCENARIO("test FocalList") {
             critical("a_ptr=", &foob, "b_ptr=", &fooc);
             REQUIRE(&focalList.popFromFocal() == &fooc);
             REQUIRE(&focalList.popFromFocal() == &foob);
+        }
+
+        WHEN("decreasing key") {
+            focalList.pushInOpenAndInFocal(fooe);
+            focalList.pushInOpenAndInFocal(fooa);
+            focalList.pushInOpenAndInFocal(foob);
+
+            //e should be place before b
+            fooe.setOpenValue(2);
+            REQUIRE(fooe.getOpenValue() == 2);
+            critical("we have changed the openValue of fooe. Updating foo position in the heap");
+            focalList.decreaseOpenListKey(fooe);
+
+            critical("focal list is ", focalList);
+
+            critical("a_ptr=", &fooa, "b_ptr=", &foob, "e_ptr=", &fooe);
+            //the sort should'nt change since we have update the open list sorting, not the focal one
+            REQUIRE(&focalList.popFromFocal() == &fooa);
+            REQUIRE(&focalList.popFromFocal() == &foob);
+            REQUIRE(&focalList.popFromFocal() == &fooe);
+
+            
         }
 
     }

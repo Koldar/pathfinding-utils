@@ -5,10 +5,13 @@
 #include <unordered_map>
 
 #include <cpp-utils/operators.hpp>
+#include <cpp-utils/ICleanable.hpp>
 
 #include "types.hpp"
 
 namespace pathfinding::data_structures {
+
+    using namespace cpp_utils;
 
     namespace internal {
 
@@ -62,6 +65,10 @@ namespace pathfinding::data_structures {
                 //boost queue are max-queue, but I want min-queue
                 return COMPARATOR()(*(b.data), *(a.data));
             }
+            friend std::ostream& operator <<(std::ostream& ss, const OpenHeapNode& a) {
+                ss << *(a.data);
+                return ss;
+            }
         };
 
 
@@ -96,9 +103,16 @@ namespace pathfinding::data_structures {
                 return *this;
             }
         public:
+            friend bool operator ==(const FocalHeapNode&a , const FocalHeapNode& b) {
+                return a.openHandle == b.openHandle;
+            }
             friend bool operator <(const FocalHeapNode&a , const FocalHeapNode& b) {
                 //boost queue are max-queue, but I want min-queue
                 return COMPARATOR()(*((*(b.openHandle)).data), *((*(a.openHandle)).data));
+            }
+            friend std::ostream& operator <<(std::ostream& ss, const FocalHeapNode& a) {
+                ss << *((*(a.openHandle)).data);
+                return ss;
             }
         };
     }
@@ -128,13 +142,20 @@ namespace pathfinding::data_structures {
      * @tparam COST_TYPE the return value of GET_COST. Defaults to `cost_t`
      */
     template <typename ITEM, typename OPEN_COMPARATOR, typename FOCAL_COMPARATOR, typename GET_COST, typename COST_TYPE = cost_t>
-    class FocalList {
+    class FocalList : public ICleanable {
     private:
         using This = FocalList<ITEM, OPEN_COMPARATOR, FOCAL_COMPARATOR, GET_COST, COST_TYPE>;
+
+        using OpenHeapNodeType = internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>;
+        using FocalHeapNodeType = internal::focal::FocalHeapNode<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>, FOCAL_COMPARATOR>;
+        
+        using OpenListType = internal::BinaryHeap<OpenHeapNodeType>;
+        using FocalListType = internal::BinaryHeap<FocalHeapNodeType>;
+        
     private:
-        std::unordered_map<ITEM*, internal::binary_heap_handle_t<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>>> stateToOpenQueue;
-        internal::BinaryHeap<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>> openQueue;
-        internal::BinaryHeap<internal::focal::FocalHeapNode<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>, FOCAL_COMPARATOR>> focalQueue;
+        std::unordered_map<ITEM*, internal::binary_heap_handle_t<OpenHeapNodeType>> stateToOpenQueue;
+        OpenListType openQueue;
+        FocalListType focalQueue;
         COST_TYPE w;
     public:
         FocalList(COST_TYPE w): openQueue{}, focalQueue{}, w{w}, stateToOpenQueue{} {
@@ -182,8 +203,9 @@ namespace pathfinding::data_structures {
         }
 
         virtual void decreaseOpenListKey(ITEM& val) {
-            auto handle = this->stateToOpenQueue[&val];
-            this->openQueue.decrease(handle);
+            internal::binary_heap_handle_t<OpenHeapNodeType> handle = this->stateToOpenQueue[&val];
+            //we call increase since boost uses a max heap but we want to model a min one
+            this->openQueue.increase(handle);
         }
 
         /**
@@ -192,7 +214,7 @@ namespace pathfinding::data_structures {
          * @param val the item to be put. We will put the **pointer**, not the item itself
          */
         virtual void pushInOpen(ITEM& val) {
-            auto handle = this->openQueue.push(internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>{&val});
+            auto handle = this->openQueue.push(OpenHeapNodeType{&val});
             (*handle).priority = handle;
             this->stateToOpenQueue.insert(std::make_pair<>(&val, handle));
         }
@@ -203,8 +225,8 @@ namespace pathfinding::data_structures {
          * @param val 
          */
         virtual void promoteToFocal(ITEM& val) {
-            internal::binary_heap_handle_t<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>> handle = this->stateToOpenQueue[const_cast<ITEM*>(&val)];
-            this->focalQueue.push(internal::focal::FocalHeapNode<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>, FOCAL_COMPARATOR>{handle});
+            internal::binary_heap_handle_t<OpenHeapNodeType> handle = this->stateToOpenQueue[const_cast<ITEM*>(&val)];
+            this->focalQueue.push(FocalHeapNodeType{handle});
         }
 
         /**
@@ -213,10 +235,10 @@ namespace pathfinding::data_structures {
          * @param val the item to be put. We will put the **pointer**, not the item itself
          */
         virtual void pushInOpenAndInFocal(ITEM& val) {
-            auto handle = this->openQueue.push(internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>{&val});
+            auto handle = this->openQueue.push(OpenHeapNodeType{&val});
             (*handle).priority = handle;
             this->stateToOpenQueue.insert(std::make_pair<>(&val, handle));
-            this->focalQueue.push(internal::focal::FocalHeapNode<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>, FOCAL_COMPARATOR>{handle});
+            this->focalQueue.push(FocalHeapNodeType{handle});
         }
 
         virtual COST_TYPE updateFocalWithOpenChanges(COST_TYPE bestOpenListScore) {
@@ -234,7 +256,7 @@ namespace pathfinding::data_structures {
                      * (scoreOfStateInOpen <= this->w * newBestOpenListScore) means that the state should now be considered in focal at the last iteration
                      */
                     if ((scoreOfStateInOpen > this->w * oldBestOpenListScore) && (scoreOfStateInOpen <= this->w * newBestOpenListScore)) {
-                        this->focalQueue.push(internal::focal::FocalHeapNode<internal::open::OpenHeapNode<ITEM, OPEN_COMPARATOR>, FOCAL_COMPARATOR>{iter->priority});
+                        this->focalQueue.push(FocalHeapNodeType{iter->priority});
                     }
                     //states are ordered in openQueue. as soon as the scoreOfStateInOpen goes beyond the scope of focal, we stop
                     //since we are sure that no state can be stored in focal
@@ -289,6 +311,102 @@ namespace pathfinding::data_structures {
 
         virtual size_t getFocalListSize() const {
             return this->focalQueue.size();
+        }
+        /**
+         * @brief Perform a test to ensure that the 2 lists are actually ordered as planned
+         * 
+         * 
+         * 
+         */
+        void checkFocalInvariant() const {
+            FocalListType expectedFocalQueue{};
+            bool mismatch = false;
+            const OpenHeapNodeType& top = this->openQueue.top();
+            COST_TYPE bestVal = GET_COST()(*(top.data));
+            COST_TYPE oldOpenValue;
+            bool first = false;
+
+            info("focal list to check:");
+            info(*this);
+            
+            for (auto iter = openQueue.ordered_begin(); iter != openQueue.ordered_end(); ++iter) {
+                const OpenHeapNodeType& s = *iter;
+                COST_TYPE value = GET_COST()(*(s.data));
+
+                // CHECK OPEN LIST SORTING
+                if (first) {
+                    oldOpenValue = value;
+                } else {
+                    if (value < oldOpenValue) {
+                        log_error("we expected the openQueue to be sorted by cost, but it's not!");
+                        throw cpp_utils::exceptions::ImpossibleException{"invalid open list sort!"};
+                    }
+                }
+
+
+                //CHECK VALUES STORED IN FOCAL LIST
+                FocalHeapNodeType expectedFocalNode{s.priority};
+                if (value <= bestVal * this->w) {
+                    expectedFocalQueue.push(FocalHeapNodeType{s.priority});
+                    if (std::find(this->focalQueue.begin(), this->focalQueue.end(), expectedFocalNode) == focalQueue.end()) {
+                        log_error("focalSet shuld contain", *(s.data), "but it doesn't");
+                        throw cpp_utils::exceptions::ImpossibleException{"the focal list is not what we have expected it to be!"};
+                    }
+                } else {
+                    if (std::find(focalQueue.begin(), focalQueue.end(), expectedFocalNode) != focalQueue.end()) {
+                        log_error("focalSet shuldn't contain", *(s.data), "but it does");
+                        throw cpp_utils::exceptions::ImpossibleException{"the focal list is not what we have expected it to be!"};
+                        mismatch = true;
+                    }
+                }
+            }
+
+            // CHECK FOCAL LIST SORTING
+            first = false;
+            if (focalQueue.size() != expectedFocalQueue.size()) {
+                throw cpp_utils::exceptions::ImpossibleException{"actual focal list has wrong size!"};
+            }
+
+            auto itActual = focalQueue.ordered_begin();
+            auto itExpected = expectedFocalQueue.ordered_begin();
+            while (true) {
+                if (itActual == focalQueue.ordered_end()) {
+                    if (itExpected != expectedFocalQueue.ordered_end()) {
+                        throw cpp_utils::exceptions::ImpossibleException{"actual ended but expected didn't"};
+                    } 
+                    return;
+                } else {
+                    if (itExpected == expectedFocalQueue.ordered_end()) {
+                        throw cpp_utils::exceptions::ImpossibleException{"actual didn't end but expected did"};
+                    } 
+                    return;
+                }
+
+                ITEM* actualData = (*((*itActual).openHandle)).data;
+                ITEM* expectedData = (*((*itExpected).openHandle)).data;
+                if (*actualData != *expectedData) {
+                    throw cpp_utils::exceptions::ImpossibleException{"an element of the focal list is wrong!"};
+                }
+                ++itActual;
+                ++itExpected;
+            }
+        }
+    public:
+        friend std::ostream& operator <<(std::ostream& ss, const This& l) {
+            ss << "************* OPEN LIST ***************" << std::endl;
+            for (auto it=l.openQueue.ordered_begin(); it!=l.openQueue.ordered_end(); ++it) {
+                ss << " - " << *it << std::endl;
+            }
+            ss << "************* FOCAL LIST **************" << std::endl;
+            for (auto it=l.focalQueue.ordered_begin(); it!=l.focalQueue.ordered_end(); ++it) {
+                ss << " - " << *it << std::endl;
+            }
+            return ss;
+        }
+    public:
+        virtual void cleanup() {
+            this->focalQueue.clear();
+            this->openQueue.clear();
         }
     };
 
