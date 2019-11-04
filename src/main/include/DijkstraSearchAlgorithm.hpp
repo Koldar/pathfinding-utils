@@ -101,7 +101,7 @@ namespace pathfinding::search {
                         cost_t bc = edge.getPayload();
                         finest(ab, bc, ac, ((ab + bc) >= (ac)));
                         if (!((ab + bc) >= (ac))) {
-                            error("nodes A=", start, ", B=", b, ", C=", c, ": triangular disequality not verified: AB=", ab, " BC=", bc, " AC=", ac, "(AB + BC) >= AC");
+                            log_error("nodes A=", start, ", B=", b, ", C=", c, ": triangular disequality not verified: AB=", ab, " BC=", bc, " AC=", ac, "(AB + BC) >= AC");
                             throw cpp_utils::exceptions::ImpossibleException{};
                         }
                     }

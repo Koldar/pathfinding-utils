@@ -41,8 +41,6 @@ struct OtherCost {
 };
 
 
-
-
 SCENARIO("test GraphState") {
 
 	maps::MovingAIGridMapReader reader{

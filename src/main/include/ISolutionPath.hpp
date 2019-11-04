@@ -132,9 +132,9 @@ namespace pathfinding::search {
         auto expectedPath = dijkstra.search(start, goal);
         
         if (expectedPath->getCost() != actualPath.getCost()) {
-            error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a path which costs", actualPath.getCost());
-            error("expected path", *expectedPath);
-            error("actual path", realActualPath);
+            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a path which costs", actualPath.getCost());
+            log_error("expected path", *expectedPath);
+            log_error("actual path", realActualPath);
             throw cpp_utils::exceptions::ImpossibleException{};
         }
     }
