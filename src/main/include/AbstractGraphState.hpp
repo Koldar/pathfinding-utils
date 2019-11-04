@@ -37,7 +37,7 @@ namespace pathfinding::search {
      * 
      */
     template <typename... IMPORTANT_STUFF>
-    class AbstractGraphState: public IAstarState, cpp_utils::HasPriority {
+    class AbstractGraphState: public IAstarState, cpp_utils::HasPriority<priority_t> {
         typedef AbstractGraphState<IMPORTANT_STUFF...> AbstractGraphStateInstance;
     protected:
         /**
