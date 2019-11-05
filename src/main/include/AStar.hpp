@@ -9,6 +9,7 @@
 #include "IStateExpander.hpp"
 #include "IStatePruner.hpp"
 #include "IStateSupplier.hpp"
+#include "IGoalChecker.hpp"
 #include <cpp-utils/imemory.hpp>
 #include <cpp-utils/commons.hpp>
 
