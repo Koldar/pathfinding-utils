@@ -9,6 +9,14 @@ namespace pathfinding::search {
 
     using namespace cpp_utils::graphs;
 
+    /**
+     * @brief A unidrectional Dijkstra algorithm which stops as soon as it finds the goal
+     * 
+     * If you need the actual Dijkstra algorithm and not this variant, please use DijkstraAlgorithm class
+     * 
+     * @tparam G 
+     * @tparam V 
+     */
     template <typename G, typename V>
     class DijkstraSearchAlgorithm: public ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t> {
     public:
