@@ -6,6 +6,7 @@
 
 #include <cpp-utils/operators.hpp>
 #include <cpp-utils/ICleanable.hpp>
+#include <cpp-utils/math.hpp>
 
 #include "types.hpp"
 
@@ -206,11 +207,10 @@ namespace pathfinding::data_structures {
         }
     public:
         bool shouldBeInFocal(COST_TYPE n, COST_TYPE bestF) const {
-            return this->wd * n <= this->wn * bestF;
+            return this->dw * n <= this->nw * bestF;
         }
         double getW() const {
             return this->w;
-            
         }
         /**
          * @brief Check if the open list is empty
@@ -252,7 +252,6 @@ namespace pathfinding::data_structures {
             internal::binary_heap_handle_t<OpenHeapNodeType> handle = this->stateToOpenQueue[const_cast<ITEM*>(&val)];
             this->focalQueue.push(FocalHeapNodeType{handle});
         }
-
         /**
          * @brief let the item to be put in open **and** in focal
          * 
@@ -279,7 +278,7 @@ namespace pathfinding::data_structures {
                      * (scoreOfStateInOpen > this->w * oldBestOpenListScore) means that the state was not in focal a tthe last iteration
                      * (scoreOfStateInOpen <= this->w * newBestOpenListScore) means that the state should now be considered in focal at the last iteration
                      */
-                    if ((!this->shouldBeInFocal(scoreOfStateInOpen, oldBestOpenListScore)) && (this->shouldBeInFocal(scoreOfStateInOpen, newBestOpenListScore)) {
+                    if ((!this->shouldBeInFocal(scoreOfStateInOpen, oldBestOpenListScore)) && (this->shouldBeInFocal(scoreOfStateInOpen, newBestOpenListScore))) {
                         this->focalQueue.push(FocalHeapNodeType{iter->priority});
                     }
                     //states are ordered in openQueue. as soon as the scoreOfStateInOpen goes beyond the scope of focal, we stop
@@ -292,7 +291,7 @@ namespace pathfinding::data_structures {
 
             return newBestOpenListScore;
         }
-
+    
         virtual ITEM& peekFromFocal() {
             auto focalNode = this->focalQueue.top();
             return *(*(focalNode.openHandle)).data;
@@ -370,7 +369,7 @@ namespace pathfinding::data_structures {
 
                 //CHECK VALUES STORED IN FOCAL LIST
                 FocalHeapNodeType expectedFocalNode{s.priority};
-                if (this->shouldBeInFocal(value, bestVal) {
+                if (this->shouldBeInFocal(value, bestVal)) {
                     expectedFocalQueue.push(FocalHeapNodeType{s.priority});
                     if (std::find(this->focalQueue.begin(), this->focalQueue.end(), expectedFocalNode) == focalQueue.end()) {
                         log_error("focalSet shuld contain", *(s.data), "but it doesn't");

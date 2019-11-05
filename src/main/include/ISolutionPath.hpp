@@ -103,77 +103,6 @@ namespace pathfinding::search {
         }
     };
 
-    template <typename T>
-    int foo(const T& t) {
-        return 0;
-    }
-
-    /**
-     * @brief Check if a given path is optimal
-     * 
-     * @tparam G payload type of the whole graph
-     * @tparam V payload type of each vertex
-     * @tparam E payload type of each edge
-     * @param graph the graph where we want to check cover
-     * @param start start vertex
-     * @param goal goal vertex
-     * @param actualPath the path we want to check if it's optimal
-     * @param edgeWeightConverter function that converts `E` of @c graph into a cost.
-     * @param mapper function that converts the stats in @c actualPath into nodes
-     * @return true if the actual path is optimal
-     * @return false otherwise
-     */
-    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
-
-        auto costGraph = graph.mapEdges(edgeWeightConverter);
-        auto realActualPath = actualPath.map(mapper);
-
-        checkPathValid<G, V, E>(
-            graph,
-            realActualPath
-        );
-
-        DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
-        auto expectedPath = dijkstra.search(start, goal);
-        
-        if (expectedPath->getCost() != actualPath.getCost()) {
-            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a path which costs", actualPath.getCost());
-            log_error("expected path", *expectedPath);
-            log_error("actual path", realActualPath);
-            throw cpp_utils::exceptions::ImpossibleException{};
-        }
-    }
-
-    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
-        
-        auto costGraph = graph.mapEdges(edgeWeightConverter);
-        auto realActualPath = actualPath.map(mapper);
-
-        checkPathValid<G, V, E>(
-            graph,
-            realActualPath
-        );
-
-        DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
-        auto expectedPath = dijkstra.search(start, goal);
-
-        double optimalPathCost = static_cast<double>(expectedPath->getCost());
-        double actualPathCost = static_cast<double>(actualPath.getCost());
-        
-        if (cpp_utils::isDefinitelyLessThan(actualPathCost, optimalPathCost, 1e-6)) {
-            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path is less than the optimal one!"};
-        }
-
-        if (cpp_utils::isDefinitelyGreaterThan(actualPathCost, (optimalPathCost * bound), 1e-6)) {
-            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a suboptimal path (with bound ", bound, ") which however costs much more! costs", optimalPathCost);
-            log_error("expected path", *expectedPath);
-            log_error("actual path", realActualPath);
-            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path was expected to be within a certain bound from the optimal solution, but it is not!"};
-        }
-    }
-
     /**
      * @brief check if a path is valid or not
      * 
@@ -226,6 +155,74 @@ namespace pathfinding::search {
                 }
                 previous = current;
             }
+        }
+    }
+
+    
+
+    /**
+     * @brief Check if a given path is optimal
+     * 
+     * @tparam G payload type of the whole graph
+     * @tparam V payload type of each vertex
+     * @tparam E payload type of each edge
+     * @param graph the graph where we want to check cover
+     * @param start start vertex
+     * @param goal goal vertex
+     * @param actualPath the path we want to check if it's optimal
+     * @param edgeWeightConverter function that converts `E` of @c graph into a cost.
+     * @param mapper function that converts the stats in @c actualPath into nodes
+     * @return true if the actual path is optimal
+     * @return false otherwise
+     */
+    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
+    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
+
+        auto costGraph = graph.mapEdges(edgeWeightConverter);
+        auto realActualPath = actualPath.map(mapper);
+
+        // checkPathValid<G, V, E>(
+        //     graph,
+        //     realActualPath
+        // );
+
+        DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
+        auto expectedPath = dijkstra.search(start, goal);
+        
+        if (expectedPath->getCost() != actualPath.getCost()) {
+            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a path which costs", actualPath.getCost());
+            log_error("expected path", *expectedPath);
+            log_error("actual path", realActualPath);
+            throw cpp_utils::exceptions::ImpossibleException{};
+        }
+    }
+
+    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
+    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
+        
+        auto costGraph = graph.mapEdges(edgeWeightConverter);
+        auto realActualPath = actualPath.map(mapper);
+
+        // checkPathValid<G, V, E>(
+        //     graph,
+        //     realActualPath
+        // );
+
+        DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
+        auto expectedPath = dijkstra.search(start, goal);
+
+        double optimalPathCost = static_cast<double>(expectedPath->getCost());
+        double actualPathCost = static_cast<double>(actualPath.getCost());
+        
+        if (cpp_utils::isDefinitelyLessThan(actualPathCost, optimalPathCost, 1e-6)) {
+            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path is less than the optimal one!"};
+        }
+
+        if (cpp_utils::isDefinitelyGreaterThan(actualPathCost, (optimalPathCost * bound), 1e-6)) {
+            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a suboptimal path (with bound ", bound, ") which however costs much more! costs", optimalPathCost);
+            log_error("expected path", *expectedPath);
+            log_error("actual path", realActualPath);
+            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path was expected to be within a certain bound from the optimal solution, but it is not!"};
         }
     }
 

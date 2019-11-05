@@ -66,6 +66,11 @@ namespace pathfinding::search {
 					debug("********** considering source", source, "... what is the minimum?");
 					cost_t value = this->getMinimumDistanceFromLandmarks(graph, source, distancesFromLandmarks);
 					//TODO support disconnected maps (value might be infty)
+					debug("the value is ", value);
+					if (value.isInfinity()) {
+						//the node we have chosen is disconnected to every other landmark. Ignoe
+						continue;
+					}
 					if (value > maximum) {
 						debug("new maximum! source=", source, "value", value);
 						maximum = value;
@@ -122,6 +127,10 @@ namespace pathfinding::search {
 
 			maxDistance = 0;
 			for (nodeid_t i=0; i<distances.size(); ++i) {
+				//distances can be infinity. Need to deal with it
+				if (distances[i].isInfinity()) {
+					continue;
+				}
 				if (distances[i] > maxDistance) {
 					maxDistance = distances[i];
 					result.clear();

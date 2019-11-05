@@ -6,6 +6,7 @@
 #include <cpp-utils/igraph.hpp>
 #include <cpp-utils/profiling.hpp>
 #include <cpp-utils/imemory.hpp>
+#include <cpp-utils/operators.hpp>
 
 #include "AbstractLandmarkPlacingStrategy.hpp"
 
@@ -150,7 +151,7 @@ namespace pathfinding::search {
         }
     public:
         static This fetchOrCompute(const IImmutableGraph<G, V, cost_t>& graph, AbstractLandmarkPlacingStrategy<G, V>& policy, const boost::filesystem::path& databaseFilename) {
-            debug("checking if ", databaseFilename.string(), " exists..");
+            info("checking if ", databaseFilename.string(), " exists..");
             if (boost::filesystem::exists(databaseFilename)) {
                 debug("it exists!");
                 FILE* f = fopen(databaseFilename.string().c_str(), "rb");
@@ -171,6 +172,7 @@ namespace pathfinding::search {
                     throw cpp_utils::exceptions::FileOpeningException{databaseFilename};
                 }
                 cpp_utils::serializers::saveToFile(f, result);
+                fclose(f);
                 return result;
             }
         }
