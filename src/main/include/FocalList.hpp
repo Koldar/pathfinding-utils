@@ -156,24 +156,42 @@ namespace pathfinding::data_structures {
         std::unordered_map<ITEM*, internal::binary_heap_handle_t<OpenHeapNodeType>> stateToOpenQueue;
         OpenListType openQueue;
         FocalListType focalQueue;
-        COST_TYPE w;
+        /**
+         * @brief the weight as the developer wanted
+         * 
+         */
+        double w;
+        /**
+         * @brief numerator of the ration which can represent w
+         * 
+         * Used to avoid floating point operations
+         */
+        mutable COST_TYPE nw;
+        /**
+         * @brief denominator of the ratio which can represent w
+         * 
+         * Used to avoid floating point operations
+         */
+        mutable COST_TYPE dw;
     public:
-        FocalList(COST_TYPE w): openQueue{}, focalQueue{}, w{w}, stateToOpenQueue{} {
-
+        FocalList(double w): openQueue{}, focalQueue{}, w{w}, stateToOpenQueue{}, nw{0}, dw{0} {
+            cpp_utils::getRatioOf(w, this->nw, this->dw, 1e-6, 5);
         }
         virtual ~FocalList() {
 
         }
-        FocalList(const This& o): w{o.w}, openQueue{o.openQueue}, focalQueue{o.focalQueue}, stateToOpenQueue{o.stateToOpenQueue} {
+        FocalList(const This& o): w{o.w}, nw{o.nw}, dw{o.dw}, openQueue{o.openQueue}, focalQueue{o.focalQueue}, stateToOpenQueue{o.stateToOpenQueue} {
 
         }
-        FocalList(This&& o): w{o.w}, openQueue{::std::move(o.openQueue)}, focalQueue{::std::move(o.focalQueue)}, stateToOpenQueue{::std::move(o.stateToOpenQueue)} {
+        FocalList(This&& o): w{o.w}, nw{o.nw}, dw{o.dw}, openQueue{::std::move(o.openQueue)}, focalQueue{::std::move(o.focalQueue)}, stateToOpenQueue{::std::move(o.stateToOpenQueue)} {
 
         }
         This& operator=(const This& o) {
             this->openQueue = o.openQueue;
             this->focalQueue = o.focalQueue;
             this->w = o.w;
+            this->nw = o.nw;
+            this->dw = o.dw;
             this->stateToOpenQueue = o.stateToOpenQueue;
             return *this;
         }
@@ -181,12 +199,18 @@ namespace pathfinding::data_structures {
             this->openQueue = ::std::move(o.openQueue);
             this->focalQueue = ::std::move(o.focalQueue);
             this->w = o.w;
+            this->nw = o.nw;
+            this->dw = o.dw;
             this->stateToOpenQueue = ::std::move(o.stateToOpenQueue);
             return *this;
         }
     public:
-        cost_t getW() const {
+        bool shouldBeInFocal(COST_TYPE n, COST_TYPE bestF) const {
+            return this->wd * n <= this->wn * bestF;
+        }
+        double getW() const {
             return this->w;
+            
         }
         /**
          * @brief Check if the open list is empty
@@ -255,12 +279,12 @@ namespace pathfinding::data_structures {
                      * (scoreOfStateInOpen > this->w * oldBestOpenListScore) means that the state was not in focal a tthe last iteration
                      * (scoreOfStateInOpen <= this->w * newBestOpenListScore) means that the state should now be considered in focal at the last iteration
                      */
-                    if ((scoreOfStateInOpen > this->w * oldBestOpenListScore) && (scoreOfStateInOpen <= this->w * newBestOpenListScore)) {
+                    if ((!this->shouldBeInFocal(scoreOfStateInOpen, oldBestOpenListScore)) && (this->shouldBeInFocal(scoreOfStateInOpen, newBestOpenListScore)) {
                         this->focalQueue.push(FocalHeapNodeType{iter->priority});
                     }
                     //states are ordered in openQueue. as soon as the scoreOfStateInOpen goes beyond the scope of focal, we stop
                     //since we are sure that no state can be stored in focal
-                    if (scoreOfStateInOpen > this->w * newBestOpenListScore) {
+                    if (!this->shouldBeInFocal(scoreOfStateInOpen, newBestOpenListScore)) {
                         break;
                     }
                 }
@@ -346,7 +370,7 @@ namespace pathfinding::data_structures {
 
                 //CHECK VALUES STORED IN FOCAL LIST
                 FocalHeapNodeType expectedFocalNode{s.priority};
-                if (value <= bestVal * this->w) {
+                if (this->shouldBeInFocal(value, bestVal) {
                     expectedFocalQueue.push(FocalHeapNodeType{s.priority});
                     if (std::find(this->focalQueue.begin(), this->focalQueue.end(), expectedFocalNode) == focalQueue.end()) {
                         log_error("focalSet shuld contain", *(s.data), "but it doesn't");

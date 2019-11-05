@@ -125,9 +125,14 @@ namespace pathfinding::search {
      */
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
     void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
-        
+
         auto costGraph = graph.mapEdges(edgeWeightConverter);
         auto realActualPath = actualPath.map(mapper);
+
+        checkPathValid<G, V, E>(
+            graph,
+            realActualPath
+        );
 
         DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
         auto expectedPath = dijkstra.search(start, goal);
@@ -145,6 +150,11 @@ namespace pathfinding::search {
         
         auto costGraph = graph.mapEdges(edgeWeightConverter);
         auto realActualPath = actualPath.map(mapper);
+
+        checkPathValid<G, V, E>(
+            graph,
+            realActualPath
+        );
 
         DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
         auto expectedPath = dijkstra.search(start, goal);
@@ -180,6 +190,28 @@ namespace pathfinding::search {
         nodeid_t previous;
         for (int i=0; i<path.size(); ++i) {
             nodeid_t current = mapper(path[i]);
+            if (!graph.containsVertex(current)) {
+                    critical("node in ",i, " with id=", current, "is not in graph ", graph);
+                    throw cpp_utils::exceptions::ImpossibleException{};
+                }
+
+            if (i == 0) {
+                previous = current;
+            } else {
+                if (!graph.hasEdge(previous, current)) {
+                    critical("there is not an edge from ", previous, " to ", current, "in graph ", graph);
+                    throw cpp_utils::exceptions::ImpossibleException{};
+                }
+                previous = current;
+            }
+        }
+    }
+
+    template <typename G, typename V, typename E>
+    void checkPathValid(const IImmutableGraph<G, V, E>& graph, const std::vector<nodeid_t>& path) {
+        nodeid_t previous;
+        for (int i=0; i<path.size(); ++i) {
+            nodeid_t current = path[i];
             if (!graph.containsVertex(current)) {
                     critical("node in ",i, " with id=", current, "is not in graph ", graph);
                     throw cpp_utils::exceptions::ImpossibleException{};
