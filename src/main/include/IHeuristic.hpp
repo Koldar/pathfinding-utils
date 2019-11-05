@@ -4,6 +4,8 @@
 #include <cpp-utils/ICleanable.hpp>
 #include <cpp-utils/imemory.hpp>
 
+#include "types.hpp"
+
 namespace pathfinding::search {
 
     using namespace cpp_utils;
