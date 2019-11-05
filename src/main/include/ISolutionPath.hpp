@@ -4,6 +4,7 @@
 #include <cpp-utils/vectorplus.hpp>
 #include <cpp-utils/igraph.hpp>
 #include <cpp-utils/commons.hpp>
+#include <cpp-utils/math.hpp>
 
 #include "types.hpp"
 
@@ -140,15 +141,27 @@ namespace pathfinding::search {
     }
 
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal3(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
-    }
+    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter, const std::function<nodeid_t(STATE)>& mapper) {
+        
+        auto costGraph = graph.mapEdges(edgeWeightConverter);
+        auto realActualPath = actualPath.map(mapper);
 
-    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal2(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& edgeWeightConverter) {
-    }
+        DijkstraSearchAlgorithm<G, V> dijkstra{*costGraph}; 
+        auto expectedPath = dijkstra.search(start, goal);
 
-    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal1(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath) {
+        double optimalPathCost = static_cast<double>(expectedPath->getCost());
+        double actualPathCost = static_cast<double>(actualPath.getCost());
+        
+        if (cpp_utils::isDefinitelyLessThan(actualPathCost, optimalPathCost, 1e-6)) {
+            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path is less than the optimal one!"};
+        }
+
+        if (cpp_utils::isDefinitelyGreaterThan(actualPathCost, (optimalPathCost * bound), 1e-6)) {
+            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a suboptimal path (with bound ", bound, ") which however costs much more! costs", optimalPathCost);
+            log_error("expected path", *expectedPath);
+            log_error("actual path", realActualPath);
+            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path was expected to be within a certain bound from the optimal solution, but it is not!"};
+        }
     }
 
     /**
