@@ -430,6 +430,7 @@ namespace pathfinding::data_structures {
         virtual void cleanup() {
             this->focalQueue.clear();
             this->openQueue.clear();
+            this->stateToOpenQueue.clear();
         }
     };
 

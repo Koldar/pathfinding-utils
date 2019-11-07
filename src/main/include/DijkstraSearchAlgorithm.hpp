@@ -1,9 +1,11 @@
 #ifndef _DIJKSTRA_SEARCH_ALGORITHM_HEADER__
 #define _DIJKSTRA_SEARCH_ALGORITHM_HEADER__
 
-#include "ISearchAlgorithm.hpp"
 #include <cpp-utils/KHeaps.hpp>
 #include <cpp-utils/igraph.hpp>
+
+#include "ISearchAlgorithm.hpp"
+#include "operators.hpp"
 
 namespace pathfinding::search {
 
@@ -14,19 +16,23 @@ namespace pathfinding::search {
      * 
      * If you need the actual Dijkstra algorithm and not this variant, please use DijkstraAlgorithm class
      * 
-     * @tparam G 
-     * @tparam V 
+     * @tparam G the type of the graph paylaod
+     * @tparam V the type of each vertex payload
+     * @tparam E the type of each edge payload
+     * @tparam GET_COST function used to retrieve a cost from the edge label
      */
-    template <typename G, typename V>
+    template <typename G, typename V, typename E, typename GET_COST = ::pathfinding::GetCost<E>>
     class DijkstraSearchAlgorithm: public ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t> {
     public:
+        using This = DijkstraSearchAlgorithm<G, V, E, GET_COST>;
+        using Super = ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t>;
         using ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t>::search;
     private:
         /**
          * @brief underlying graph Dijkstra works on
          * 
          */
-        const IImmutableGraph<G,V,cost_t>& g;
+        const IImmutableGraph<G,V,E>& g;
         /**
          * @brief vector indexed by id of grpah vertices.
          * 
@@ -43,13 +49,21 @@ namespace pathfinding::search {
          * 
          */
         cpp_utils::min_id_heap<nodeid_t, cost_t> queue;
+        /**
+         * @brief function used to retrieve the cost of an edge
+         * 
+         */
+        GET_COST costFunction;
     public:
-        DijkstraSearchAlgorithm(const IImmutableGraph<G,V,cost_t>& g): g{g}, distancesFromSource{}, bestPreviousNode{}, queue{g.numberOfVertices()} {
+        DijkstraSearchAlgorithm(const IImmutableGraph<G,V,E>& g, GET_COST costFunction): g{g}, costFunction{costFunction}, distancesFromSource{}, bestPreviousNode{}, queue{g.numberOfVertices()} {
         }
         virtual ~DijkstraSearchAlgorithm() {
 
         }
-        DijkstraSearchAlgorithm& operator =(const DijkstraSearchAlgorithm& other) = delete;
+        DijkstraSearchAlgorithm(const This& o) = delete;
+        DijkstraSearchAlgorithm(This&& o) = delete;
+        This& operator =(const This& other) = delete;
+        This& operator =(This&& other) = delete;
     public:
         virtual void cleanup() {
             this->distancesFromSource.resize(g.numberOfVertices());
@@ -67,6 +81,7 @@ namespace pathfinding::search {
             this->cleanup();
         }
         virtual void tearDownSearch() {
+
         }
     protected:
         virtual nodeid_t performSearch(nodeid_t& start, const nodeid_t* goal) {
@@ -79,8 +94,8 @@ namespace pathfinding::search {
             }
 
             for(int i=0; i<g.getOutDegree(start); ++i) {
-                OutEdge<cost_t> edge = g.getOutEdge(start, i);
-                this->reach(edge.getSinkId(), 0 + edge.getPayload(), start);
+                OutEdge<E> edge = g.getOutEdge(start, i);
+                this->reach(edge.getSinkId(), 0 + costFunction(edge.getPayload()), start);
             }
 
             while(!queue.isEmpty()) {
@@ -95,7 +110,7 @@ namespace pathfinding::search {
 
                 for(auto edge : g.getOutEdges(v)) {
                     finest("edge is", edge);
-                    this->reach(edge.getSinkId(), distancesFromSource[v] + edge.getPayload(), v);
+                    this->reach(edge.getSinkId(), distancesFromSource[v] + costFunction(edge.getPayload()), v);
                 }
             }
 
@@ -106,7 +121,7 @@ namespace pathfinding::search {
                         nodeid_t c = edge.getSinkId();
                         cost_t ab = distancesFromSource[b];
                         cost_t ac = distancesFromSource[c];
-                        cost_t bc = edge.getPayload();
+                        cost_t bc = costFunction(edge.getPayload());
                         finest(ab, bc, ac, ((ab + bc) >= (ac)));
                         if (!((ab + bc) >= (ac))) {
                             log_error("nodes A=", start, ", B=", b, ", C=", c, ": triangular disequality not verified: AB=", ab, " BC=", bc, " AC=", ac, "(AB + BC) >= AC");
@@ -119,7 +134,7 @@ namespace pathfinding::search {
             throw search::SolutionNotFoundException{};
         }
         virtual std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> buildSolutionFromGoalFetched(nodeid_t start, nodeid_t actualGoal, const nodeid_t* goal) {
-            auto result = new GraphSolutionPath<G, V>{this->g};
+            auto result = new GraphSolutionPath<G, V, E, GET_COST>{this->g, costFunction};
 
             nodeid_t tmp = actualGoal;
             result->addHead(tmp);
@@ -130,7 +145,7 @@ namespace pathfinding::search {
                 tmp = prev;
             }
 
-            return std::unique_ptr<GraphSolutionPath<G, V>>{result};
+            return std::unique_ptr<GraphSolutionPath<G, V, E, GET_COST>>{result};
         }
         virtual cost_t getSolutionCostFromGoalFetched(nodeid_t start, nodeid_t actualGoal, const nodeid_t* goal) const {
             return this->distancesFromSource[actualGoal];

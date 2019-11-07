@@ -4,14 +4,17 @@
 #include <cpp-utils/StaticPriorityQueue.hpp>
 #include <cpp-utils/log.hpp>
 #include <cpp-utils/listeners.hpp>
+#include <cpp-utils/imemory.hpp>
+#include <cpp-utils/commons.hpp>
+#include <cpp-utils/profiling.hpp>
+
 #include "IHeuristic.hpp"
 #include "ISearchAlgorithm.hpp"
 #include "IStateExpander.hpp"
 #include "IStatePruner.hpp"
 #include "IStateSupplier.hpp"
 #include "IGoalChecker.hpp"
-#include <cpp-utils/imemory.hpp>
-#include <cpp-utils/commons.hpp>
+
 
 namespace pathfinding::search {
 
@@ -22,7 +25,7 @@ namespace pathfinding::search {
  * 
  */
 template <typename STATE>
-class AstarListener {
+class AstarListener: public ICleanable {
 public:
 	/**
 	 * @brief called whenever a new node is expanded from the open list
@@ -124,12 +127,13 @@ public:
         return "A*";
     }
     virtual void setupSearch(const STATE* start, const STATE* goal) {
+        this->doOnObserver([&](AstarListener<STATE>& l) { l.cleanup();});
 		//cleanup before running since at the end we may want to poll information on the other structures
-		this->heuristic.cleanup();
-		this->expander.cleanup();
-		this->supplier.cleanup();
-		this->pruner.cleanup();
-		this->openList->clear();
+        this->heuristic.cleanup();
+        this->expander.cleanup();
+        this->supplier.cleanup();
+        this->pruner.cleanup();
+        this->openList->clear();
 	}
     virtual void tearDownSearch() {
 	}
@@ -138,6 +142,7 @@ protected:
         auto result = new StateSolutionPath<STATE>{};
         const STATE* tmp = &actualGoal;
         while (tmp != nullptr) {
+            info("adding ", *tmp, "to solution!");
             result->addHead(tmp);
             tmp = tmp->getParent();
         }

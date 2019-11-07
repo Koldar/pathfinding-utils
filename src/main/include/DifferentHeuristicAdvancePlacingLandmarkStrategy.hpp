@@ -104,10 +104,17 @@ namespace pathfinding::search {
 		std::vector<uint32_t> convertCostTInto4Bytes(const std::vector<cost_t>& costVector) const {
 			std::vector<uint32_t> result{};
 			for (auto i=0; i<costVector.size(); ++i) {
-				if (costVector[i] > static_cast<cost_t>(UINT32_MAX)) {
-					throw std::domain_error{"trying to compress a number into a 32bit which will generate overflow!"};
+				if (costVector[i].isInfinity()) {
+					//we need to save infinity. Let's save UINT32_MAX and hope for the best!
+					//TODO find a better method: we should be able to save in the landmark database infinity itself!
+					result.push_back(std::numeric_limits<uint32_t>::max());
+				} else if (costVector[i] > static_cast<cost_t>(UINT32_MAX)) {
+					log_error("trying to compress ", costVector[i]);
+					throw cpp_utils::exceptions::ImpossibleException{"trying to compress a number into a 32bit which will generate overflow!"};
+				} else {
+					result.push_back(costVector.at(i).toUInt32());
 				}
-				result.push_back(costVector.at(i).toUInt32());
+				
 			}
 			return result;
 		}

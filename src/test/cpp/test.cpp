@@ -336,7 +336,7 @@ SCENARIO("test validator") {
 	graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
 
 	GIVEN("optimality") {
-		search::GraphSolutionPath<std::string, xyLoc> path{graph};
+		search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 		path.add(
 			graph.idOfVertex(xyLoc{0,0}),
 			graph.idOfVertex(xyLoc{1,0}),
@@ -349,7 +349,7 @@ SCENARIO("test validator") {
 			graph, 
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 			path,
-			[&](const cost_t& c) { return c; },
+			GetCost<cost_t>{},
 			[&](graphs::nodeid_t v) { return v; }
 		);
 
@@ -357,7 +357,7 @@ SCENARIO("test validator") {
 			graph, 
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{4,0}), 
 			path,
-			[&](const cost_t& c) { return c; },
+			GetCost<cost_t>{},
 			[&](graphs::nodeid_t v) { return v; }
 		));
 	}
@@ -365,7 +365,7 @@ SCENARIO("test validator") {
 	GIVEN("suboptimality") {
 
 		WHEN("check optimal path") {
-			search::GraphSolutionPath<std::string, xyLoc> optimalPath{graph};
+			search::GraphSolutionPath<std::string, xyLoc, cost_t> optimalPath{graph, GetCost<cost_t>{}};
 			optimalPath.add(
 				graph.idOfVertex(xyLoc{0,0}),
 				graph.idOfVertex(xyLoc{1,0}),
@@ -378,13 +378,13 @@ SCENARIO("test validator") {
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				optimalPath,
-				[&](const cost_t& c) { return c; },
+				GetCost<cost_t>{},
 				[&](graphs::nodeid_t v) { return v; }
 			);
 		}
 
 		WHEN("checking compliant suboptimal path") {
-			search::GraphSolutionPath<std::string, xyLoc> path{graph};
+			search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 			path.add(
 				graph.idOfVertex(xyLoc{0,0}),
 				graph.idOfVertex(xyLoc{1,1}),
@@ -397,13 +397,13 @@ SCENARIO("test validator") {
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
-				[&](const cost_t& c) { return c; },
+				GetCost<cost_t>{},
 				[&](graphs::nodeid_t v) { return v; }
 			);
 		}
 
 		WHEN("checking uncompliant suboptimal path") {
-			search::GraphSolutionPath<std::string, xyLoc> path{graph};
+			search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 			path.add(
 				graph.idOfVertex(xyLoc{0,0}),
 				graph.idOfVertex(xyLoc{1,0}),
@@ -416,14 +416,14 @@ SCENARIO("test validator") {
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
-				[&](const cost_t& c) { return c; },
+				GetCost<cost_t>{},
 				[&](graphs::nodeid_t v) { return v; }
 			));
 		}
 
 		WHEN("checking a path not ending in goal") {
 
-			search::GraphSolutionPath<std::string, xyLoc> path{graph};
+			search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 			path.add(
 				graph.idOfVertex(xyLoc{0,0}),
 				graph.idOfVertex(xyLoc{1,0}),
@@ -435,14 +435,14 @@ SCENARIO("test validator") {
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
-				[&](const cost_t& c) { return c; },
+				GetCost<cost_t>{},
 				[&](graphs::nodeid_t v) { return v; }
 			));
 		}
 
 		WHEN("checking a path not starting in start") {
 
-			search::GraphSolutionPath<std::string, xyLoc> path{graph};
+			search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 			path.add(
 				graph.idOfVertex(xyLoc{1,0}),
 				graph.idOfVertex(xyLoc{2,0}),
@@ -454,14 +454,14 @@ SCENARIO("test validator") {
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
-				[&](const cost_t& c) { return c; },
+				GetCost<cost_t>{},
 				[&](graphs::nodeid_t v) { return v; }
 			));
 		}
 
 		WHEN("checking a path jumping an edge") {
 
-			search::GraphSolutionPath<std::string, xyLoc> path{graph};
+			search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 			path.add(
 				graph.idOfVertex(xyLoc{0,0}),
 				graph.idOfVertex(xyLoc{1,0}),
@@ -473,7 +473,7 @@ SCENARIO("test validator") {
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
-				[&](const cost_t& c) { return c; },
+				GetCost<cost_t>{},
 				[&](graphs::nodeid_t v) { return v; }
 			));
 

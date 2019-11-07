@@ -117,7 +117,7 @@ SCENARIO("test search algorithms") {
 
 	GIVEN("testing dijkstra") {
 
-		search::DijkstraSearchAlgorithm<std::string, xyLoc> searchAlgorithm{graph};
+		search::DijkstraSearchAlgorithm<std::string, xyLoc, cost_t> searchAlgorithm{graph, GetCost<cost_t>{}};
 		
 		WHEN("start is the same of goal") {
 			xyLoc startLoc{0,0};
@@ -174,13 +174,12 @@ SCENARIO("test search algorithms") {
 
 SCENARIO("test ALT") {
 
-	//ALT implementation does not support disconnected maps
 	maps::MovingAIGridMapReader reader{
 		'.', cost_t{100},
 		'T', cost_t::INFTY,
 		'@', cost_t::INFTY
 	};
-	maps::GridMap map{reader.load(boost::filesystem::path{"./square03-allconnected.map"})};
+	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 
 	/*
 	* MAP
@@ -188,7 +187,7 @@ SCENARIO("test ALT") {
 	*	.....
 	*  ...@@
 	*  ..@@.
-	*  ...@.
+	*  ...@@
 	*  .....
 	* 
 	*/
@@ -209,7 +208,6 @@ SCENARIO("test ALT") {
 			strategy,
 			boost::filesystem::path{"./database.landmarkdb"}
 		);
-
 
 		//h computer
 		search::ALTHeuristic<search::GridMapState, std::string, xyLoc> heuristic{graph, landmarkDatabase};
@@ -273,6 +271,14 @@ SCENARIO("test ALT") {
 				||
 				(solution->map<xyLoc>([&](const search::GridMapState* x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}, xyLoc{1,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}))
 			));
+		}
+
+		WHEN("goal is un reachable") {
+			xyLoc startLoc{0,0};
+			xyLoc goalLoc{4,2};
+			search::GridMapState& start = supplier.getState(graph.idOfVertex(startLoc));
+			search::GridMapState& goal = supplier.getState(graph.idOfVertex(goalLoc));
+			REQUIRE_THROWS(searchAlgorithm.search(start, goal, false));
 		}
 	}
 }
