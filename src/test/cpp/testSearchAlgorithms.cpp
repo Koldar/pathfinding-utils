@@ -21,9 +21,9 @@ using namespace cpp_utils;
 SCENARIO("test search algorithms") {
 
 	maps::MovingAIGridMapReader reader{
-		'.', cost_t{100},
-		'T', cost_t::INFTY,
-		'@', cost_t::INFTY
+		'.', cost_t{100}, color_t::WHITE,
+		'T', cost_t::INFTY, color_t::BLACK,
+		'@', cost_t::INFTY, color_t::BLACK
 	};
 	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 
@@ -175,9 +175,9 @@ SCENARIO("test search algorithms") {
 SCENARIO("test ALT") {
 
 	maps::MovingAIGridMapReader reader{
-		'.', cost_t{100},
-		'T', cost_t::INFTY,
-		'@', cost_t::INFTY
+		'.', cost_t{100}, color_t::WHITE,
+		'T', cost_t::INFTY, color_t::BLACK,
+		'@', cost_t::INFTY, color_t::BLACK
 	};
 	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 

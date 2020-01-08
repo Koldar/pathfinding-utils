@@ -44,9 +44,9 @@ struct OtherCost {
 SCENARIO("test GraphState") {
 
 	maps::MovingAIGridMapReader reader{
-		'.', cost_t{1000},
-		'T', cost_t{1500},
-		'@', cost_t::INFTY
+		'.', cost_t{1000}, color_t::WHITE,
+		'T', cost_t{1500}, color_t::GREEN,
+		'@', cost_t::INFTY, color_t::BLACK
 	};
 
 	GIVEN("traversable map") {
@@ -87,9 +87,9 @@ SCENARIO("test GraphState") {
 SCENARIO("test moving ai gridmap loader") {
 
 	maps::MovingAIGridMapReader reader{
-		'.', cost_t{1000},
-		'T', cost_t{1500},
-		'@', cost_t::INFTY
+		'.', cost_t{1000}, color_t::WHITE,
+		'T', cost_t{1500}, color_t::GREEN,
+		'@', cost_t::INFTY, color_t::BLACK
 	};
 
 	GIVEN("traversable map") {
@@ -314,9 +314,9 @@ SCENARIO("test manhattan") {
 SCENARIO("test validator") {
 
 	maps::MovingAIGridMapReader reader{
-		'.', cost_t{100},
-		'T', cost_t::INFTY,
-		'@', cost_t::INFTY
+		'.', cost_t{100}, color_t::WHITE,
+		'T', cost_t::INFTY, color_t::BLACK,
+		'@', cost_t::INFTY, color_t::BLACK
 	};
 	maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
 
