@@ -1,5 +1,5 @@
-#ifndef _GRIDMAP_HEADER__
-#define _GRIDMAP_HEADER__
+#ifndef _PATHFINDING_UTILS_GRIDMAP_HEADER__
+#define _PATHFINDING_UTILS_GRIDMAP_HEADER__
 
 #include <unordered_map>
 #include <string>
@@ -13,8 +13,9 @@
 #include "IPathFindingMap.hpp"
 #include "xyLoc.hpp"
 
-
 namespace pathfinding::maps {
+
+    using namespace cpp_utils;
 
     /**
      * @brief 
@@ -32,7 +33,7 @@ namespace pathfinding::maps {
      * 
      * @tparam BRANCHING a GridMapBranching representing how the underlying graph is structured
      */
-    class GridMap: public IPathFindingMap, IImageable {
+    class GridMap: public IPathFindingMap, public IImageable {
     private:
         /**
          * @brief name of the map
@@ -49,6 +50,16 @@ namespace pathfinding::maps {
          * @endcode
          */
         std::unordered_map<char, cost_t> terrainCost;
+        /**
+         * @brief map where each key is a symbol in the gridmap filename representing a cell while the value is the color we're going to use when printing the gridmap on a file
+         * 
+         * @code
+         *  terrainCost['.'] = color_t::WHITE
+         *  terrainCost['T'] = color_t::GREEN
+         *  terrainCost['@'] = color_t::BLACK
+         * @endcode
+         */
+        std::unordered_map<char, color_t> terrainColor;
         /**
          * @brief number of columns this map has
          * 
@@ -71,117 +82,35 @@ namespace pathfinding::maps {
          * 
          */
         size_t size;
-    private:
-        size_t computeSize() const {
-            return this->cells
-                .map<cost_t>([&](char x) {return this->terrainCost.at(x);})
-                .filter([&](cost_t x) { return x.isNotInfinity(); })
-                .size();
-        }
-        int toVectorCoord(xyLoc xy) const {
-            return toVectorCoord(xy.y, xy.x);
-        }
-        int toVectorCoord(ucood_t y, ucood_t x) const {
-            return y * this->width + x;
-        }
-        xyLoc toXyLoc(ucood_t x) const {
-            return xyLoc{x / this->width, x % this->width};
-        }
     public:
-        GridMap(const std::string& name, const std::vector<char>& cells, ucood_t width, ucood_t height, std::unordered_map<char, cost_t> terrainCost): name{name}, cells{cells}, width{width}, height{height}, terrainCost{terrainCost} {
-            this->size = this->computeSize();
-        }
+        GridMap(const std::string& name, const std::vector<char>& cells, ucood_t width, ucood_t height, std::unordered_map<char, cost_t> terrainCost, std::unordered_map<char, color_t> terrainColor);
 
-        virtual ~GridMap() {
-        }
+        virtual ~GridMap();
 
-        GridMap(const GridMap& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost} {
-        }
-
-        GridMap(GridMap&& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, size{other.size} {
-        }
-
+        GridMap(const GridMap& other);
+        GridMap(GridMap&& other);
         GridMap& operator= (const GridMap& map) = delete;
-        GridMap operator= (GridMap&& map) = delete;
-
-        ucood_t getWidth() const {
-            return this->width;
-        }
-
-        ucood_t getHeight() const {
-            return this->height;
-        }
-
-        char getCellTerrain(xyLoc loc) const {
-            return this->cells[this->toVectorCoord(loc)];
-        }
-
-        cost_t getCellCost(xyLoc loc) const {
-            debug("xyLoc is", loc, "cell is", this->cells[this->toVectorCoord(loc)]);
-            return this->terrainCost.at(this->cells[this->toVectorCoord(loc)]);
-        }
-
-        bool isTraversable(xyLoc loc) const {
-            return getCellCost(loc).isNotInfinity();
-        }
-    protected:
-        const PPMImage* getPPM() const {
-            callExternalProgram("rm -f /tmp/getPPM.png /tmp/getPPM.ppm /tmp/getPPM.dot");
-
-            int cellWidth = 3;
-            int cellHeight = 3;
-            int borderWidth = 1;
-            int borderHeight = 1;
-
-            PPMImage* result = new PPMImage{
-                (borderWidth + cellWidth) * this->width + borderWidth, 
-                (borderHeight + cellHeight) * this->height + borderHeight
-            };
-
-            result->setPixel();
-
-            std::ofstream f;
-            f.open("/tmp/getPPM.ppm", std::ofstream::out | std::ofstream::trunc);
-
-            f << "digraph {\n";
-            info("iterate over vertices...");
-            for (auto it=this->beginVertices(); it!=this->endVertices(); ++it) {
-                info("drawing vertex", it->first);
-                f << "N" << it->first << " [label=\"id:" << it->first << "\\n" << it->second << "\"];\n";
-            }
-
-            info("iterate over edges...");
-            for (auto it=this->beginEdges(); it!=this->endEdges(); ++it) {
-                info("drawing edge", it->getSourceId(), "->", it->getSinkId());
-                f << "N" << it->getSourceId() << " -> N" << it->getSinkId() << " [label=\"" << it->getPayload() << "\"];\n";
-            }
-            f << "}\n";
-
-            f.close();
-
-            callExternalProgram("dot -Tpng -o /tmp/getPPM.png /tmp/getPPM.dot");
-            //https://askubuntu.com/a/84415/703658
-            callExternalProgram("convert -depth 8 -compress none /tmp/getPPM.png /tmp/getPPM.ppm");
-            PPMImage* result = new PPMImage{"/tmp/getPPM.ppm"};
-            return result;
-        }
+        GridMap& operator= (GridMap&& map) = delete;
     private:
-        void createGrid(PPMImage& image, int cellWidth, int cellHeight, int borderWidth, int borderHeight) {
-            //horizontal lines
-            for (ucood_t y=0; y<this->height; y+=(cellHeight + borderHeight)) {
-                for (ucood_t)
-                for (ucood_t x=0; x<this->width; ++x) {
-
-                }
-            }
-        }
+        size_t computeSize() const;
+        int toVectorCoord(xyLoc xy) const;
+        int toVectorCoord(ucood_t y, ucood_t x) const;
+        xyLoc toXyLoc(ucood_t x) const;
     public:
-        virtual const std::string& getName() const {
-            return this->name;
-        }
-        virtual size_t getSize() const {
-            return this->size;
-        }
+        ucood_t getWidth() const;
+        ucood_t getHeight() const;
+        char getCellTerrain(xyLoc loc) const;
+        cost_t getCellCost(xyLoc loc) const;
+        bool isTraversable(xyLoc loc) const;
+    protected:
+        const PPMImage* getPPM() const;
+    private:
+        void setCellColor(PPMImage& image, xyLoc cell, int cellWidth, int cellHeight, int borderWidth, int borderHeight, const color_t& color) const;
+        void setPixelInCell(PPMImage& image, xyLoc cell, xyLoc pixel, int cellWidth, int cellHeight, int borderWidth, int borderHeight, const color_t& color) const;
+        void createGrid(PPMImage& image, int cellWidth, int cellHeight, int borderWidth, int borderHeight) const;
+    public:
+        virtual const std::string& getName() const;
+        virtual size_t getSize() const;
     };
 
 }
