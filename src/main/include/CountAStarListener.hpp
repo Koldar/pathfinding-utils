@@ -88,6 +88,7 @@ namespace pathfinding::search {
             this->heuristicTimer.cleanup();
         }
     };
+
 }
 
 #endif

@@ -124,7 +124,7 @@ protected:
     }
 public:
     virtual std::string getName() const {
-        return "A*";
+        return std::string{"A*"};
     }
     virtual void setupSearch(const STATE* start, const STATE* goal) {
         this->doOnObserver([&](AstarListener<STATE>& l) { l.cleanup();});
