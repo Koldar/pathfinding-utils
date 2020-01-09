@@ -51,12 +51,10 @@ namespace pathfinding::maps {
     }
 
     void GridMapImage::setPixelInGrid(int x, int y, int subPixelx, int subPixely, const color_t& c) {
-        
-        this->setPixel(
-            x*(this->cellWidth + this->gridWidth) + cpp_utils::ringBound(subPixelx, static_cast<int>(this->cellWidth)),
-            y*(this->cellHeight + this->gridHeight) + cpp_utils::ringBound(subPixely, static_cast<int>(this->cellHeight)),
-            c
-        );
+        int px = x*(this->cellWidth + this->gridWidth) + this->gridWidth + cpp_utils::ringBound(subPixelx, static_cast<int>(this->cellWidth));
+        int py = y*(this->cellHeight + this->gridHeight) + this->gridHeight + cpp_utils::ringBound(subPixely, static_cast<int>(this->cellHeight));
+        critical("setting psubpixel", px, py, "total is", this->getWidth(), this->getHeight());
+        this->setPixel(px, py, c);
     }
 
     void GridMapImage::createGrid(color_t gridColor) {

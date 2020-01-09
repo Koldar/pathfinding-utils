@@ -103,7 +103,7 @@ namespace pathfinding::maps {
         char getCellTerrain(xyLoc loc) const;
         cost_t getCellCost(xyLoc loc) const;
         bool isTraversable(xyLoc loc) const;
-    protected:
+    public:
         const PPMImage* getPPM() const;
     public:
         virtual const std::string& getName() const;
