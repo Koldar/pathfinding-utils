@@ -1,4 +1,5 @@
 #include "GridMap.hpp"
+#include <cpp-utils/operators.hpp>
 
 namespace pathfinding::maps {
     GridMap::GridMap(const std::string& name, const std::vector<char>& cells, ucood_t width, ucood_t height, std::unordered_map<char, cost_t> terrainCost, std::unordered_map<char, color_t> terrainColor): name{name}, cells{cells}, width{width}, height{height}, terrainCost{terrainCost}, terrainColor{terrainColor} {
@@ -52,54 +53,17 @@ namespace pathfinding::maps {
     }
 
     const PPMImage* GridMap::getPPM() const {
-        int cellWidth = 3;
-        int cellHeight = 3;
-        int borderWidth = 1;
-        int borderHeight = 1;
+        auto result = new GridMapImage{3, 3, 1, 1, this->getWidth(), this->getHeight(), color_t::RED, color_t::WHITE};
 
-        PPMImage* result = new PPMImage{
-            (borderWidth + cellWidth) * this->width + borderWidth, 
-            (borderHeight + cellHeight) * this->height + borderHeight
-        };
-
-        this->createGrid(*result, cellWidth, cellHeight, borderWidth, borderHeight);
-
-        for (ucood_t y=0; y<this->height; ++y) {
-            for (ucood_t x=0; x<this->width; ++x) {
-                this->setCellColor(
-                    *result, 
-                    xyLoc{x, y}, 
-                    cellWidth, cellHeight,
-                    borderWidth, borderHeight, 
-                    this->terrainColor.at(this->getCellTerrain(xyLoc{x, y}))
-                );
+        for (auto y=0; y<this->getHeight(); ++y) {
+            for (auto x=0; x<this->getWidth(); ++x) {
+                xyLoc loc{static_cast<ucood_t>(x), static_cast<ucood_t>(y)};
+                debug("terrain is ", this->getCellTerrain(loc), "terrain colors are", this->terrainColor);
+                result->setGridCellColor(loc, this->terrainColor.at(this->getCellTerrain(loc)));
             }
         }
 
         return result;
-    }
-
-    void GridMap::setCellColor(PPMImage& image, xyLoc cell, int cellWidth, int cellHeight, int borderWidth, int borderHeight, const color_t& color) const {
-        ucood_t topy = cell.y * (borderHeight + cellHeight) + borderHeight;
-        ucood_t topx = cell.x * (borderWidth + cellWidth) + borderWidth;
-        image.setRectanglePixel(topy, topx, topy + cellHeight, topx + cellWidth, color, true, true);
-    }
-
-    void GridMap::setPixelInCell(PPMImage& image, xyLoc cell, xyLoc pixel, int cellWidth, int cellHeight, int borderWidth, int borderHeight, const color_t& color) const {
-        ucood_t topy = cell.y * (borderHeight + cellHeight) + borderHeight;
-        ucood_t topx = cell.x * (borderWidth + cellWidth) + borderWidth;
-        image.setPixel(topy + pixel.y, topx + pixel.x, color);
-    }
-
-    void GridMap::createGrid(PPMImage& image, int cellWidth, int cellHeight, int borderWidth, int borderHeight) const {
-        //horizontal lines
-        for (ucood_t y=0; y<this->height; y+=(cellHeight + borderHeight)) {
-            image.setRectanglePixel(y, 0, y + borderHeight, image.getWidth(), color_t::BLACK, true, false);
-        }
-        //vertical lines
-        for (ucood_t x=0; x<this->width; x+=(cellWidth + borderWidth)) {
-            image.setRectanglePixel(0, x, image.getHeight(), x + borderHeight, color_t::BLACK, false, true);
-        }
     }
 
     const std::string& GridMap::getName() const {
