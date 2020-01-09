@@ -102,6 +102,21 @@ namespace pathfinding::maps {
         char getCellTerrain(xyLoc loc) const;
         cost_t getCellCost(xyLoc loc) const;
         bool isTraversable(xyLoc loc) const;
+        /**
+         * @brief get a grid map image
+         *  
+         * @tparam G paylaod of the whole graph
+         * @tparam V payload of each vertex
+         * @tparam E paylaod of each edge
+         * @tparam VERTEXCONVERTER a function that from a const V& it retrieves a xyLoc
+         * @tparam EDGECONVERTER  a function that from a const E& it retruieves a cost_t
+         * @param gridMapGraph graph of a gridmap
+         * @param xyLocFetcher 
+         * @param costFetcher 
+         * 
+         */
+        template <typename G, typename V, typename E, typename VERTEXCONVERTER, typename EDGECONVERTER>
+        GridMapImage getImage(const IImmutableGraph<G, V, E>& gridMapGraph, VERTEXCONVERTER&& xyLocFetcher, EDGECONVERTER&& costFetcher)
     protected:
         const PPMImage* getPPM() const;
     private:
