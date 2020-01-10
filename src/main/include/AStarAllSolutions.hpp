@@ -91,7 +91,7 @@ protected:
     }
 public:
     virtual std::string getName() const {
-        return std::string{"A*"};
+        return std::string{"A* all solutions"};
     }
     virtual void setupSearch(const STATE* start, const STATE* goal) {
         this->doOnObserver([&](AstarAllSolutionsListener<STATE>& l) { l.cleanup();});
@@ -127,6 +127,7 @@ protected:
         
 
 		STATE* goal = nullptr;
+        cost_t optimalSolutionCost = 0;
 
         start.setG(0);
         this->fireEvent([&start](AstarAllSolutionsListener<STATE>& l) { l.onStartingComputingHeuristic(start); });
@@ -142,7 +143,13 @@ protected:
             if (this->goalChecker.isGoal(current, expectedGoal)) {
                 info("state ", current, "is a goal!");
                 goal = &current;
+
+                this->openList->pop();
+                current.markAsExpanded();
+                optimalSolutionCost = current.getF();
+
                 this->fireEvent([&current](AstarAllSolutionsListener<STATE>& l) { l.onSolutionFound(current); });
+                continue;
             }
 
             this->openList->pop();
@@ -150,13 +157,27 @@ protected:
             current.markAsExpanded();
             this->fireEvent([&current](AstarAllSolutionsListener<STATE>& l) { l.onNodeExpanded(current); });
 
+            // if a goal has already been found, we prune away all the states which have f greater than the oe we have found
+            if ((goal != nullptr) && (current.getF() > optimalSolutionCost)) {
+                warning("state", current, "pruned since it is beyond the optimal solution cost! (", current.getF(), ">", optimalSolutionCost, ")");
+                continue;
+            }
+
             info("computing successors of state ", current, "...");
             for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
                 STATE& successor = pair.first;
                 cost_t current_to_successor_cost = pair.second;
 
+                // if we have found a solution, we need to reopen a closed state if the newg <= oldg
+                // if we haven't found a ssolution yet, we need to reopen a closed state if newg < oldg
+
+                if ((goal != nullptr) && (current.getF() > optimalSolutionCost)) {
+                    warning("state", current, "pruned since it is beyond the optimal solution cost! (", current.getF(), ">", optimalSolutionCost, ")");
+                    continue;
+                }
+
                 if (this->pruner.shouldPrune(successor)) {
-                    info("child", successor, "of state ", current, "should be pruned!");
+                    info("child", successor, "of state ", current, "should be pruned since it doesn't respect prune criterion!");
                     //skip neighbours already expanded
                     continue;
                 }
@@ -175,6 +196,30 @@ protected:
 
                         this->openList->decrease_key(successor);
                     }
+                } else if (successor.isExpanded()) {
+                    //state belong to closed list
+                    cost_t gval = current.getG() + current_to_successor_cost;
+
+                    //check if there is scenario where we can ignore the state
+                    if (goal != nullptr) {
+                        //a solution has been already found
+                        if (gval > successor.getG()) {
+                            continue;
+                        }
+                    } else {
+                        // no solution has been found yet
+                        if (gval >= successor.getG()) {
+                            continue;
+                        }
+                    }
+
+                    //otherwise reput in openlist
+                    //reput in open list
+                    successor.setG(gval);
+                    successor.setF(this->computeF(gval, successor.getH()));
+                    const STATE* oldParent = successor.getParent();
+                    successor.setParent(&current);
+                    this->openList->push(successor);
                 } else {
                     //state is not present in open list. Add to it
                     cost_t gval = current.getG() + current_to_successor_cost;
@@ -190,16 +235,17 @@ protected:
                     info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                     this->openList->push(successor);
                     
-                    
                 }
             }
         }
-        info("found no solutions!");
-        throw SolutionNotFoundException{};
+        info("we have popped everything from openlist!");
+        if (goal == nullptr) {
+            //no solution has been found whatsoever
+            info("found no solutions!");
+            throw SolutionNotFoundException{};
+        }
 
-        goal_found:
         return *goal;
-
     }
 
 
