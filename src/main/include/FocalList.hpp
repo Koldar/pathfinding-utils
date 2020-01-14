@@ -195,8 +195,8 @@ namespace pathfinding::data_structures {
         bool shouldBeInFocal(COST_TYPE n, COST_TYPE bestF) const {
             return this->w.getDenominator() * n <= this->w.getNumerator() * bestF;
         }
-        double getW() const {
-            return this->w.getRatio();
+        fractional_number<COST_TYPE> getW() const {
+            return this->w;
         }
         /**
          * @brief Check if the open list is empty
