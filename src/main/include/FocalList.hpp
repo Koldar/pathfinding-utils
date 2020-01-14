@@ -7,6 +7,7 @@
 #include <cpp-utils/operators.hpp>
 #include <cpp-utils/ICleanable.hpp>
 #include <cpp-utils/math.hpp>
+#include <cpp-utils/fractional_number.hpp>
 
 #include "types.hpp"
 
@@ -161,56 +162,41 @@ namespace pathfinding::data_structures {
          * @brief the weight as the developer wanted
          * 
          */
-        double w;
-        /**
-         * @brief numerator of the ration which can represent w
-         * 
-         * Used to avoid floating point operations
-         */
-        mutable COST_TYPE nw;
-        /**
-         * @brief denominator of the ratio which can represent w
-         * 
-         * Used to avoid floating point operations
-         */
-        mutable COST_TYPE dw;
+        fractional_number<COST_TYPE> w;
     public:
-        FocalList(double w): openQueue{}, focalQueue{}, w{w}, stateToOpenQueue{}, nw{0}, dw{0} {
-            cpp_utils::getRatioOf(w, this->nw, this->dw, 1e-6, 5);
+        FocalList(const double aw): openQueue{}, focalQueue{}, w{aw, 1e-6}, stateToOpenQueue{} {
+        }
+        FocalList(const fractional_number<COST_TYPE>& w): openQueue{}, focalQueue{}, w{w}, stateToOpenQueue{} {
         }
         virtual ~FocalList() {
 
         }
-        FocalList(const This& o): w{o.w}, nw{o.nw}, dw{o.dw}, openQueue{o.openQueue}, focalQueue{o.focalQueue}, stateToOpenQueue{o.stateToOpenQueue} {
+        FocalList(const This& o): w{o.w}, openQueue{o.openQueue}, focalQueue{o.focalQueue}, stateToOpenQueue{o.stateToOpenQueue} {
 
         }
-        FocalList(This&& o): w{o.w}, nw{o.nw}, dw{o.dw}, openQueue{::std::move(o.openQueue)}, focalQueue{::std::move(o.focalQueue)}, stateToOpenQueue{::std::move(o.stateToOpenQueue)} {
+        FocalList(This&& o): w{o.w}, openQueue{::std::move(o.openQueue)}, focalQueue{::std::move(o.focalQueue)}, stateToOpenQueue{::std::move(o.stateToOpenQueue)} {
 
         }
         This& operator=(const This& o) {
             this->openQueue = o.openQueue;
             this->focalQueue = o.focalQueue;
             this->w = o.w;
-            this->nw = o.nw;
-            this->dw = o.dw;
             this->stateToOpenQueue = o.stateToOpenQueue;
             return *this;
         }
         This& operator=(This&& o) {
             this->openQueue = ::std::move(o.openQueue);
             this->focalQueue = ::std::move(o.focalQueue);
-            this->w = o.w;
-            this->nw = o.nw;
-            this->dw = o.dw;
+            this->w = ::std::move(o.w);
             this->stateToOpenQueue = ::std::move(o.stateToOpenQueue);
             return *this;
         }
     public:
         bool shouldBeInFocal(COST_TYPE n, COST_TYPE bestF) const {
-            return this->dw * n <= this->nw * bestF;
+            return this->w.getDenominator() * n <= this->w.getNumerator() * bestF;
         }
         double getW() const {
-            return this->w;
+            return this->w.getRatio();
         }
         /**
          * @brief Check if the open list is empty
