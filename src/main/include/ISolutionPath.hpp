@@ -8,6 +8,7 @@
 
 #include "types.hpp"
 #include "operators.hpp"
+#include "IPath.hpp"
 
 namespace pathfinding::search {
 
@@ -239,11 +240,33 @@ namespace pathfinding::search {
      * @param goal 
      * @return vectorplus<nodeid_t> 
      */
+    //TODO remove this because the one that generates a NodePath is better
     template <typename G, typename V, typename E, typename GET_COST = ::pathfinding::GetCost<E>>
 	cpp_utils::vectorplus<nodeid_t> getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal) {
 		DijkstraSearchAlgorithm<G, V, E, GET_COST> dijkstra{graph, GET_COST{}};
 		auto path = dijkstra.search(start, goal);
 		return *path;
+	}
+
+    /**
+     * @brief get the optimal path over a graph in a simplistic way as **a sequence of vertices**
+     * 
+     * If start == goal the sequence generated has size 1
+     * 
+     * @tparam G type of a paylaod associated to the graph
+     * @tparam V type of a payload associated to every vertex
+     * @tparam E type of a payload associated to every edge
+     * @tparam ::pathfinding::GetCost<E> lambda function computing a cost from the edge type
+     * @param graph the graph where to compute the optimal path
+     * @param start start of the optimal path
+     * @param goal goal of the optimal path
+     * @return NodePath an optimal path from @c start to @c goal
+     */
+    template <typename G, typename V, typename E, typename GET_COST>
+	NodePath getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, GET_COST getCost) {
+		DijkstraSearchAlgorithm<G, V, E, cost_t> dijkstra{graph, getCost()};
+		auto path = dijkstra.search(start, goal);
+		return NodePath{*path};
 	}
 
     /**
