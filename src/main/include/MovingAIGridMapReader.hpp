@@ -33,16 +33,15 @@ private:
      */
     cpp_utils::MapPlus<char, cost_t> terrainCost;
     cpp_utils::MapPlus<char, color_t> terrainColor;
-private:
-    template <typename... OTHER>
-    MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color, OTHER... others) {
-        this->terrainCost[symbol] = cost;
-        return this->addTerrain(others...);
-    }
 public:
     template <typename... OTHER>
     MovingAIGridMapReader(OTHER... args): terrainCost{}, terrainColor{} {
         this->addTerrain(args...);
+    }
+    template <typename... OTHER>
+    MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color, OTHER... others) {
+        this->terrainCost[symbol] = cost;
+        return this->addTerrain(others...);
     }
     MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color) {
         this->terrainCost[symbol] = cost;
