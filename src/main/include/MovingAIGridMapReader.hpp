@@ -41,6 +41,7 @@ public:
     template <typename... OTHER>
     MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color, OTHER... others) {
         this->terrainCost[symbol] = cost;
+        this->terrainColor[symbol] = color;
         return this->addTerrain(others...);
     }
     MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color) {
