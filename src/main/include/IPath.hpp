@@ -122,11 +122,41 @@ namespace pathfinding {
      * @brief a path over a graph
      * 
      */
-    class NodePath : AbstractPath<nodeid_t>, vectorplus<nodeid_t> {
+    class NodePath : public AbstractPath<nodeid_t>, vectorplus<nodeid_t> {
     public:
         typedef NodePath This;
         typedef AbstractPath<nodeid_t> Super1;
         typedef vectorplus<nodeid_t> Super2;
+    public:
+        explicit NodePath(): Super1{}, Super2{} {
+
+        }
+        NodePath(const Super2& v): Super1{}, Super2{v} {
+
+        }
+        virtual ~NodePath() {
+
+        }
+        NodePath(const This& o): Super1{o}, Super2{o} {
+            debug("call NodePath assignment constructor!");
+        }
+        NodePath(This&& o): Super1{o}, Super2{o} {
+            debug("call NodePath move constructor");
+        }
+        This& operator =(const This& o) {
+            debug("call NodePath copy =");
+            Super1::operator =(o);
+            Super2::operator =(o);
+            return *this;
+        }
+        This& operator =(This&& o) {
+            debug("call Super1 move");
+            Super1::operator =(o);
+            debug("call Super2 move");
+            Super2::operator =(o);
+            debug("return *this");
+            return *this;
+        }
     public:
         virtual bool isEmpty() const {
             return Super2::isEmpty();
@@ -173,7 +203,7 @@ namespace pathfinding {
      * @brief a path over a graph which use edge movement to determine the path
      * 
      */
-    class MovePath: AbstractPath<moveid_t>, vectorplus<moveid_t> {
+    class MovePath: public AbstractPath<moveid_t>, vectorplus<moveid_t> {
 
     };
 
@@ -183,7 +213,7 @@ namespace pathfinding {
      * @tparam E type of each label associated to an edge
      */
     template <typename E>
-    class EdgePath: AbstractPath<Edge<E>>, vectorplus<Edge<E>> {
+    class EdgePath: public AbstractPath<Edge<E>>, vectorplus<Edge<E>> {
 
     };
 }
