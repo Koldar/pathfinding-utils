@@ -19,12 +19,11 @@ namespace pathfinding::search {
      * @tparam G the type of the graph paylaod
      * @tparam V the type of each vertex payload
      * @tparam E the type of each edge payload
-     * @tparam GET_COST function used to retrieve a cost from the edge label
      */
-    template <typename G, typename V, typename E, typename GET_COST = ::pathfinding::GetCost<E>>
+    template <typename G, typename V, typename E>
     class DijkstraSearchAlgorithm: public ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t> {
     public:
-        using This = DijkstraSearchAlgorithm<G, V, E, GET_COST>;
+        using This = DijkstraSearchAlgorithm<G, V, E>;
         using Super = ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t>;
         using ISearchAlgorithm<nodeid_t, nodeid_t, nodeid_t>::search;
     private:
@@ -53,9 +52,9 @@ namespace pathfinding::search {
          * @brief function used to retrieve the cost of an edge
          * 
          */
-        GET_COST costFunction;
+        std::function<cost_t(const E&)> costFunction;
     public:
-        DijkstraSearchAlgorithm(const IImmutableGraph<G,V,E>& g, GET_COST costFunction): g{g}, costFunction{costFunction}, distancesFromSource{}, bestPreviousNode{}, queue{g.numberOfVertices()} {
+        DijkstraSearchAlgorithm(const IImmutableGraph<G,V,E>& g, std::function<cost_t(const E&)> costFunction): g{g}, costFunction{costFunction}, distancesFromSource{}, bestPreviousNode{}, queue{g.numberOfVertices()} {
         }
         virtual ~DijkstraSearchAlgorithm() {
 
@@ -134,7 +133,7 @@ namespace pathfinding::search {
             throw search::SolutionNotFoundException{};
         }
         virtual std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> buildSolutionFromGoalFetched(nodeid_t start, nodeid_t actualGoal, const nodeid_t* goal) {
-            auto result = new GraphSolutionPath<G, V, E, GET_COST>{this->g, costFunction};
+            auto result = new GraphSolutionPath<G, V, E>{this->g, costFunction};
 
             nodeid_t tmp = actualGoal;
             result->addHead(tmp);
@@ -145,7 +144,7 @@ namespace pathfinding::search {
                 tmp = prev;
             }
 
-            return std::unique_ptr<GraphSolutionPath<G, V, E, GET_COST>>{result};
+            return std::unique_ptr<GraphSolutionPath<G, V, E>>{result};
         }
         virtual cost_t getSolutionCostFromGoalFetched(nodeid_t start, nodeid_t actualGoal, const nodeid_t* goal) const {
             return this->distancesFromSource[actualGoal];

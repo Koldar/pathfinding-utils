@@ -7,6 +7,7 @@
 
 namespace pathfinding {
 
+    //TODO remove superseded by std::function. Remember to create a local variable of type std::function if you want to pass a lambda
     /**
      * @brief Generic template function used to fetch a `cost_t` from the label of an edge
      * 

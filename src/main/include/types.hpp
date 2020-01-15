@@ -30,6 +30,16 @@ namespace pathfinding {
      */
     using stateid_t = u_int64_t;
 
+    /**
+     * @brief represents a function which convert a type into a cost_t
+     * 
+     * Useful when dealing with general maps
+     * 
+     * @tparam E the type of the label of an edge
+     */
+    template <typename E>
+    using costFunction_t = std::function<cost_t(const E&)>;
+
 }
 
 #endif

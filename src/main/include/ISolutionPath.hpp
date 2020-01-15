@@ -15,7 +15,7 @@ namespace pathfinding::search {
     using namespace pathfinding;
     using namespace cpp_utils::graphs;
 
-    template <typename G, typename V, typename E, typename GET_COST>
+    template <typename G, typename V, typename E>
     class DijkstraSearchAlgorithm;
 
     /**
@@ -77,9 +77,8 @@ namespace pathfinding::search {
      * @tparam G payload of the whole graph
      * @tparam V payload of an vertex
      * @tparam E paylaod type of each edge
-     * @tparam GET_COST a function allowing you to retrieve a cost_t from a label
      */
-    template <typename G, typename V, typename E, typename GET_COST = ::pathfinding::GetCost<E>>
+    template <typename G, typename V, typename E>
     class GraphSolutionPath: public ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t> {
     public:
         using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::vectorplus;
@@ -90,9 +89,9 @@ namespace pathfinding::search {
         using ISolutionPath<cpp_utils::graphs::nodeid_t, cpp_utils::graphs::nodeid_t>::filter;
     private:
         const cpp_utils::graphs::IImmutableGraph<G, V, E>& g;
-        GET_COST costFunction;
+        std::function<cost_t(const E&)> costFunction;
     public:
-        GraphSolutionPath(const cpp_utils::graphs::IImmutableGraph<G, V, E>& g, GET_COST costFunction): g{g}, costFunction{costFunction} {
+        GraphSolutionPath(const cpp_utils::graphs::IImmutableGraph<G, V, E>& g, std::function<cost_t(const E&)> costFunction): g{g}, costFunction{costFunction} {
 
         }
     public:
@@ -180,8 +179,8 @@ namespace pathfinding::search {
      * @return true if the actual path is optimal
      * @return false otherwise
      */
-    template <typename G, typename V, typename E, typename STATE, typename CONST_REF, class GET_COST = ::pathfinding::GetCost<E>>
-    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, GET_COST costFunction, const std::function<nodeid_t(STATE)>& mapper) {
+    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
+    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& costFunction, const std::function<nodeid_t(STATE)>& mapper) {
         auto realActualPath = actualPath.map(mapper);
 
         checkPathValid<G, V, E>(
@@ -189,7 +188,7 @@ namespace pathfinding::search {
             realActualPath
         );
 
-        DijkstraSearchAlgorithm<G, V, E, GET_COST> dijkstra{graph, costFunction}; 
+        DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction}; 
         auto expectedPath = dijkstra.search(start, goal);
         
         if (expectedPath->getCost() != actualPath.getCost()) {
@@ -200,8 +199,8 @@ namespace pathfinding::search {
         }
     }
 
-    template <typename G, typename V, typename E, typename STATE, typename CONST_REF, typename GET_COST = ::pathfinding::GetCost<E>>
-    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, GET_COST costFunction, const std::function<nodeid_t(STATE)>& mapper) {
+    template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
+    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& costFunction, const std::function<nodeid_t(STATE)>& mapper) {
         
         auto realActualPath = actualPath.map(mapper);
 
@@ -210,7 +209,7 @@ namespace pathfinding::search {
             realActualPath
         );
 
-        DijkstraSearchAlgorithm<G, V, E, GET_COST> dijkstra{graph, costFunction}; 
+        DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction}; 
         auto expectedPath = dijkstra.search(start, goal);
 
         double optimalPathCost = static_cast<double>(expectedPath->getCost());
@@ -233,40 +232,23 @@ namespace pathfinding::search {
      * 
      * If start == goal the sequence generated has size 1
      * 
-     * @tparam E 
-     * @tparam ::pathfinding::GetCost<E> 
-     * @param graph 
-     * @param start 
-     * @param goal 
-     * @return vectorplus<nodeid_t> 
-     */
-    //TODO remove this because the one that generates a NodePath is better
-    template <typename G, typename V, typename E, typename GET_COST = ::pathfinding::GetCost<E>>
-	cpp_utils::vectorplus<nodeid_t> getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal) {
-		DijkstraSearchAlgorithm<G, V, E, GET_COST> dijkstra{graph, GET_COST{}};
-		auto path = dijkstra.search(start, goal);
-		return *path;
-	}
-
-    /**
-     * @brief get the optimal path over a graph in a simplistic way as **a sequence of vertices**
-     * 
-     * If start == goal the sequence generated has size 1
-     * 
      * @tparam G type of a paylaod associated to the graph
      * @tparam V type of a payload associated to every vertex
      * @tparam E type of a payload associated to every edge
-     * @tparam ::pathfinding::GetCost<E> lambda function computing a cost from the edge type
      * @param graph the graph where to compute the optimal path
      * @param start start of the optimal path
      * @param goal goal of the optimal path
+     * @param mapper the function to use to convert E to cost_t
      * @return NodePath an optimal path from @c start to @c goal
      */
-    template <typename G, typename V, typename E, typename GET_COST>
-	NodePath getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, GET_COST getCost) {
-		DijkstraSearchAlgorithm<G, V, E, cost_t> dijkstra{graph, getCost()};
-		auto path = dijkstra.search(start, goal);
-		return NodePath{*path};
+    template <typename G, typename V, typename E>
+	NodePath getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, std::function<cost_t(const E&)> mapper) {
+		DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, mapper};
+		std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> path = ::std::move(dijkstra.search(start, goal));
+		NodePath result{*path};
+        critical("path is ", *path, path.get());
+        critical("done building path with NodePath, which ", result, &result);
+        return result;
 	}
 
     /**
@@ -275,15 +257,14 @@ namespace pathfinding::search {
      * If start == goal the sequence generated has size 0
      * 
      * @tparam E 
-     * @tparam ::pathfinding::GetCost<E> 
      * @param graph 
      * @param start 
      * @param goal 
      * @return vectorplus<Edge<E>> 
      */
-	template <typename G, typename V, typename E, typename GET_COST = ::pathfinding::GetCost<E>>
-	cpp_utils::vectorplus<Edge<E>> getOptimalPathAsEdges(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal) {
-		DijkstraSearchAlgorithm<G, V, E, GET_COST> dijkstra{graph, GET_COST{}};
+	template <typename G, typename V, typename E>
+	cpp_utils::vectorplus<Edge<E>> getOptimalPathAsEdges(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const std::function<cost_t(const E&)> costFunction) {
+		DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction};
 		auto path = dijkstra.search(start, goal);
 
 		cpp_utils::vectorplus<Edge<E>> result{};
