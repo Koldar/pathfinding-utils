@@ -104,7 +104,8 @@ namespace pathfinding::maps {
         cost_t getCellCost(xyLoc loc) const;
         bool isTraversable(xyLoc loc) const;
     public:
-        const PPMImage* getPPM() const;
+        //TODO the method should rfeturn a modificable image since some times we want to change it!
+        const GridMapImage* getPPM() const;
     public:
         virtual const std::string& getName() const;
         virtual size_t getSize() const;
