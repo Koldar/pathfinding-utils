@@ -38,6 +38,13 @@ namespace pathfinding::search {
          * @param s 
          */
         virtual void onEndingComputingHeuristic(const STATE& s) = 0;
+        
+        /**
+         * @brief called whenever a new goal is found
+         * 
+         * @param goal the goal we have reached
+         */
+        virtual void onSolutionFound(const STATE& goal) = 0;
     };
 
 }

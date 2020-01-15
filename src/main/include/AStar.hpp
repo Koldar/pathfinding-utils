@@ -138,6 +138,8 @@ namespace pathfinding::search {
                 if (this->goalChecker.isGoal(current, expectedGoal)) {
                     info("state ", current, "is a goal!");
                     goal = &current;
+
+                    this->fireEvent([&current](AstarListener<STATE>& l) { l.onSolutionFound(current); });
                     goto goal_found;
                 }
 
