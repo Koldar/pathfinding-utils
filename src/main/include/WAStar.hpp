@@ -16,18 +16,11 @@
 #include "IStateSupplier.hpp"
 #include "IGoalChecker.hpp"
 #include "AStar.hpp"
+#include "AstarListener.hpp"
 
 namespace pathfinding::search {
 
     using namespace cpp_utils;
-
-    /**
-     * @brief Allows you to further refines the behavior of an A* algorithm
-     * 
-     */
-    template <typename STATE>
-    class WAstarListener: public AstarListener<STATE> {
-    };
 
     /**
      * @brief an impementation of WA*
@@ -48,11 +41,11 @@ namespace pathfinding::search {
      * @created: 21/08/2012
      */
     template <typename STATE, typename... STATE_IMPORTANT_TYPES>
-    class NoCloseListSingleGoalWAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<WAstarListener<STATE>> {
+    class NoCloseListSingleGoalWAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
         using This = NoCloseListSingleGoalWAstar<STATE, STATE_IMPORTANT_TYPES...>;
     public:
         NoCloseListSingleGoalWAstar(double weight, IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
-            ISingleListenable<WAstarListener<STATE>>{}, 
+            ISingleListenable<AstarListener<STATE>>{}, 
             weight{weight},
             heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
             openList{nullptr} {
@@ -148,9 +141,9 @@ namespace pathfinding::search {
             STATE* goal = nullptr;
 
             start.setG(0);
-            this->fireEvent([&start](WAstarListener<STATE>& l) { l.onStartingComputingHeuristic(start); });
+            this->fireEvent([&start](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(start); });
             start.setH(this->heuristic.getHeuristic(start, expectedGoal));
-            this->fireEvent([&start](WAstarListener<STATE>& l) { l.onEndingComputingHeuristic(start); });
+            this->fireEvent([&start](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(start); });
             start.setF(this->computeF(start.getG(), start.getH()));
 
             this->openList->push(start);
@@ -161,13 +154,15 @@ namespace pathfinding::search {
                 if (this->goalChecker.isGoal(current, expectedGoal)) {
                     info("state ", current, "is a goal!");
                     goal = &current;
+                    
+                    this->fireEvent([&current](AstarListener<STATE>& l) { l.onSolutionFound(current); });
                     goto goal_found;
                 }
 
                 this->openList->pop();
 
                 current.markAsExpanded();
-                this->fireEvent([&current](WAstarListener<STATE>& l) { l.onNodeExpanded(current); });
+                this->fireEvent([&current](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
 
                 info("computing successors of state ", current, "...");
                 for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
@@ -198,9 +193,9 @@ namespace pathfinding::search {
                     } else {
                         //state is not present in open list. Add to it
                         cost_t gval = current.getG() + current_to_successor_cost;
-                        this->fireEvent([&successor](WAstarListener<STATE>& l) { l.onStartingComputingHeuristic(successor); });
+                        this->fireEvent([&successor](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(successor); });
                         cost_t hval = this->heuristic.getHeuristic(successor, expectedGoal);
-                        this->fireEvent([&successor](WAstarListener<STATE>& l) { l.onEndingComputingHeuristic(successor); });
+                        this->fireEvent([&successor](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(successor); });
                         successor.setG(gval);
                         successor.setH(hval);
                         successor.setF(this->computeF(gval, hval));

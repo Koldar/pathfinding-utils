@@ -66,10 +66,10 @@ namespace pathfinding::search {
             return this->heuristicTime;
         }
     public:
-        void onNodeExpanded(const STATE& s) {
+        virtual void onNodeExpanded(const STATE& s) {
             this->nodeExpanded += 1;
         }
-        void onNodeGenerated(const STATE& s) {
+        virtual void onNodeGenerated(const STATE& s) {
             this->nodeGenerated += 1;
         }
         void onStartingComputingHeuristic(const STATE& s) {
