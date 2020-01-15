@@ -52,7 +52,7 @@ namespace pathfinding::maps {
         return getCellCost(loc).isNotInfinity();
     }
 
-    const PPMImage* GridMap::getPPM() const {
+    const GridMapImage* GridMap::getPPM() const {
         auto result = new GridMapImage{3, 3, 1, 1, this->getWidth(), this->getHeight(), color_t::BLACK, color_t::WHITE};
 
         for (auto y=0; y<this->getHeight(); ++y) {
