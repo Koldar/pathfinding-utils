@@ -34,12 +34,12 @@ namespace pathfinding::search {
     public:
         typedef AstarTrackerListener<G, V, E, STATE> This;
         typedef CountAStarListener<STATE> Super;
-    private:
+    protected:
         AdjacentGraph<G,statevisited_e,E> states;
     public:
         AstarTrackerListener(const IImmutableGraph<G,V,E>& originalGraph): Super{}, states{} {
             function_t<V, statevisited_e> lambda = [&](const V& e) { return statevisited_e::UNVISITED;};
-            auto p = originalGraph->mapVertices(lambda);
+            auto p = originalGraph.mapVertices(lambda);
             this->states = *p;
             delete p;
         }
@@ -55,13 +55,13 @@ namespace pathfinding::search {
     public:
         virtual void onNodeExpanded(const STATE& s) {
             Super::onNodeExpanded(s);
-            this->states.getVertex(s.getId()) = statevisited_e::EXPANDED;
+            this->states.changeVertexPayload(s.getId(), statevisited_e::EXPANDED);
         }
         virtual void onNodeGenerated(const STATE& s) {
             Super::onNodeGenerated(s);
             this->states.changeVertexPayload(s.getId(), statevisited_e::GENERATED);
         }
-        void cleanup() {
+        virtual void cleanup() {
             Super::cleanup();
             for (auto it=this->states.beginVertices(); it!=this->states.endVertices(); ++it) {
                 this->states.changeVertexPayload(it->first, statevisited_e::UNVISITED);

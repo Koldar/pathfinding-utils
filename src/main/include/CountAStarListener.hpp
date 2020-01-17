@@ -72,13 +72,16 @@ namespace pathfinding::search {
         virtual void onNodeGenerated(const STATE& s) {
             this->nodeGenerated += 1;
         }
-        void onStartingComputingHeuristic(const STATE& s) {
+        virtual void onStartingComputingHeuristic(const STATE& s) {
             this->heuristicTimer.cleanup();
             this->heuristicTimer.start();
         }
-        void onEndingComputingHeuristic(const STATE& s) {
+        virtual void onEndingComputingHeuristic(const STATE& s) {
             this->heuristicTimer.stop();
             this->heuristicTime.update(this->heuristicTimer.getElapsedMicroSeconds().toLong());
+        }
+        virtual void onSolutionFound(const STATE& s) {
+
         }
     public:
         void cleanup() {
