@@ -46,6 +46,51 @@ namespace pathfinding::maps {
         );
     }
 
+    void GridMapImage::lerpGridCellColor(xyLoc loc, const color_t& c) {
+        for (int y=0; y<this->cellHeight; ++y) {
+            for (int x=0; x<this->cellWidth; ++x) {
+                auto oldColor = this->getPixelInGrid(loc.x, loc.y, x, y);
+                this->setPixelInGrid(loc.x, loc.y, x, y, oldColor.lerp(c));
+            }
+        }
+    }
+
+    void GridMapImage::invertGridCellColor(xyLoc loc) {
+        for (int y=0; y<this->cellHeight; ++y) {
+            for (int x=0; x<this->cellWidth; ++x) {
+                auto oldColor = this->getPixelInGrid(loc.x, loc.y, x, y);
+                this->setPixelInGrid(loc.x, loc.y, x, y, oldColor.invert());
+            }
+        }
+    }
+
+    void GridMapImage::scaleGridCellColor(xyLoc loc, double scale) {
+        for (int y=0; y<this->cellHeight; ++y) {
+            for (int x=0; x<this->cellWidth; ++x) {
+                auto oldColor = this->getPixelInGrid(loc.x, loc.y, x, y);
+                this->setPixelInGrid(loc.x, loc.y, x, y, oldColor.scale(scale));
+            }
+        }
+    }
+
+    void GridMapImage::maxGridCellColor(xyLoc loc, const color_t& c) {
+        for (int y=0; y<this->cellHeight; ++y) {
+            for (int x=0; x<this->cellWidth; ++x) {
+                auto oldColor = this->getPixelInGrid(loc.x, loc.y, x, y);
+                this->setPixelInGrid(loc.x, loc.y, x, y, oldColor.max(c));
+            }
+        }
+    }
+
+    void GridMapImage::minGridCellColor(xyLoc loc, const color_t& c) {
+        for (int y=0; y<this->cellHeight; ++y) {
+            for (int x=0; x<this->cellWidth; ++x) {
+                auto oldColor = this->getPixelInGrid(loc.x, loc.y, x, y);
+                this->setPixelInGrid(loc.x, loc.y, x, y, oldColor.min(c));
+            }
+        }
+    }
+
     void GridMapImage::setPixelInGrid(xyLoc loc, xyLoc subPixel, const color_t& c) {
         this->setPixelInGrid(loc.x, loc.y, subPixel.x, subPixel.y, c);
     }
@@ -55,6 +100,16 @@ namespace pathfinding::maps {
         int py = y*(this->cellHeight + this->gridHeight) + this->gridHeight + cpp_utils::ringBound(subPixely, static_cast<int>(this->cellHeight));
         debug("setting psubpixel", px, py, "total is", this->getWidth(), this->getHeight());
         this->setPixel(px, py, c);
+    }
+
+    color_t GridMapImage::getPixelInGrid(xyLoc loc, xyLoc subPixel) {
+        return this->getPixelInGrid(loc.x, loc.y, subPixel.x, subPixel.y);
+    }
+    
+    color_t GridMapImage::getPixelInGrid(int x, int y, int subPixelx, int subPixely) {
+        int px = x*(this->cellWidth + this->gridWidth) + this->gridWidth + cpp_utils::ringBound(subPixelx, static_cast<int>(this->cellWidth));
+        int py = y*(this->cellHeight + this->gridHeight) + this->gridHeight + cpp_utils::ringBound(subPixely, static_cast<int>(this->cellHeight));
+        return this->getPixel(px, py);
     }
 
     void GridMapImage::createGrid(color_t gridColor) {

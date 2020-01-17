@@ -42,8 +42,15 @@ namespace pathfinding::maps {
         This& operator=(const This&& o);
     public:
         void setGridCellColor(xyLoc loc, const color_t& c);
+        void lerpGridCellColor(xyLoc loc, const color_t& c);
+        void invertGridCellColor(xyLoc loc);
+        void scaleGridCellColor(xyLoc loc, double scale);
+        void maxGridCellColor(xyLoc loc, const color_t& c);
+        void minGridCellColor(xyLoc loc, const color_t& c);
         void setPixelInGrid(xyLoc loc, xyLoc subPixel, const color_t& c);
         void setPixelInGrid(int x, int y, int subPixelx, int subPixely, const color_t& c);
+        color_t getPixelInGrid(xyLoc loc, xyLoc subPixel);
+        color_t getPixelInGrid(int x, int y, int subPixelx, int subPixely);
     private:
         void createGrid(color_t gridColor);
     };
