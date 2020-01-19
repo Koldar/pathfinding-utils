@@ -1,5 +1,5 @@
 #ifndef _PATH_FINDING_UTILS_FOCAL_LIST_HEADER__
-#define _PATH_FINDING_FOCAL_LIST_HEADER__
+#define _PATH_FINDING_UTILS_FOCAL_LIST_HEADER__
 
 #include <boost/heap/d_ary_heap.hpp>
 #include <unordered_map>
