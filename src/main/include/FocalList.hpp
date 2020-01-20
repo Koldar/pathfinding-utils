@@ -250,6 +250,15 @@ namespace pathfinding::data_structures {
             this->focalQueue.push(FocalHeapNodeType{handle});
         }
 
+        /**
+         * @brief update tyhe focal list
+         * 
+         * This function check if the open list lowerbound has changed. If it has changed, it rebuilds the focal list by adding new elements in them. if the lowerbound hasn't changed, it does nothing
+         * 
+         * 
+         * @param bestOpenListScore the lowerbound of the open list before we have changed it in anyway
+         * @return COST_TYPE the new lowerbound of the open list
+         */
         virtual COST_TYPE updateFocalWithOpenChanges(COST_TYPE bestOpenListScore) {
             COST_TYPE oldBestOpenListScore = bestOpenListScore;
             COST_TYPE newBestOpenListScore = GET_COST()(*this->openQueue.top().data);
