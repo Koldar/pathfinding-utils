@@ -61,14 +61,14 @@ public:
      * @brief \f$log_{2}(NBS)\f$
      * 
      */
-	static const constexpr uint32_t LOG2_NBS = log2(NBS);
+	static const constexpr uint32_t LOG2_NBS = cpp_utils::log2(NBS);
     /**
      * @brief mask of NBS 
      * 
      * NBS acts as a bit threshold. this mask is obtained by setting all the bits on the right of NBS to 1 and all the
      * bits on the left of NBS (NBS included) as 0. So it's something like `00011111`.
      */
-	static const uint32_t NBS_MASK = (0xFFFFFFFF << static_cast<uint32_t>(log2(NBS) + 1) ^ ~NBS); //63;
+	static const uint32_t NBS_MASK = (0xFFFFFFFF << static_cast<uint32_t>(cpp_utils::log2(NBS) + 1) ^ ~NBS); //63;
 private:
     /**
      * @brief size of the array ::blocks_
