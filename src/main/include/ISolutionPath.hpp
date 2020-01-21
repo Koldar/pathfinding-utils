@@ -246,8 +246,8 @@ namespace pathfinding::search {
 		DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, mapper};
 		std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> path = ::std::move(dijkstra.search(start, goal));
 		NodePath result{*path};
-        critical("path is ", *path, path.get());
-        critical("done building path with NodePath, which ", result, &result);
+        finer("path is ", *path, path.get());
+        finest("done building path with NodePath, which ", result, &result);
         return result;
 	}
 
