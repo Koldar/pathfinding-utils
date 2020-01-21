@@ -81,7 +81,7 @@ namespace pathfinding::search {
         virtual STATE generateNewInstance(stateid_t id, nodeid_t location, STATE_OTHER_IMPORTANT_TYPES... args) = 0;
     public:
         virtual STATE& getState(nodeid_t location, STATE_OTHER_IMPORTANT_TYPES... args) {
-            fine("location is ", location);
+            finest("location is ", location);
             //let's check if we have the requested timestamp in fromTimestampToLocationMap
             if (this->statePointers[location] == nullptr) {
                 stateid_t newId = this->generateStateId(location, args...);
