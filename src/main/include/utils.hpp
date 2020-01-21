@@ -12,6 +12,7 @@
 
 #include "GridMap.hpp"
 #include "GridMapImage.hpp"
+#include "DijkstraSearchAlgorithm.hpp"
 
 
 namespace pathfinding::utils {
@@ -19,6 +20,60 @@ namespace pathfinding::utils {
     using namespace cpp_utils;
     using namespace cpp_utils::graphs;
     using namespace pathfinding::maps;
+    using namespace pathfinding::search;
+
+    /**
+     * @brief get the optimal path over a graph in a simplistic way as **a sequence of vertices**
+     * 
+     * If start == goal the sequence generated has size 1
+     * 
+     * @tparam G type of a paylaod associated to the graph
+     * @tparam V type of a payload associated to every vertex
+     * @tparam E type of a payload associated to every edge
+     * @param graph the graph where to compute the optimal path
+     * @param start start of the optimal path
+     * @param goal goal of the optimal path
+     * @param mapper the function to use to convert E to cost_t
+     * @return NodePath an optimal path from @c start to @c goal
+     */
+    template <typename G, typename V, typename E>
+	NodePath getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, std::function<cost_t(const E&)> mapper) {
+		DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, mapper};
+		std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> path = ::std::move(dijkstra.search(start, goal));
+		NodePath result{*path};
+        finer("path is ", *path, path.get());
+        finest("done building path with NodePath, which ", result, &result);
+        return result;
+	}
+
+    /**
+     * @brief get the optimal path over a graph in a simplistic way as **a sequence of edges**
+     * 
+     * If start == goal the sequence generated has size 0
+     * 
+     * @tparam E 
+     * @param graph 
+     * @param start 
+     * @param goal 
+     * @return vectorplus<Edge<E>> 
+     */
+	template <typename G, typename V, typename E>
+	cpp_utils::vectorplus<Edge<E>> getOptimalPathAsEdges(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const std::function<cost_t(const E&)> costFunction) {
+		DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction};
+		auto path = dijkstra.search(start, goal);
+
+		cpp_utils::vectorplus<Edge<E>> result{};
+		if (path.isEmpty()) {
+			return result;
+		} else if (path.size() == 1) {
+			return result;
+		} else {
+			for (int i=0; i<(path.size() - 1); ++i) {
+				result.add(Edge<E>{path[i], path[i+1], graph.getEdge(path[i], path[i+1])});
+			}
+			return result;
+		}
+	}
 
     /**
      * @brief Loads the perturbated graph starting from the perturbations saved into a file
@@ -32,7 +87,7 @@ namespace pathfinding::utils {
      * @return AdjacentGraph<G, V, E>* a graph containing the perturbatations. This needs to be freed manually
      */
     template <typename G, typename V, typename E>
-    AdjacentGraph<G, V, E>* loadPerturbatedMap(const boost::filesystem::path& path, const IImmutableGraph<G, V, cost_t>& originalGraph, const cpp_utils::function_t<cost_t, E>& mapper) {
+    IImmutableGraph<G, V, E>* loadPerturbatedMap(const boost::filesystem::path& path, const IImmutableGraph<G, V, cost_t>& originalGraph, const cpp_utils::function_t<cost_t, E>& mapper) {
         info("perturbated graph file should be located in", path);
 
         if (!boost::filesystem::exists(path)) {

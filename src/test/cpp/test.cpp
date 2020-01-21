@@ -19,6 +19,8 @@
 #include "GraphState.hpp"
 #include "ISolutionPath.hpp"
 #include <functional>
+#include "utils.hpp"
+#include "pathValidators.hpp"
 
 using namespace pathfinding;
 using namespace cpp_utils;
@@ -316,8 +318,8 @@ SCENARIO("test validator") {
 			graph.idOfVertex(xyLoc{3,0})
 		);
 
-		search::checkPathValid<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(graph, path, [&](graphs::nodeid_t id) { return id; });
-		search::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+		validator::checkPathValid<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(graph, path, [&](graphs::nodeid_t id) { return id; });
+		validator::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 			graph, 
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 			path,
@@ -325,7 +327,7 @@ SCENARIO("test validator") {
 			[&](graphs::nodeid_t v) { return v; }
 		);
 
-		REQUIRE_THROWS(search::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+		REQUIRE_THROWS(validator::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 			graph, 
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{4,0}), 
 			path,
@@ -345,7 +347,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{3,0})
 			);
 
-			search::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			validator::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 				2,
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
@@ -364,7 +366,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{3,0})
 			);
 
-			search::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			validator::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 				2,
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
@@ -383,7 +385,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{3,0})
 			);
 
-			REQUIRE_THROWS(search::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			REQUIRE_THROWS(validator::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 				1.001,
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
@@ -402,7 +404,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{2,0})
 			);
 
-			REQUIRE_THROWS(search::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			REQUIRE_THROWS(validator::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 				2,
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
@@ -421,7 +423,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{3,0})
 			);
 
-			REQUIRE_THROWS(search::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			REQUIRE_THROWS(validator::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 				2,
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
@@ -440,7 +442,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{3,0})
 			);
 
-			REQUIRE_THROWS(search::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
+			REQUIRE_THROWS(validator::checkIfPathSuboptimalityBound<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 				2,
 				graph,
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
