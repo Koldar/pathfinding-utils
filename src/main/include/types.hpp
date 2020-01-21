@@ -3,6 +3,7 @@
 
 //#include <cpp-utils/wrapped_number.hpp>
 #include <cpp-utils/safe_inf_uint.hpp>
+#include <cpp-utils/fractional_number.hpp>
 
 namespace pathfinding {
 
@@ -23,6 +24,13 @@ namespace pathfinding {
      * 
      */
     using cost_t = cpp_utils::safe_inf_uint;
+
+    /**
+     * @brief alias for ::fractional_number<cost_t>
+     * 
+     */
+    using fractional_cost = cpp_utils::fractional_number<cost_t>;
+
     //TODO remove using cost_t = cpp_utils::wrapped_number<u_int64_t, 0x0, 0x0FFFFFFFFFFFFFFF>;
     /**
      * @brief a number representing an id of a state
