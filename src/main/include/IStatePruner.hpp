@@ -25,27 +25,6 @@ namespace pathfinding::search {
     };
 
     /**
-     * @brief nbever prune
-     * 
-     * @tparam STATE the type fo the state involved
-     */
-    template <typename STATE>
-    class NoPruning: public IStatePruner<STATE> {
-    public:
-        virtual bool shouldPrune(const STATE& state) const {
-            return false;
-        }
-    public:
-        virtual void cleanup() {
-            
-        }
-    public:
-        virtual MemoryConsumption getByteMemoryOccupied() const {
-            return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
-        }
-    };
-
-    /**
      * @brief prune the state only if its expanded flag is set to true
      * 
      * @tparam STATE the type of the state involved

@@ -1,12 +1,15 @@
 #ifndef _MOVINGAIGRIDMAPREADER_HEADER__
 #define _MOVINGAIGRIDMAPREADER_HEADER__
 
-#include "IPathFindingMapReader.hpp"
-#include "GridMap.hpp"
 #include <unordered_map>
 #include <fstream>
 #include <iostream>
+
 #include <cpp-utils/mapplus.hpp>
+#include <cpp-utils/ppmImage.hpp>
+
+#include "IPathFindingMapReader.hpp"
+#include "GridMap.hpp"
 
 namespace pathfinding::maps {
 
@@ -29,19 +32,21 @@ private:
      * @endcode
      */
     cpp_utils::MapPlus<char, cost_t> terrainCost;
-private:
-    template <typename... OTHER>
-    MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, OTHER... others) {
-        this->terrainCost[symbol] = cost;
-        return this->addTerrain(others...);
-    }
+    cpp_utils::MapPlus<char, color_t> terrainColor;
 public:
     template <typename... OTHER>
-    MovingAIGridMapReader(OTHER... args): terrainCost{} {
+    MovingAIGridMapReader(OTHER... args): terrainCost{}, terrainColor{} {
         this->addTerrain(args...);
     }
-    MovingAIGridMapReader& addTerrain(char symbol, cost_t cost) {
+    template <typename... OTHER>
+    MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color, OTHER... others) {
         this->terrainCost[symbol] = cost;
+        this->terrainColor[symbol] = color;
+        return this->addTerrain(others...);
+    }
+    MovingAIGridMapReader& addTerrain(char symbol, cost_t cost, color_t color) {
+        this->terrainCost[symbol] = cost;
+        this->terrainColor[symbol] = color;
         return *this;
     }
 
@@ -96,7 +101,9 @@ public:
         return GridMap{
             mapPath.stem().string(),
             cells,
-            width, height, this->terrainCost
+            width, height, 
+            this->terrainCost,
+            this->terrainColor
         };
     }
 };

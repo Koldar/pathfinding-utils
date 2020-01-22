@@ -1,12 +1,13 @@
-#ifndef _ASTAR_HEADER__
-#define _ASTAR_HEADER__
+#ifndef _PATHFINDING_UTILS_WASTAR_HEADER__
+#define _PATHFINDING_UTILS_WASTAR_HEADER__
+
+#include <cmath>
 
 #include <cpp-utils/StaticPriorityQueue.hpp>
 #include <cpp-utils/log.hpp>
 #include <cpp-utils/listeners.hpp>
 #include <cpp-utils/imemory.hpp>
 #include <cpp-utils/commons.hpp>
-#include <cpp-utils/profiling.hpp>
 
 #include "IHeuristic.hpp"
 #include "ISearchAlgorithm.hpp"
@@ -14,6 +15,7 @@
 #include "IStatePruner.hpp"
 #include "IStateSupplier.hpp"
 #include "IGoalChecker.hpp"
+#include "AStar.hpp"
 #include "AstarListener.hpp"
 
 namespace pathfinding::search {
@@ -21,43 +23,46 @@ namespace pathfinding::search {
     using namespace cpp_utils;
 
     /**
-     * @brief an impementation of A*
+     * @brief an impementation of WA*
      * 
      * The class has been inspired by Daniel Harabor implementation.
      * 
-     * This A* star algorithm is perfect in the following case:
+     * This WA* star algorithm is perfect in the following case:
      *  - the heuristic is consistent (no need for close list);
      *  - the goal can be represented by a single state (goal known apriori): for example
      *      in single agent pathfinding this is ensured while in classical planning this is not.
      * 
-     * A* implementation that allows arbitrary combinations of 
+     * WA* implementation that allows arbitrary combinations of 
      * (weighted) heuristic functions and node expansion policies.
-     * This implementation uses a binary heap for the open_ list
-     * and a bit array for the closed_ list (under the form of `expanded` flag in ::IState)
+     * This implementation uses a binary heap for the open_list
+     * and a bit array for the closed_list (under the form of `expanded` flag in ::IState)
      * 
      * @author: dharabor
      * @created: 21/08/2012
      */
     template <typename STATE, typename... STATE_IMPORTANT_TYPES>
-    class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
+    class NoCloseListSingleGoalWAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
+        using This = NoCloseListSingleGoalWAstar<STATE, STATE_IMPORTANT_TYPES...>;
     public:
-        NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
+        NoCloseListSingleGoalWAstar(double weight, IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
             ISingleListenable<AstarListener<STATE>>{}, 
+            weight{weight},
             heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
             openList{nullptr} {
                 if (!heuristic.isConsistent()) {
                     throw cpp_utils::exceptions::InvalidArgumentException{"the heuristic is not consistent!"};
                 }
                 this->openList = new StaticPriorityQueue<STATE>{openListCapacity, true};
+                getRatioOf(weight, this->nweight, this->dweight, 1e-6, 5);
             }
 
-        virtual ~NoCloseListSingleGoalAstar() {
+        virtual ~NoCloseListSingleGoalWAstar() {
             this->tearDownSearch();
             delete this->openList;
         }
         //the class cannot be copied whatsoever
-        NoCloseListSingleGoalAstar(const NoCloseListSingleGoalAstar& other) = delete;
-        NoCloseListSingleGoalAstar& operator=(const NoCloseListSingleGoalAstar& other) = delete;
+        NoCloseListSingleGoalWAstar(const This& other) = delete;
+        NoCloseListSingleGoalWAstar& operator=(const This& other) = delete;
 
     public:
         virtual MemoryConsumption getByteMemoryOccupied() const {
@@ -75,6 +80,17 @@ namespace pathfinding::search {
                 // MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
         }
     private:
+        double weight;
+        /**
+         * @brief numerator of the fraction representing the weight
+         * 
+         */
+        cost_t nweight;
+        /**
+         * @brief denominator of the fraction representing the weight
+         * 
+         */
+        cost_t dweight;
         IHeuristic<STATE>& heuristic;
         IGoalChecker<STATE>& goalChecker;
         IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander;
@@ -83,14 +99,15 @@ namespace pathfinding::search {
         StaticPriorityQueue<STATE>* openList;
     protected:
         virtual cost_t computeF(cost_t g, cost_t h) const {
-            return g + h;
+            //weight is double. If rounding is applied we need to make sure that the rounding is on the floor,
+            //to ensure the w-admissibility of the algorithm
+            return floor(static_cast<double>(g) + this->weight * static_cast<double>(h));
         }
     public:
         virtual std::string getName() const {
-            return std::string{"A*"};
+            return "WA*";
         }
         virtual void setupSearch(const STATE* start, const STATE* goal) {
-            this->doOnObserver([&](AstarListener<STATE>& l) { l.cleanup();});
             //cleanup before running since at the end we may want to poll information on the other structures
             this->heuristic.cleanup();
             this->expander.cleanup();
@@ -105,7 +122,6 @@ namespace pathfinding::search {
             auto result = new StateSolutionPath<STATE>{};
             const STATE* tmp = &actualGoal;
             while (tmp != nullptr) {
-                info("adding ", *tmp, "to solution!");
                 result->addHead(tmp);
                 tmp = tmp->getParent();
             }
@@ -138,7 +154,7 @@ namespace pathfinding::search {
                 if (this->goalChecker.isGoal(current, expectedGoal)) {
                     info("state ", current, "is a goal!");
                     goal = &current;
-
+                    
                     this->fireEvent([&current](AstarListener<STATE>& l) { l.onSolutionFound(current); });
                     goto goal_found;
                 }
@@ -153,6 +169,7 @@ namespace pathfinding::search {
                     STATE& successor = pair.first;
                     cost_t current_to_successor_cost = pair.second;
 
+                    
                     if (this->pruner.shouldPrune(successor)) {
                         info("child", successor, "of state ", current, "should be pruned!");
                         //skip neighbours already expanded
@@ -184,11 +201,8 @@ namespace pathfinding::search {
                         successor.setF(this->computeF(gval, hval));
                         successor.setParent(&current);
 
-                        this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onNodeGenerated(successor); });
                         info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                         this->openList->push(successor);
-                        
-                        
                     }
                 }
             }
