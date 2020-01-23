@@ -1,7 +1,11 @@
 #ifndef PATHFINDINGUTILS_ASTARLISTENER_HEADER__
 #define PATHFINDINGUTILS_ASTARLISTENER_HEADER__
 
-namespace pathfinding::search {
+#include <cpp-utils/ICleanable.hpp>
+
+namespace pathfinding::search::listeners {
+
+    using namespace cpp_utils;
 
     /**
      * @brief Allows you to further refines the behavior of an A* algorithm

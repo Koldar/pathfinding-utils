@@ -39,10 +39,12 @@ namespace pathfinding::search {
      * @created: 21/08/2012
      */
     template <typename STATE, typename... STATE_IMPORTANT_TYPES>
-    class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
+    class NoCloseListSingleGoalAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<listeners::AstarListener<STATE>> {
+    public:
+        using Listener = listeners::AstarListener<STATE>;
     public:
         NoCloseListSingleGoalAstar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
-            ISingleListenable<AstarListener<STATE>>{}, 
+            ISingleListenable<Listener>{}, 
             heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
             openList{nullptr} {
                 if (!heuristic.isConsistent()) {
@@ -90,7 +92,7 @@ namespace pathfinding::search {
             return std::string{"A*"};
         }
         virtual void setupSearch(const STATE* start, const STATE* goal) {
-            this->doOnObserver([&](AstarListener<STATE>& l) { l.cleanup();});
+            this->doOnObserver([&](Listener& l) { l.cleanup();});
             //cleanup before running since at the end we may want to poll information on the other structures
             this->heuristic.cleanup();
             this->expander.cleanup();
@@ -125,9 +127,9 @@ namespace pathfinding::search {
             STATE* goal = nullptr;
 
             start.setG(0);
-            this->fireEvent([&start](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(start); });
+            this->fireEvent([&start](Listener& l) { l.onStartingComputingHeuristic(start); });
             start.setH(this->heuristic.getHeuristic(start, expectedGoal));
-            this->fireEvent([&start](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(start); });
+            this->fireEvent([&start](Listener& l) { l.onEndingComputingHeuristic(start); });
             start.setF(this->computeF(start.getG(), start.getH()));
 
             this->openList->push(start);
@@ -139,14 +141,14 @@ namespace pathfinding::search {
                     info("state ", current, "is a goal!");
                     goal = &current;
 
-                    this->fireEvent([&current](AstarListener<STATE>& l) { l.onSolutionFound(current); });
+                    this->fireEvent([&current](Listener& l) { l.onSolutionFound(current); });
                     goto goal_found;
                 }
 
                 this->openList->pop();
 
                 current.markAsExpanded();
-                this->fireEvent([&current](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
+                this->fireEvent([&current](Listener& l) { l.onNodeExpanded(current); });
 
                 info("computing successors of state ", current, "...");
                 for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
@@ -176,15 +178,15 @@ namespace pathfinding::search {
                     } else {
                         //state is not present in open list. Add to it
                         cost_t gval = current.getG() + current_to_successor_cost;
-                        this->fireEvent([&successor](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(successor); });
+                        this->fireEvent([&successor](Listener& l) { l.onStartingComputingHeuristic(successor); });
                         cost_t hval = this->heuristic.getHeuristic(successor, expectedGoal);
-                        this->fireEvent([&successor](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(successor); });
+                        this->fireEvent([&successor](Listener& l) { l.onEndingComputingHeuristic(successor); });
                         successor.setG(gval);
                         successor.setH(hval);
                         successor.setF(this->computeF(gval, hval));
                         successor.setParent(&current);
 
-                        this->fireEvent([&current, &successor](AstarListener<STATE>& l) {l.onNodeGenerated(successor); });
+                        this->fireEvent([&current, &successor](Listener& l) {l.onNodeGenerated(successor); });
                         info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                         this->openList->push(successor);
                         
