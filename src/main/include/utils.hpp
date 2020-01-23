@@ -13,6 +13,8 @@
 #include "GridMap.hpp"
 #include "GridMapImage.hpp"
 #include "DijkstraSearchAlgorithm.hpp"
+#include "NodePath.hpp"
+#include "statevisited_e.hpp"
 
 
 namespace pathfinding::utils {
@@ -21,6 +23,24 @@ namespace pathfinding::utils {
     using namespace cpp_utils::graphs;
     using namespace pathfinding::maps;
     using namespace pathfinding::search;
+
+	/**
+	 * @brief generate a path from a search state
+	 * 
+	 * @tparam implementation of a ISearchState
+	 * @param mapper function converting state into a node over a graph
+	 * @return NodePath 
+	 */
+	template <typename STATE>
+	NodePath getNodePath(const STATE& state, const function_t<STATE, nodeid_t>& mapper) {
+		NodePath result{};
+		auto tmp = &state;
+		while (tmp != nullptr) {
+			result.add(mapper(*tmp));
+			tmp = tmp->getParent();
+		}
+		return result;
+	}
 
     /**
      * @brief get the optimal path over a graph in a simplistic way as **a sequence of vertices**
@@ -116,7 +136,7 @@ namespace pathfinding::utils {
     }
 
     /**
-	 * @brief Create a Grid Map Perturbated Map object
+	 * @brief Alters an image (assumed to be a GridMapImage) to add all the perturbations present in `perturbatedGraph`
 	 * 
 	 * @tparam G 
 	 * @tparam V 
@@ -126,11 +146,13 @@ namespace pathfinding::utils {
 	 * @param perturbatedGraph 
 	 * @param worseEdgeColor 
 	 * @param betterEdgeColor 
-	 * @return GridMapImage& 
+	 * @return GridMapImage& the @c image altered
 	 */
 	template <typename G, typename V, typename E>
-	GridMapImage* createGridMapPerturbatedMap(const GridMap& gridMap, const IImmutableGraph<G, V, cost_t>& baseMapGraph, const IImmutableGraph<G, V, E>& perturbatedGraph, color_t worseEdgeColor, color_t betterEdgeColor, const std::function<cost_t(const E&)>& costFunction) {
-		auto image = const_cast<GridMapImage*>(gridMap.getPPM());
+	PPMImage& addPerturbationsOnMap(PPMImage& image, const IPathFindingMap& map, const IImmutableGraph<G, V, cost_t>& baseMapGraph, const IImmutableGraph<G, V, E>& perturbatedGraph, color_t worseEdgeColor, color_t betterEdgeColor, const std::function<cost_t(const E&)>& costFunction) {
+		GridMapImage& gridMapImage = static_cast<GridMapImage&>(image);
+		const GridMap& gridMap = static_cast<const GridMap&>(map);
+		
 		for (auto it=perturbatedGraph.beginEdges(); it!=perturbatedGraph.endEdges(); ++it) {
 			if (!it->getPayload().isPerturbated()) {
 				continue;
@@ -162,13 +184,69 @@ namespace pathfinding::utils {
 				//cost has decreased
 				perturbatedColor = betterEdgeColor;
 			}
-			image->setPixelInGrid(source.x, source.y, pixel1x, pixel1y, perturbatedColor); 
-			image->setPixelInGrid(sink.x, sink.y, pixel2x, pixel2y, perturbatedColor);
+			gridMapImage.setPixelInGrid(source.x, source.y, pixel1x, pixel1y, perturbatedColor); 
+			gridMapImage.setPixelInGrid(sink.x, sink.y, pixel2x, pixel2y, perturbatedColor);
 		}
 
-		return image;
+		return gridMapImage;
 	}
 
+	template <typename G, typename V, typename E>
+	PPMImage& addExpandedNodesInImage(PPMImage& image, const IPathFindingMap& map, const IImmutableGraph<G,V,E>& graph, const function_t<V, statevisited_e>& mapper, const color_t& unvisitedColor, const color_t& expandedColor, const color_t& generatedColor) {
+		GridMapImage& gridMapImage = static_cast<GridMapImage&>(image);
+		const GridMap& gridMap = static_cast<const GridMap&>(map);
+
+		//now add to the map the expanded nodes
+		for (auto it=graph.beginVertices(); it!=graph.endVertices(); ++it) {
+			auto data = mapper(it->second);
+			if (data == statevisited_e::UNVISITED) {
+				//do nothing;
+			} else if (data == statevisited_e::GENERATED) {
+				gridMapImage.lerpGridCellColor(it->second, generatedColor); 
+			} else if (data == statevisited_e::EXPANDED) {
+				gridMapImage.lerpGridCellColor(it->second, expandedColor);
+			} else {
+				throw cpp_utils::exceptions::makeInvalidArgumentException(data);
+			}
+		}
+
+		return gridMapImage;
+	}
+
+	/**
+	 * @brief add 
+	 * 
+	 * @tparam G 
+	 * @tparam V 
+	 * @tparam E 
+	 * @param image 
+	 * @param map 
+	 * @param graph 
+	 * @param path 
+	 * @param path 
+	 * @param start 
+	 * @param goal 
+	 * @return PPMImage& 
+	 */
+	template <typename G, typename V, typename E>
+	PPMImage& addPathInImage(PPMImage& image, const IPathFindingMap& map, const IImmutableGraph<G,V,E>& graph, const NodePath& path, const color_t& pathColor, const color_t& startColor, const color_t& goalColor) {
+		GridMapImage& gridMapImage = static_cast<GridMapImage&>(image);
+		const GridMap& gridMap = static_cast<const GridMap&>(map);
+
+		color_t c{};
+		for (int i=0; i<path.size(); ++i) {
+			if (i == 0) {
+				c = startColor;
+			} else if (i == path.size()) {
+				c = goalColor;
+			} else {
+				c = pathColor;
+			}
+			xyLoc loc = graph.getVertex(path.at(i));
+			gridMapImage.lerpGridCellColor(loc, c);
+		}
+		return gridMapImage;
+	}
 }
 
 #endif
