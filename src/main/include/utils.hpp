@@ -191,20 +191,40 @@ namespace pathfinding::utils {
 		return gridMapImage;
 	}
 
-	template <typename G, typename V, typename E>
-	PPMImage& addExpandedNodesInImage(PPMImage& image, const IPathFindingMap& map, const IImmutableGraph<G,V,E>& graph, const function_t<V, statevisited_e>& mapper, const color_t& unvisitedColor, const color_t& expandedColor, const color_t& generatedColor) {
+	/**
+	 * @brief update the @c image by coloring the states which have been expanded/generated
+	 * 
+	 * @tparam G1 type of the payload of the graph representig the map where we're searching
+	 * @tparam V1 type of the payload of eachv vertex representig the map where we're searching
+	 * @tparam E1 type of the payload of each edge representig the map where we're searching
+	 * @tparam G2 type of the payload of the graph representig the map storing the state of each node
+	 * @tparam V2 type of the payload of each vertex representig the map storing the state of each node
+	 * @tparam E2 type of the payload of each edge representig the map storing the state of each node
+	 * @param image the image to update
+	 * @param map the actual map where we are searching
+	 * @param graphMap the repersentation of the graph where we are searching
+	 * @param stateGraph the graph we use to fetch the state of each vertex
+	 * @param mapper function converting V2 into states
+	 * @param unvisitedColor color to use to color the vertex we haven't even visited
+	 * @param expandedColor color to use to colro the vertices we have expanded at least once
+	 * @param generatedColor color to use to colro the vertices we have generated but not expanded
+	 * @return PPMImage& the updated image
+	 */
+	template <typename G1, typename V1, typename E1, typename G2, typename V2, typename E2>
+	PPMImage& addExpandedNodesInImage(PPMImage& image, const IPathFindingMap& map, const IImmutableGraph<G1,V1,E1>& graphMap, const IImmutableGraph<G2,V2,E2>& stateGraph, const function_t<V2, statevisited_e>& mapper, const color_t& unvisitedColor, const color_t& expandedColor, const color_t& generatedColor) {
 		GridMapImage& gridMapImage = static_cast<GridMapImage&>(image);
 		const GridMap& gridMap = static_cast<const GridMap&>(map);
 
 		//now add to the map the expanded nodes
-		for (auto it=graph.beginVertices(); it!=graph.endVertices(); ++it) {
+		for (auto it=stateGraph.beginVertices(); it!=stateGraph.endVertices(); ++it) {
 			auto data = mapper(it->second);
+			xyLoc loc = graphMap.getVertex(it->first);
 			if (data == statevisited_e::UNVISITED) {
 				//do nothing;
 			} else if (data == statevisited_e::GENERATED) {
-				gridMapImage.lerpGridCellColor(it->second, generatedColor); 
+				gridMapImage.lerpGridCellColor(loc, generatedColor); 
 			} else if (data == statevisited_e::EXPANDED) {
-				gridMapImage.lerpGridCellColor(it->second, expandedColor);
+				gridMapImage.lerpGridCellColor(loc, expandedColor);
 			} else {
 				throw cpp_utils::exceptions::makeInvalidArgumentException(data);
 			}

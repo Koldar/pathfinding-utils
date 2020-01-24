@@ -16,11 +16,12 @@ namespace pathfinding {
      * a node path contains all the vertices where the agent was located.
      * Hence if the agent does not move, the nodepath will have size 1. If the agent moves one time, the path will have size 2 and so on.
      */
-    class NodePath : public AbstractPath<nodeid_t>, vectorplus<nodeid_t> {
+    class NodePath : public AbstractPath<nodeid_t>, public vectorplus<nodeid_t> {
     public:
         using This = NodePath;
         using Super1 = AbstractPath<nodeid_t>;
         using Super2 = vectorplus<nodeid_t>;
+        using vectorplus<nodeid_t>::add;
     public:
         explicit NodePath(): Super1{}, Super2{} {
 
