@@ -123,13 +123,13 @@ namespace pathfinding::search {
                 info("starting A*! start = ", start, "goal = ", "none");
             }
             
-
+            int aStarIteration = 0;
             STATE* goal = nullptr;
 
             start.setG(0);
-            this->fireEvent([&start](Listener& l) { l.onStartingComputingHeuristic(start); });
+            this->fireEvent([&start, aStarIteration](Listener& l) { l.onStartingComputingHeuristic(aStarIteration, start); });
             start.setH(this->heuristic.getHeuristic(start, expectedGoal));
-            this->fireEvent([&start](Listener& l) { l.onEndingComputingHeuristic(start); });
+            this->fireEvent([&start, aStarIteration](Listener& l) { l.onEndingComputingHeuristic(aStarIteration, start); });
             start.setF(this->computeF(start.getG(), start.getH()));
 
             this->openList->push(start);
@@ -141,14 +141,14 @@ namespace pathfinding::search {
                     info("state ", current, "is a goal!");
                     goal = &current;
 
-                    this->fireEvent([&current](Listener& l) { l.onSolutionFound(current); });
+                    this->fireEvent([&current, aStarIteration](Listener& l) { l.onSolutionFound(aStarIteration, current); });
                     goto goal_found;
                 }
 
                 this->openList->pop();
 
                 current.markAsExpanded();
-                this->fireEvent([&current](Listener& l) { l.onNodeExpanded(current); });
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onNodeExpanded(aStarIteration,current); });
 
                 info("computing successors of state ", current, "...");
                 for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
@@ -178,21 +178,23 @@ namespace pathfinding::search {
                     } else {
                         //state is not present in open list. Add to it
                         cost_t gval = current.getG() + current_to_successor_cost;
-                        this->fireEvent([&successor](Listener& l) { l.onStartingComputingHeuristic(successor); });
+                        this->fireEvent([&successor, aStarIteration](Listener& l) { l.onStartingComputingHeuristic(aStarIteration, successor); });
                         cost_t hval = this->heuristic.getHeuristic(successor, expectedGoal);
-                        this->fireEvent([&successor](Listener& l) { l.onEndingComputingHeuristic(successor); });
+                        this->fireEvent([&successor, aStarIteration](Listener& l) { l.onEndingComputingHeuristic(aStarIteration, successor); });
                         successor.setG(gval);
                         successor.setH(hval);
                         successor.setF(this->computeF(gval, hval));
                         successor.setParent(&current);
 
-                        this->fireEvent([&current, &successor](Listener& l) {l.onNodeGenerated(successor); });
+                        this->fireEvent([&current, &successor, aStarIteration](Listener& l) {l.onNodeGenerated(aStarIteration, successor); });
                         info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                         this->openList->push(successor);
                         
                         
                     }
                 }
+
+                aStarIteration += 1;
             }
             info("found no solutions!");
             throw SolutionNotFoundException{};

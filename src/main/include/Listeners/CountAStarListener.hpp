@@ -35,19 +35,19 @@ namespace pathfinding::search::listeners {
         This& operator=(const This& o) = default;
         This& operator=(This&& o) = default;
     public:
-        virtual void onNodeExpanded(const STATE& s) {
+        virtual void onNodeExpanded(int iteration, const STATE& s) {
             this->updateNodeExpanded();
         }
-        virtual void onNodeGenerated(const STATE& s) {
+        virtual void onNodeGenerated(int iteration, const STATE& s) {
             this->updateNodeGenerated();
         }
-        virtual void onStartingComputingHeuristic(const STATE& s) {
+        virtual void onStartingComputingHeuristic(int iteration, const STATE& s) {
             this->startHeuristicTimer();
         }
-        virtual void onEndingComputingHeuristic(const STATE& s) {
+        virtual void onEndingComputingHeuristic(int iteration, const STATE& s) {
             this->stopHeuristicTimer();
         }
-        virtual void onSolutionFound(const STATE& s) {
+        virtual void onSolutionFound(int iteration, const STATE& s) {
 
         }
     public:

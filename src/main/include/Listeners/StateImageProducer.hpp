@@ -2,27 +2,29 @@
 #define _PATHFINDINGUTILS_STATEIMAGEPRODUCER_HEADER__
 
 #include "utils.hpp"
+#include "IPathFindingMap.hpp"
 
 namespace pathfinding::search::listeners {
 
     using namespace pathfinding;
+    using namespace pathfinding::maps;
 
     /**
      * @brief a class which generate an image every time a node is expanded
      * 
      */
-    template <typename G, typename V, typename IMAGETYPE>
-    class StateImageProducer: public StateTracker<G, E> {
+    template <typename G, typename V, typename EORIGINAL, typename EPERTURBATED, typename MAPTYPE, typename IMAGETYPE>
+    class StateImageProducer: public StateTracker<G, V, EPERTURBATED> {
     public:
-        using This = StateImageProducer<G,V,E>;
-        using Super = StateTracker<G,E>;
+        using This = StateImageProducer<G, V, EORIGINAL, EPERTURBATED, MAPTYPE, IMAGETYPE>;
+        using Super = StateTracker<G, V, EPERTURBATED>;
     private:
-        const IPathFindingMap& map;
-        const IImmutableGraph<G,V,E>& perturbatedGraph;
-        const function_t<E,cost_t>& costFunction;
+        const MAPTYPE& map;
+        const IImmutableGraph<G,V,EORIGINAL>& originalGraph;
+        const IImmutableGraph<G,V,EPERTURBATED>& perturbatedGraph;
+        const function_t<EPERTURBATED,cost_t>& costFunction;
     public:
-        template <typename EORIGINAL, typename EPERTURBATED>
-        StateImageProducer(const ImmutableGraph<G,V,E>& originalGraph, const IImmutableGraph<G, V, E>& perturbatedGraph, const IPathFindingMap& map, const function_t<E,cost_t>& costFunction): Super{perturbatedGraph}, map{map}, costFunction{costFunction} {
+        StateImageProducer(const IImmutableGraph<G,V,EORIGINAL>& originalGraph, const IImmutableGraph<G, V, EPERTURBATED>& perturbatedGraph, const MAPTYPE& map, const function_t<EPERTURBATED,cost_t>& costFunction): Super{perturbatedGraph}, originalGraph{originalGraph}, perturbatedGraph{perturbatedGraph}, map{map}, costFunction{costFunction} {
 
         }
         virtual ~StateImageProducer() {
@@ -33,47 +35,50 @@ namespace pathfinding::search::listeners {
         This& operator=(const This& o) = default;
         This& operator=(This&& o) = default;
     public:
-        IMAGETYPE* drawMap(const sta) const {
-            IMAGETYPE* image = map->getPPM();
+        IMAGETYPE* drawMap() const {
+            critical("drawing image!");
+            IMAGETYPE* image = map.getPPM();
 
-            autofunction_t<statevisited_e> identity = [&](const statevisited_e& a) { return a; };
-            *image = utils::addExpandedNodesInImage(
-                *image,
-                map,
-                Super::states,
-                identity,
+            if (!image->isValid()) {
+                throw cpp_utils::exceptions::makeImpossibleException("image is not valid!");
+            }
+
+            static function_t<VertexInfo<V>, statevisited_e> mapper = [&](const VertexInfo<V>& v) { return v.state; };
+            utils::addExpandedNodesInImage(
+                *image, map, 
+                this->perturbatedGraph, this->perturbatedGraphState,
+                mapper,
                 color_t::BLACK,
                 color_t::YELLOW.scale(0.4),
                 color_t::YELLOW.scale(0.6)
             );
 
             //draw the grid and the perturbations on it
-            costFunction_t<PerturbatedCost> costFunction = [&] (const PerturbatedCost& p) { return p.getCost();};
-            *image = addPerturbationsOnMap(
+            utils::addPerturbationsOnMap(
                 *image,
                 map,
-                originalMap, 
-                perturbatedGraph, 
+                this->originalGraph, 
+                this->perturbatedGraph, 
                 color_t::RED, 
                 color_t::BLUE, 
-                costFunction
+                this->costFunction
             );
             
             //add path
-            *image = addPathInImage(
+            utils::addPathInImage(
                 *image,
                 map,
-                graph,
-                Super2::solution,
+                this->perturbatedGraph,
+                Super::currentSolution,
                 color_t::YELLOW.scale(0.8),
                 color_t::YELLOW.scale(0.8),
                 color_t::YELLOW.scale(0.8)
-            )
+            );
             
-            image->saveBMP("./query1");
-            delete image;
+            critical("end drawing image!");
+            return image;
         }
-    }
+    };
 
 }
 

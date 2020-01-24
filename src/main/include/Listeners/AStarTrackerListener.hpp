@@ -20,14 +20,13 @@ namespace pathfinding::search::listeners {
      * 
      * @tparam STATE type of the A* state
      */
-    template <typename G, typename E, typename STATE>
-    class AstarTrackerListener: public AstarListener<STATE>, public StateCounter, public StateTracker<G, E> {
+    template <typename G, typename V, typename E, typename STATE>
+    class AstarTrackerListener: public AstarListener<STATE>, public StateCounter, public StateTracker<G, V, E> {
     public:
-        using This = AstarTrackerListener<G, E, STATE>;
+        using This = AstarTrackerListener<G, V, E, STATE>;
         using Super1 = StateCounter;
-        using Super2 = StateTracker<G, E>;
+        using Super2 = StateTracker<G, V, E>;
     public:
-        template <typename V>
         AstarTrackerListener(const IImmutableGraph<G,V,E>& originalGraph): Super1{}, Super2{originalGraph} {
         }
         virtual ~AstarTrackerListener() = default;
@@ -36,21 +35,21 @@ namespace pathfinding::search::listeners {
         This& operator =(const This& o) = default;
         This& operator = (This&& o) = default;
     public:
-        virtual void onNodeExpanded(const STATE& s) {
+        virtual void onNodeExpanded(int iteration, const STATE& s) {
             Super1::updateNodeExpanded();
             Super2::updateNodeExpanded(s);
         }
-        virtual void onNodeGenerated(const STATE& s) {
+        virtual void onNodeGenerated(int iteration, const STATE& s) {
             Super1::updateNodeGenerated();
             Super2::updateNodeGenerated(s);
         }
-        virtual void onStartingComputingHeuristic(const STATE& s) {
+        virtual void onStartingComputingHeuristic(int iteration, const STATE& s) {
             Super1::startHeuristicTimer();
         }
-        virtual void onEndingComputingHeuristic(const STATE& s) {
+        virtual void onEndingComputingHeuristic(int iteration, const STATE& s) {
             Super1::stopHeuristicTimer();
         }
-        virtual void onSolutionFound(const STATE& s) {
+        virtual void onSolutionFound(int iteration, const STATE& s) {
             static function_t<STATE, nodeid_t> mapper = [&](auto s) { return s.getPosition();};
             Super2::updateSolution(s, mapper);
         }
