@@ -7,7 +7,6 @@
 
 #include <cpp-utils/listGraph.hpp>
 #include <cpp-utils/vectorplus.hpp>
-#include <cpp-utils/IImageable.hpp>
 
 #include "types.hpp"
 #include "IPathFindingMap.hpp"
@@ -34,7 +33,7 @@ namespace pathfinding::maps {
      * 
      * @tparam BRANCHING a GridMapBranching representing how the underlying graph is structured
      */
-    class GridMap: public IPathFindingMap, public IImageable {
+    class GridMap: public IPathFindingMap {
     private:
         /**
          * @brief name of the map
@@ -104,8 +103,7 @@ namespace pathfinding::maps {
         cost_t getCellCost(xyLoc loc) const;
         bool isTraversable(xyLoc loc) const;
     public:
-        //TODO the method should rfeturn a modificable image since some times we want to change it!
-        const GridMapImage* getPPM() const;
+        GridMapImage* getPPM() const;
     public:
         virtual const std::string& getName() const;
         virtual size_t getSize() const;
