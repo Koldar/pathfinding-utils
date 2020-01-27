@@ -114,9 +114,8 @@ namespace pathfinding::utils {
             throw cpp_utils::exceptions::FileOpeningException{path};
         }
          
-        AdjacentGraph<G,V,E>* result = new AdjacentGraph<G, V, E>{
-            *originalGraph.mapEdges(mapper)
-        };
+		auto resultTmp = std::unique_ptr<IImmutableGraph<G,V,E>>{originalGraph.mapEdges(mapper)};
+        AdjacentGraph<G,V,E>* result = new AdjacentGraph<G, V, E>{*resultTmp};
 
         FILE* f = fopen(path.native().c_str(), "rb");
         SetPlus<Edge<E>> perturbatedEdges{};
