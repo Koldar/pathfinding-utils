@@ -54,7 +54,7 @@ namespace pathfinding::search::listeners {
          * 
          * @param outputName output name of the vide
          */
-        void buildVideo(const boost::filesystem::path& outputName) const {
+        void buildVideo(const boost::filesystem::path& outputName) {
             this->videoBuilder.buildVideo(outputName);
         }
         /**
@@ -63,7 +63,7 @@ namespace pathfinding::search::listeners {
          * @param outputName output name fo the video
          * @param audio audio to add to the video
          */
-        void buildVideo(const boost::filesystem::path& outputName, const boost::filesystem::path& audio) const {
+        void buildVideo(const boost::filesystem::path& outputName, const boost::filesystem::path& audio) {
             this->videoBuilder
                 .setAudio(audio)
                 .buildVideo(outputName);
