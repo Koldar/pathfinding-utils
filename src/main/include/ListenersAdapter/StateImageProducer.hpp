@@ -38,7 +38,7 @@ namespace pathfinding::search::listeners {
         This& operator=(This&& o) = default;
     public:
         IMAGETYPE* drawMap() const {
-            critical("drawing image!");
+            debug("drawing image!");
             IMAGETYPE* image = map.getPPM();
 
             if (!image->isValid()) {
@@ -77,7 +77,7 @@ namespace pathfinding::search::listeners {
                 color_t::YELLOW.scale(0.8)
             );
             
-            critical("end drawing image!");
+            debug("end drawing image!");
             return image;
         }
     };

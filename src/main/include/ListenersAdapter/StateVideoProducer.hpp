@@ -47,6 +47,10 @@ namespace pathfinding::search::listeners {
          * @param image the frame to add
          */
         void addImage(const boost::filesystem::path& image) {
+            debug("handling ", image);
+            auto tmp = Super::drawMap();
+            tmp->saveJPEG(image);
+            delete tmp;
             this->videoBuilder.addImage(image);
         }
         /**
