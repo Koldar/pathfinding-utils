@@ -38,44 +38,45 @@ namespace pathfinding::search {
      * It's a better version of GraphlessState, however suince it contains the reference of the graph, it is harder to instantiate
      * 
      */
-    template <typename G, typename V, typename E = cost_t>
-    class GraphState: public AbstractGraphState<V> {
-        typedef GraphState<G,V,E> GraphStateInstance;
+    template <typename G, typename V, typename E, typename REASON>
+    class GraphState: public AbstractGraphState<REASON, V> {
+        using This = GraphState<G, V, E, REASON>;
+        using Super = AbstractGraphState<REASON, V>;
     public:
-        using AbstractGraphState<V>::getPayload;
+        using Super::getPayload;
     protected:
         /**
          * @brief the graph where the state will be located
          */
         const cpp_utils::graphs::IImmutableGraph<G, V, E>& graph;
     public:
-        GraphState(stateid_t id, const IImmutableGraph<G, V, E>& graph, nodeid_t position): AbstractGraphState<V>{id, position}, graph{graph} {
+        GraphState(stateid_t id, const IImmutableGraph<G, V, E>& graph, nodeid_t position, const REASON& reason): Super{id, position, reason}, graph{graph} {
 
         }
 
-        GraphState(const GraphStateInstance& other): AbstractGraphState<V>{other}, graph{other.graph} {
+        GraphState(const This& other): Super{other}, graph{other.graph} {
         }
-        GraphStateInstance& operator =(const GraphStateInstance& other) {
+        This& operator =(const This& other) {
             assert(this->graph == other.graph);
-            AbstractGraphState<V>::operator =(other);
+            Super::operator =(other);
             this->graph = other.graph;
             return *this;
         }
-        GraphState(GraphStateInstance&& other): AbstractGraphState<V>{::std::move(other)}, graph{other.graph} {
+        GraphState(This&& other): Super{::std::move(other)}, graph{other.graph} {
         }
-        GraphStateInstance& operator =(GraphStateInstance&& other) {
+        This& operator =(This&& other) {
             assert(this->graph == other.graph);
-            AbstractGraphState<V>::operator =(::std::move(other));
+            Super::operator =(::std::move(other));
             this->graph = other.graph;
             return *this;
         }
 
-        GraphStateInstance* getParent() {
-            return static_cast<GraphStateInstance*>(this->parent); 
+        This* getParent() {
+            return static_cast<This*>(this->parent); 
         }
 
-        const GraphStateInstance* getParent() const {
-            return static_cast<const GraphStateInstance*>(this->parent); 
+        const This* getParent() const {
+            return static_cast<const This*>(this->parent); 
         }
         
         /**
@@ -91,7 +92,7 @@ namespace pathfinding::search {
             return this->graph;
         }
     public:
-        friend std::ostream& operator <<(std::ostream& out, const GraphStateInstance& state) {
+        friend std::ostream& operator <<(std::ostream& out, const This& state) {
             out 
                 << "{id: " 
                 << state.getId() 
@@ -112,17 +113,18 @@ namespace pathfinding::search {
      * @tparam G payload type pf the map
      * @tparam V payload type of each vertex in the graph
      */
-    template <typename G, typename V, typename E = cost_t>
-    class GraphStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E> {
-        typedef GraphStateSupplier<G, V, E> GraphStateSupplierInstance;
-        typedef AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E> Super;
+    template <typename G, typename V, typename E = cost_t, typename REASON>
+    class GraphStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E, REASON>, G, V, E, REASON> {
+        using State = GraphState<G, V, E, REASON>;
+        using This = GraphStateSupplier<G, V, E>;
+        using Super = AbstractSimpleWeightedDirectedGraphStateSupplier<State, G, V, E, REASON>;
     protected:
-        virtual stateid_t generateStateId(nodeid_t location) {
+        virtual stateid_t generateStateId(nodeid_t location, const REASON& reason) {
             return location;
         }
 
-        virtual GraphState<G, V, E> generateNewInstance(stateid_t id, nodeid_t location) {
-            return GraphState<G, V, E>{id, this->graph, location};
+        virtual State generateNewInstance(stateid_t id, nodeid_t location, const REASON& reason) {
+            return State{id, this->graph, location, reason};
         }
     public:
         /**
@@ -133,19 +135,19 @@ namespace pathfinding::search {
         GraphStateSupplier(const IImmutableGraph<G, V, E>& graph): Super{graph} {
             debug("GraphStateSupplier called");
         }
-        GraphStateSupplier(const GraphStateSupplierInstance& other) = delete;
-        GraphStateSupplier(GraphStateSupplierInstance&& other): Super{::std::move(other)} {
-            debug("GraphStateSupplierInstance MOVED");
+        GraphStateSupplier(const This& other) = delete;
+        GraphStateSupplier(This&& other): Super{::std::move(other)} {
+            debug("This MOVED");
         }
         virtual ~GraphStateSupplier() {
             debug("GraphStateSupplier destroyed!");
         }
-        GraphStateSupplierInstance& operator =(GraphStateSupplierInstance&& other) {
-            AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E>, G, V, E>::operator=(::std::move(other));
-            debug("GraphStateSupplierInstance MOVED");
+        This& operator =(This&& other) {
+            Super::operator=(::std::move(other));
+            debug("This MOVED");
             return *this;
         }
-        GraphStateSupplierInstance& operator =(const GraphStateSupplierInstance& other) = delete;
+        This& operator =(const This& other) = delete;
     };
 
 

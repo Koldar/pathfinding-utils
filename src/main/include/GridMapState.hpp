@@ -24,37 +24,42 @@ namespace pathfinding::search {
      * In this state there is only x and y coordinates
      * 
      */
-    using GridMapState = GraphlessState<xyLoc>;
+    template <typename REASON>
+    using GridMapState = GraphlessState<xyLoc, REASON>;
 
-    template <typename G>
-    class GridMapStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t> {
+    template <typename G, typename REASON>
+    class GridMapStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState<REASON>, G, xyLoc, cost_t, REASON> {
+    public:
+        using State = GridMapState<REASON>;
+        using This = GridMapStateSupplier<G, REASON>;
+        using Super = AbstractSimpleWeightedDirectedGraphStateSupplier<State, G, xyLoc, cost_t, REASON>;
     protected:
-        virtual stateid_t generateStateId(nodeid_t location) {
+        virtual stateid_t generateStateId(nodeid_t location, const REASON& reason) {
             return location;
         }
 
-        virtual GridMapState generateNewInstance(stateid_t id, nodeid_t location) {
-            return GridMapState{id, location, this->graph.getVertex(location)};
+        virtual State generateNewInstance(stateid_t id, nodeid_t location, const REASON& reason) {
+            return State{id, location, this->graph.getVertex(location), reason};
         }
     public:
-        GridMapStateSupplier(const IImmutableGraph<G, xyLoc, cost_t>& graph): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{graph} {
+        GridMapStateSupplier(const IImmutableGraph<G, xyLoc, cost_t>& graph): Super{graph} {
 
         }
-        GridMapStateSupplier(const GridMapStateSupplier<G>& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{other} {
+        GridMapStateSupplier(const This& other): Super{other} {
 
         }
-        GridMapStateSupplier(const GridMapStateSupplier<G>&& other): AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>{::std::move(other)} {
+        GridMapStateSupplier(const This&& other): Super{::std::move(other)} {
             
         }
         virtual ~GridMapStateSupplier() {
 
         }
-        GridMapStateSupplier& operator =(const GridMapStateSupplier<G>& other) {
-            AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>::operator=(other);
+        This& operator =(const This& other) {
+            Super::operator=(other);
             return *this;
         }
-        GridMapStateSupplier& operator =(GridMapStateSupplier<G>&& other) {
-            AbstractSimpleWeightedDirectedGraphStateSupplier<GridMapState, G, xyLoc, cost_t>::operator=(other);
+        This& operator =(This&& other) {
+            Super::operator=(other);
             return *this;
         }
     };
@@ -72,7 +77,11 @@ namespace pathfinding::search {
      * @tparam V paylaod of each single vertex
      */
     template <typename G>
-    class SimpleGridMapStateExpander: public IStateExpander<GridMapState, nodeid_t> {
+    class SimpleGridMapStateExpander: public IStateExpander<GridMapState<bool>, nodeid_t> {
+    public:
+        using State = GridMapState<bool>;
+        using This = SimpleGridMapStateExpander<G>;
+        using Super = IStateExpander<State, nodeid_t>;
     private:
         const cpp_utils::graphs::IImmutableGraph<G, xyLoc, cost_t>& graph;
     public:
@@ -82,35 +91,35 @@ namespace pathfinding::search {
         virtual ~SimpleGridMapStateExpander() {
 
         }
-        SimpleGridMapStateExpander(const SimpleGridMapStateExpander<G>& other) : graph{other.graph} {
+        SimpleGridMapStateExpander(const This& other) : graph{other.graph} {
 
         }
-        SimpleGridMapStateExpander<G>& operator =(const SimpleGridMapStateExpander<G>& other) {
+        This& operator =(const This& other) {
             this->graph = other.graph;
             return *this;
         }
-        SimpleGridMapStateExpander(SimpleGridMapStateExpander<G>&& other): graph{other.graph} {
+        SimpleGridMapStateExpander(This&& other): graph{other.graph} {
 
         }
-        SimpleGridMapStateExpander<G>& operator =(SimpleGridMapStateExpander<G>&& other) {
+        This& operator =(This&& other) {
             this->graph = other.graph;
             return *this;
         }
     public:
-        virtual cpp_utils::vectorplus<std::pair<GridMapState&, cost_t>> getSuccessors(const GridMapState& state, IStateSupplier<GridMapState, nodeid_t>& supplier) {
-            cpp_utils::vectorplus<std::pair<GridMapState&, cost_t>> result{};
+        virtual cpp_utils::vectorplus<std::pair<State&, cost_t>> getSuccessors(const State& state, IStateSupplier<State, nodeid_t, bool>& supplier) {
+            cpp_utils::vectorplus<std::pair<State&, cost_t>> result{};
             for (auto outEdge : graph.getOutEdges(state.getId())) {
                 fine("an outedge ", outEdge, " of ", state, "(", &state, ") goes to", outEdge.getSinkId(), "edge payload of", outEdge.getPayload());
-                result.add(std::pair<GridMapState&, cost_t>{
-                    supplier.getState(outEdge.getSinkId()),
+                result.add(std::pair<State&, cost_t>{
+                    supplier.getState(outEdge.getSinkId(), true),
                     outEdge.getPayload()
                 });
             }
             return result;
         }
-        virtual std::pair<GridMapState&, cost_t> getSuccessor(const GridMapState& state, int successorNumber, IStateSupplier<GridMapState, nodeid_t>& supplier) {
+        virtual std::pair<State&, cost_t> getSuccessor(const State& state, int successorNumber, IStateSupplier<State, nodeid_t, bool>& supplier) {
             auto outEdge = this->graph.getOutEdge(state.getId(), static_cast<moveid_t>(successorNumber));
-            return std::pair<GridMapState&, cost_t>{supplier.getState(outEdge.getSinkId()), outEdge.getPayload()};
+            return std::pair<State&, cost_t>{supplier.getState(outEdge.getSinkId(), true), outEdge.getPayload()};
         }
     public:
         virtual void cleanup() {
@@ -122,9 +131,11 @@ namespace pathfinding::search {
         }
     };
 
-    class SAPFGridMapGoalChecker: public IGoalChecker<GridMapState> {
+    class SAPFGridMapGoalChecker: public IGoalChecker<GridMapState<bool>> {
     public:
-        virtual bool isGoal(const GridMapState& state, const GridMapState* goal) const {
+        using State = GridMapState<bool>;
+    public:
+        virtual bool isGoal(const State& state, const State* goal) const {
             return state.getPosition() == goal->getPosition();
         }
     public:

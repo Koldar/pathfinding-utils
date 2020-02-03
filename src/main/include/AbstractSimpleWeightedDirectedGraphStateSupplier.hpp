@@ -18,9 +18,9 @@ namespace pathfinding::search {
      * @tparam V paylaod type of each vertex
      * @tparam STATE_OTHER_IMPORTANT_TYPES additional types necessary (along the nodeid_t) to generate a new state
      */
-    template <typename STATE, typename G, typename V, typename E, typename... STATE_OTHER_IMPORTANT_TYPES>
-    class AbstractSimpleWeightedDirectedGraphStateSupplier: public IStateSupplier<STATE, nodeid_t, STATE_OTHER_IMPORTANT_TYPES...> {
-        typedef AbstractSimpleWeightedDirectedGraphStateSupplier<STATE,G, V, E, STATE_OTHER_IMPORTANT_TYPES...> AbstractSimpleWeightedDirectedGraphStateSupplierInstance;
+    template <typename STATE, typename G, typename V, typename E, typename REASON, typename... STATE_OTHER_IMPORTANT_TYPES>
+    class AbstractSimpleWeightedDirectedGraphStateSupplier: public IStateSupplier<STATE, nodeid_t, REASON, STATE_OTHER_IMPORTANT_TYPES...> {
+        using This =  AbstractSimpleWeightedDirectedGraphStateSupplier<STATE,G, V, E, STATE_OTHER_IMPORTANT_TYPES...>;
     protected:
         /**
          * @brief heap memory where the states are concretely saved
@@ -54,12 +54,12 @@ namespace pathfinding::search {
             debug("AbstractSimpleWeightedDirectedGraphStateSupplier cleanup called!");
             delete this->statePool;
         }
-        AbstractSimpleWeightedDirectedGraphStateSupplier(const AbstractSimpleWeightedDirectedGraphStateSupplierInstance& other) = delete;
-        AbstractSimpleWeightedDirectedGraphStateSupplier(AbstractSimpleWeightedDirectedGraphStateSupplierInstance&& other) : statePointers{::std::move(other.statePointers)}, statePool{::std::move(other.statePool)}, graph{other.graph} {
+        AbstractSimpleWeightedDirectedGraphStateSupplier(const This& other) = delete;
+        AbstractSimpleWeightedDirectedGraphStateSupplier(This&& other) : statePointers{::std::move(other.statePointers)}, statePool{::std::move(other.statePool)}, graph{other.graph} {
             debug("AbstractSimpleWeightedDirectedGraphStateSupplier MOVED");
         }
-        AbstractSimpleWeightedDirectedGraphStateSupplierInstance& operator = (const AbstractSimpleWeightedDirectedGraphStateSupplierInstance& other) = delete;
-        AbstractSimpleWeightedDirectedGraphStateSupplierInstance& operator = (AbstractSimpleWeightedDirectedGraphStateSupplierInstance&& other) {
+        This& operator = (const This& other) = delete;
+        This& operator = (This&& other) {
             debug("AbstractSimpleWeightedDirectedGraphStateSupplier MOVED");
             this->statePointers = ::std::move(other.statePointers);
             this->statePool = other.statePool;
@@ -76,15 +76,15 @@ namespace pathfinding::search {
          * @param location location of the state to generate
          * @return stateid_t the stateid_t this newly generated state will have
          */
-        virtual stateid_t generateStateId(nodeid_t location, STATE_OTHER_IMPORTANT_TYPES... args) = 0;
+        virtual stateid_t generateStateId(nodeid_t location, const REASON& reason, const STATE_OTHER_IMPORTANT_TYPES&... args) = 0;
 
-        virtual STATE generateNewInstance(stateid_t id, nodeid_t location, STATE_OTHER_IMPORTANT_TYPES... args) = 0;
+        virtual STATE generateNewInstance(stateid_t id, nodeid_t location, const REASON& reason, const STATE_OTHER_IMPORTANT_TYPES&... args) = 0;
     public:
-        virtual STATE& getState(nodeid_t location, STATE_OTHER_IMPORTANT_TYPES... args) {
+        virtual STATE& getState(const nodeid_t& location, const REASON& reason, const STATE_OTHER_IMPORTANT_TYPES&... args) {
             finest("location is ", location);
             //let's check if we have the requested timestamp in fromTimestampToLocationMap
             if (this->statePointers[location] == nullptr) {
-                stateid_t newId = this->generateStateId(location, args...);
+                stateid_t newId = this->generateStateId(location, reason, args...);
                 this->statePointers[location] = new (this->statePool->allocate()) STATE{generateNewInstance(newId, location, args...)};
             }
             return *this->statePointers[location];

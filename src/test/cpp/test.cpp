@@ -67,17 +67,17 @@ SCENARIO("test GraphState") {
 		}
 
 		WHEN("GrapState with default") {
-			search::GraphState<std::string, xyLoc> state{0, graph, 0};
+			search::GraphState<std::string,  xyLoc, cost_t> state{0, graph, 0};
 			search::GraphStateSupplier<std::string, xyLoc, cost_t> supplier{graph}; 
-			search::StandardStateExpander<search::GraphState<std::string, xyLoc>, std::string, xyLoc, cost_t> expander{graph};
-			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc>> goalChecker{};
+			search::StandardStateExpander<search::GraphState<std::string,  xyLoc, cost_t>, std::string, xyLoc, cost_t> expander{graph};
+			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, cost_t>, cost_t> goalChecker{};
 			REQUIRE(state.getId() == 0);
 		}
 
 		WHEN("GrapState with other") {
 			search::GraphState<std::string, xyLoc, OtherCost> state{0, graph2, 0};
 			search::GraphStateSupplier<std::string, xyLoc, OtherCost> supplier{graph2}; 
-			search::StandardStateExpander<search::GraphState<std::string, xyLoc>, std::string, xyLoc, OtherCost, OtherCost::getCost> expander{graph2};
+			search::StandardStateExpander<search::GraphState<std::string,  xyLoc, cost_t>, std::string, xyLoc, OtherCost, OtherCost::getCost> expander{graph2};
 			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, OtherCost>> goalChecker{};
 			REQUIRE(state.getId() == 0);
 		}

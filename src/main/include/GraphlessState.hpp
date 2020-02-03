@@ -38,9 +38,10 @@ namespace pathfinding::search {
      * This state contains the value of the vertex payload it intend to represents
      * 
      */
-    template <typename V>
-    class GraphlessState: public AbstractGraphState<V> {
-        typedef GraphlessState<V> GraphlessStateInstance;
+    template <typename V, typename REASON>
+    class GraphlessState: public AbstractGraphState<REASON, V> {
+        using This = GraphlessState<V, REASON>;
+        using Super = AbstractGraphState<REASON, V>;
     protected:
         /**
          * @brief reference of paylaod of the node it intends to mimic
@@ -48,32 +49,32 @@ namespace pathfinding::search {
          */
         V payload;
     public:
-        GraphlessState(stateid_t id, nodeid_t position, const V& payload): AbstractGraphState<V>{id, position}, payload{payload} {
+        GraphlessState(stateid_t id, nodeid_t position, const V& payload): Super{id, position}, payload{payload} {
 
         }
-        GraphlessState(const GraphlessStateInstance& other): AbstractGraphState<V>{other}, payload{other.payload} {
+        GraphlessState(const This& other): Super{other}, payload{other.payload} {
         }
-        GraphlessStateInstance& operator =(const GraphlessStateInstance& other) {
-            AbstractGraphState<V>::operator=(other);
+        This& operator =(const This& other) {
+            Super::operator=(other);
             this->payload = other.payload;
             return *this;
         }
-        GraphlessState(GraphlessStateInstance&& other): AbstractGraphState<V>{::std::move(other)}, payload{::std::move(other.payload)} {
+        GraphlessState(This&& other): Super{::std::move(other)}, payload{::std::move(other.payload)} {
         }
-        GraphlessStateInstance& operator =(GraphlessStateInstance&& other) {
-            AbstractGraphState<V>::operator=(other);
+        This& operator =(This&& other) {
+            Super::operator=(other);
             this->payload = ::std::move(other.payload);
             return *this;
         }
 
         virtual void setParent(ISearchState* parent) {
-            this->parent = static_cast<GraphlessState*>(parent);
+            this->parent = static_cast<This*>(parent);
         }
-        virtual GraphlessState* getParent() {
-            return static_cast<GraphlessState*>(this->parent);
+        virtual This* getParent() {
+            return static_cast<This*>(this->parent);
         }
-        virtual const GraphlessState* getParent() const {
-            return static_cast<const GraphlessState*>(this->parent);
+        virtual const This* getParent() const {
+            return static_cast<const This*>(this->parent);
         }
 
 
