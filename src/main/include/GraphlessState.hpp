@@ -49,6 +49,9 @@ namespace pathfinding::search {
          */
         V payload;
     public:
+        GraphlessState(stateid_t id, nodeid_t position, const V& payload, const REASON& reason): Super{id, position, reason}, payload{payload} {
+
+        }
         GraphlessState(stateid_t id, nodeid_t position, const V& payload): Super{id, position}, payload{payload} {
 
         }
@@ -67,7 +70,7 @@ namespace pathfinding::search {
             return *this;
         }
 
-        virtual void setParent(ISearchState* parent) {
+        virtual void setParent(ISearchState<REASON>* parent) {
             this->parent = static_cast<This*>(parent);
         }
         virtual This* getParent() {

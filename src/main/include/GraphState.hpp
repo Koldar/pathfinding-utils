@@ -113,10 +113,10 @@ namespace pathfinding::search {
      * @tparam G payload type pf the map
      * @tparam V payload type of each vertex in the graph
      */
-    template <typename G, typename V, typename E = cost_t, typename REASON>
+    template <typename G, typename V, typename E, typename REASON>
     class GraphStateSupplier: public AbstractSimpleWeightedDirectedGraphStateSupplier<GraphState<G, V, E, REASON>, G, V, E, REASON> {
         using State = GraphState<G, V, E, REASON>;
-        using This = GraphStateSupplier<G, V, E>;
+        using This = GraphStateSupplier<G, V, E, REASON>;
         using Super = AbstractSimpleWeightedDirectedGraphStateSupplier<State, G, V, E, REASON>;
     protected:
         virtual stateid_t generateStateId(nodeid_t location, const REASON& reason) {

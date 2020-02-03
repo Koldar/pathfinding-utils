@@ -20,9 +20,12 @@ namespace pathfinding::search {
  * ```
  * 
  */
-class OctileHeuristic : public IHeuristic<GridMapState> {
+class OctileHeuristic : public IHeuristic<GridMapState<bool>> {
 public:
-    using IHeuristic<GridMapState>::getHeuristic;
+    using State = GridMapState<bool>;
+    using This = OctileHeuristic;
+    using Super = IHeuristic<State>;
+    using Super::getHeuristic;
     using IMemorable::getByteMemoryOccupied;
 private:
     const pathfinding::maps::GridBranching branching;
@@ -47,7 +50,7 @@ public:
         }
     }
 public:
-    virtual cost_t getHeuristic(const GridMapState& current, const GridMapState* goal) {
+    virtual cost_t getHeuristic(const State& current, const State* goal) {
         xyLoc distance = current.getFirstData().getDistance(goal->getFirstData());
         auto minC = distance.getMinCoordinate();
         auto maxC = distance.getMaxCoordinate();
