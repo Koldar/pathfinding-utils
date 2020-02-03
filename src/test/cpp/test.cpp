@@ -42,50 +42,6 @@ struct OtherCost {
 	}
 };
 
-
-SCENARIO("test GraphState") {
-
-	maps::MovingAIGridMapReader reader{
-		'.', cost_t{1000}, color_t::WHITE,
-		'T', cost_t{1500}, color_t::GREEN,
-		'@', cost_t::INFTY, color_t::BLACK
-	};
-
-	GIVEN("traversable map") {
-
-		maps::GridMap map{reader.load(boost::filesystem::path{"./square03.map"})};
-		maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
-		graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
-		graphs::ListGraph<std::string, xyLoc, OtherCost> graph2{*graph.mapEdges<OtherCost>([&] (const cost_t& c) { return OtherCost{c, false};})};
-
-		WHEN("GrapState with cost_t") {
-			search::GraphState<std::string, xyLoc, cost_t> state{0, graph, 0};
-			search::GraphStateSupplier<std::string, xyLoc, cost_t> supplier{graph}; 
-			search::StandardStateExpander<search::GraphState<std::string, xyLoc, cost_t>, std::string, xyLoc, cost_t> expander{graph};
-			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, cost_t>> goalChecker{};
-			REQUIRE(state.getId() == 0);
-		}
-
-		WHEN("GrapState with default") {
-			search::GraphState<std::string,  xyLoc, cost_t> state{0, graph, 0};
-			search::GraphStateSupplier<std::string, xyLoc, cost_t> supplier{graph}; 
-			search::StandardStateExpander<search::GraphState<std::string,  xyLoc, cost_t>, std::string, xyLoc, cost_t> expander{graph};
-			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, cost_t>, cost_t> goalChecker{};
-			REQUIRE(state.getId() == 0);
-		}
-
-		WHEN("GrapState with other") {
-			search::GraphState<std::string, xyLoc, OtherCost> state{0, graph2, 0};
-			search::GraphStateSupplier<std::string, xyLoc, OtherCost> supplier{graph2}; 
-			search::StandardStateExpander<search::GraphState<std::string,  xyLoc, cost_t>, std::string, xyLoc, OtherCost, OtherCost::getCost> expander{graph2};
-			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, OtherCost>> goalChecker{};
-			REQUIRE(state.getId() == 0);
-		}
-		
-	}
-
-}
-
 SCENARIO("test xyLoc") {
 
     GIVEN("testing locations") {
@@ -259,28 +215,28 @@ SCENARIO("test octile") {
 
     search::OctileHeuristic h{maps::GridBranching::EIGHT_CONNECTED};
 
-	REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{0,0}}, search::GridMapState{0, 0, xyLoc{0, 1}}) == 1L);
-	REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{0,1}}, search::GridMapState{0, 0, xyLoc{0, 1}}) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 10}}) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 0}}) == 10L);
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{0, 10}}) == 10L);
+	REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{0,0}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 1}, false}) == 1L);
+	REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{0,1}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 1}, false}) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{10, 10}, false}) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{10, 0}, false}) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 10}, false}) == 10L);
     
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 130}}) == (20L + 42L));
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{100,100}, false}, search::GridMapState<bool>{0, 0, xyLoc{150, 130}, false}) == (20L + 42L));
 
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 170}}) == (20L + 70L));
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{100,100}}, search::GridMapState<bool>{0, 0, xyLoc{150, 170}}) == (20L + 70L));
 }
 
 SCENARIO("test manhattan") {
 
-    search::ManhattanHeuristic h{maps::GridBranching::FOUR_CONNECTED};
+    search::ManhattanHeuristic<bool> h{maps::GridBranching::FOUR_CONNECTED};
 
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 10}}) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{10, 0}}) == 10L);
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{10,10}}, search::GridMapState{0, 0, xyLoc{0, 10}}) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{10, 10}, false}) == 0L);
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{10, 0}, false}) == 10L);
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 10}, false}) == 10L);
     
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 130}}) == (50L + 30L));
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{100,100}, false}, search::GridMapState<bool>{0, 0, xyLoc{150, 130}, false}) == (50L + 30L));
 
-    REQUIRE(h.getHeuristic(search::GridMapState{0, 0, xyLoc{100,100}}, search::GridMapState{0, 0, xyLoc{150, 170}}) == (50L + 70L));
+    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{100,100}, false}, search::GridMapState<bool>{0, 0, xyLoc{150, 170}, false}) == (50L + 70L));
 }
 
 
