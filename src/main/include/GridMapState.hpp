@@ -77,7 +77,7 @@ namespace pathfinding::search {
      * @tparam V paylaod of each single vertex
      */
     template <typename G>
-    class SimpleGridMapStateExpander: public IStateExpander<GridMapState<bool>, nodeid_t> {
+    class SimpleGridMapStateExpander: public IStateExpander<GridMapState<bool>, nodeid_t, bool> {
     public:
         using State = GridMapState<bool>;
         using This = SimpleGridMapStateExpander<G>;

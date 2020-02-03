@@ -25,23 +25,6 @@
 using namespace pathfinding;
 using namespace cpp_utils;
 
-struct OtherCost {
-	cost_t cost;
-	bool isDirty;
-
-	static cost_t getCost(const OtherCost& c) {
-		return c.cost;
-	}
-
-	friend bool operator ==(const OtherCost& a, const OtherCost& b) {
-		return a.cost == b.cost && a.isDirty == b.isDirty;
-	}
-	friend std::ostream& operator <<(std::ostream& ss, const OtherCost& a) {
-		ss << "{" << a.cost  <<", " << a.isDirty << "}";
-		return ss;
-	}
-};
-
 SCENARIO("test xyLoc") {
 
     GIVEN("testing locations") {

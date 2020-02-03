@@ -20,7 +20,7 @@ namespace pathfinding::search {
      */
     template <typename STATE, typename G, typename V, typename E, typename REASON, typename... STATE_OTHER_IMPORTANT_TYPES>
     class AbstractSimpleWeightedDirectedGraphStateSupplier: public IStateSupplier<STATE, nodeid_t, REASON, STATE_OTHER_IMPORTANT_TYPES...> {
-        using This =  AbstractSimpleWeightedDirectedGraphStateSupplier<STATE,G, V, E, STATE_OTHER_IMPORTANT_TYPES...>;
+        using This =  AbstractSimpleWeightedDirectedGraphStateSupplier<STATE,G, V, E, REASON, STATE_OTHER_IMPORTANT_TYPES...>;
     protected:
         /**
          * @brief heap memory where the states are concretely saved
@@ -85,9 +85,12 @@ namespace pathfinding::search {
             //let's check if we have the requested timestamp in fromTimestampToLocationMap
             if (this->statePointers[location] == nullptr) {
                 stateid_t newId = this->generateStateId(location, reason, args...);
-                this->statePointers[location] = new (this->statePool->allocate()) STATE{generateNewInstance(newId, location, args...)};
+                this->statePointers[location] = new (this->statePool->allocate()) STATE{generateNewInstance(newId, location, reason, args...)};
             }
             return *this->statePointers[location];
+        }
+        STATE& getState(const nodeid_t& location, const STATE_OTHER_IMPORTANT_TYPES&... args) {
+            return this->getState(location, REASON{}, args...);
         }
     public:
         virtual void cleanup() {
