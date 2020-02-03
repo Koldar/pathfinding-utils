@@ -104,7 +104,7 @@ namespace pathfinding::search {
          * @param id the id of the state to generate
          * @param position the position where the state is in the A* graph
          */
-        AbstractGraphState(stateid_t id, nodeid_t position): f{0}, g{0}, h{0}, parent{nullptr}, id{id}, expanded{false}, position{position}, priority{0}, reason{} {
+        AbstractGraphState(stateid_t id, nodeid_t position): f{0}, g{0}, h{0}, parent{nullptr}, id{id}, expanded{false}, position{position}, priority{0}, reason{REASON::getFirst()} {
 
         }
 

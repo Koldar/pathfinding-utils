@@ -76,10 +76,9 @@ namespace pathfinding::search {
      * @tparam G paylaod of the whole graph
      * @tparam V paylaod of each single vertex
      */
-    template <typename G>
-    class SimpleGridMapStateExpander: public IStateExpander<GridMapState<bool>, nodeid_t, bool> {
+    template <typename STATE, typename G>
+    class SimpleGridMapStateExpander: public IStateExpander<STATE, nodeid_t, bool> {
     public:
-        using State = GridMapState<bool>;
         using This = SimpleGridMapStateExpander<G>;
         using Super = IStateExpander<State, nodeid_t>;
     private:
@@ -106,7 +105,7 @@ namespace pathfinding::search {
             return *this;
         }
     public:
-        virtual cpp_utils::vectorplus<std::pair<State&, cost_t>> getSuccessors(const State& state, IStateSupplier<State, nodeid_t, bool>& supplier) {
+        virtual cpp_utils::vectorplus<std::pair<STATE&, cost_t>> getSuccessors(const STATE& state, IStateSupplier<STATE, nodeid_t, bool>& supplier) {
             cpp_utils::vectorplus<std::pair<State&, cost_t>> result{};
             for (auto outEdge : graph.getOutEdges(state.getId())) {
                 fine("an outedge ", outEdge, " of ", state, "(", &state, ") goes to", outEdge.getSinkId(), "edge payload of", outEdge.getPayload());
@@ -120,23 +119,6 @@ namespace pathfinding::search {
         virtual std::pair<State&, cost_t> getSuccessor(const State& state, int successorNumber, IStateSupplier<State, nodeid_t, bool>& supplier) {
             auto outEdge = this->graph.getOutEdge(state.getId(), static_cast<moveid_t>(successorNumber));
             return std::pair<State&, cost_t>{supplier.getState(outEdge.getSinkId(), true), outEdge.getPayload()};
-        }
-    public:
-        virtual void cleanup() {
-
-        }
-    public:
-        virtual MemoryConsumption getByteMemoryOccupied() const {
-            return MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
-        }
-    };
-
-    class SAPFGridMapGoalChecker: public IGoalChecker<GridMapState<bool>> {
-    public:
-        using State = GridMapState<bool>;
-    public:
-        virtual bool isGoal(const State& state, const State* goal) const {
-            return state.getPosition() == goal->getPosition();
         }
     public:
         virtual void cleanup() {

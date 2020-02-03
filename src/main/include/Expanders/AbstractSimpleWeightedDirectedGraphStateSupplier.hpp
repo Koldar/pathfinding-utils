@@ -90,7 +90,7 @@ namespace pathfinding::search {
             return *this->statePointers[location];
         }
         STATE& getState(const nodeid_t& location, const STATE_OTHER_IMPORTANT_TYPES&... args) {
-            return this->getState(location, REASON{}, args...);
+            return this->getState(location, REASON::getFirst(), args...);
         }
     public:
         virtual void cleanup() {

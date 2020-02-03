@@ -2,6 +2,7 @@
 #define _PATHFINDINGUTILS_PATHVALIDATORS_HEADER__
 
 #include <cpp-utils/igraph.hpp>
+#include <cpp-utils/functional.hpp>
 
 #include "ISolutionPath.hpp"
 #include "DijkstraSearchAlgorithm.hpp"
@@ -25,7 +26,7 @@ namespace pathfinding::validator {
      * @param path 
      */
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkPathValid(const IImmutableGraph<G, V, E>& graph, const ISolutionPath<STATE, CONST_REF>& path, std::function<nodeid_t(CONST_REF)> mapper) {
+    void checkPathValid(const IImmutableGraph<G, V, E>& graph, const ISolutionPath<STATE, CONST_REF>& path, cpp_utils::function_t<STATE,nodeid_t> mapper) {
 
         nodeid_t previous;
         for (int i=0; i<path.size(); ++i) {
@@ -87,7 +88,7 @@ namespace pathfinding::validator {
      * @return false otherwise
      */
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& costFunction, const std::function<nodeid_t(STATE)>& mapper) {
+    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<STATE, nodeid_t>& mapper) {
         auto realActualPath = actualPath.map(mapper);
 
         checkPathValid<G, V, E>(
@@ -107,7 +108,7 @@ namespace pathfinding::validator {
     }
 
     template <typename G, typename V, typename E, typename STATE, typename CONST_REF>
-    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const std::function<cost_t(const E&)>& costFunction, const std::function<nodeid_t(STATE)>& mapper) {
+    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<STATE, nodeid_t>& mapper) {
         
         auto realActualPath = actualPath.map(mapper);
 

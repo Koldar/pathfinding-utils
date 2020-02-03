@@ -5,6 +5,8 @@
 #include "OctileHeuristic.hpp"
 #include "ALTHeuristic.hpp"
 
+#include "map_base_reason_e.hpp"
+
 #include "IPathFindingMapReader.hpp"
 #include "GridMap.hpp"
 #include "GridMapGraphConverter.hpp"
@@ -47,17 +49,17 @@ SCENARIO("test search algorithms") {
 
 	GIVEN("testing A*") {
 		//h computer
-		search::OctileHeuristic heuristic{maps::GridBranching::EIGHT_CONNECTED};
+		search::OctileHeuristic<search::GridMapState<map_base_reason_e>> heuristic{maps::GridBranching::EIGHT_CONNECTED};
 		//goal checker
-		search::SAPFGridMapGoalChecker goalChecker{};
+		search::SAPFGridMapGoalChecker<search::GridMapState<map_base_reason_e>> goalChecker{};
 		//state generator
-		search::GridMapStateSupplier<std::string, bool> supplier{graph};
+		search::GridMapStateSupplier<std::string, map_base_reason_e> supplier{graph};
 		//successor generator
 		search::SimpleGridMapStateExpander<std::string> expander{graph};
 		//pruner
-		search::PruneIfExpanded<search::GridMapState<bool>> pruner{};
+		search::PruneIfExpanded<search::GridMapState<map_base_reason_e>> pruner{};
 		//meta heuristic search
-		search::NoCloseListSingleGoalAstar<search::GridMapState<bool>, graphs::nodeid_t, bool> searchAlgorithm{
+		search::NoCloseListSingleGoalAstar<search::GridMapState<map_base_reason_e>, graphs::nodeid_t, map_base_reason_e> searchAlgorithm{
 			heuristic, 
 			goalChecker, 
 			supplier, 
@@ -69,8 +71,8 @@ SCENARIO("test search algorithms") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,0};
 
-			search::GridMapState<bool>& start = supplier.getState(graph.idOfVertex(startLoc), false);
-			search::GridMapState<bool>& goal = supplier.getState(graph.idOfVertex(goalLoc), false);
+			search::GridMapState<map_base_reason_e>& start = supplier.getState(graph.idOfVertex(startLoc), false);
+			search::GridMapState<map_base_reason_e>& goal = supplier.getState(graph.idOfVertex(goalLoc), false);
 			auto solution{searchAlgorithm.search(start, goal, false)};
 			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
 			REQUIRE(solution->getCost() == 0);
@@ -210,17 +212,17 @@ SCENARIO("test ALT") {
 		);
 
 		//h computer
-		search::ALTHeuristic<search::GridMapState<bool>, std::string, xyLoc> heuristic{graph, landmarkDatabase};
+		search::ALTHeuristic<search::GridMapState<map_base_reason_e>, std::string, xyLoc> heuristic{graph, landmarkDatabase};
 		//goal checker
 		search::SAPFGridMapGoalChecker goalChecker{};
 		//state generator
-		search::GridMapStateSupplier<std::string, bool> supplier{graph};
+		search::GridMapStateSupplier<std::string, map_base_reason_e> supplier{graph};
 		//successor generator
 		search::SimpleGridMapStateExpander<std::string> expander{graph};
 		//pruner
-		search::PruneIfExpanded<search::GridMapState<bool>> pruner{};
+		search::PruneIfExpanded<search::GridMapState<map_base_reason_e>> pruner{};
 		//meta heuristic search
-		search::NoCloseListSingleGoalAstar<search::GridMapState<bool>, graphs::nodeid_t, bool> searchAlgorithm{
+		search::NoCloseListSingleGoalAstar<search::GridMapState<map_base_reason_e>, graphs::nodeid_t, map_base_reason_e> searchAlgorithm{
 			heuristic, 
 			goalChecker, 
 			supplier, 

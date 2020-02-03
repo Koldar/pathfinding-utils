@@ -7,6 +7,7 @@
 #include "OtherCost.hpp"
 #include "StandardStateExpander.hpp"
 #include "StandardLocationGoalChecker.hpp"
+#include "map_base_reason_e.hpp"
 
 using namespace pathfinding;
 using namespace pathfinding::search;
@@ -14,7 +15,7 @@ using namespace pathfinding::maps;
 
 SCENARIO("test GraphState") {
 
-	using TestState = search::GraphState<std::string, xyLoc, cost_t, bool>;
+	using TestState = search::GraphState<std::string, xyLoc, cost_t, map_base_reason_e>;
 
 	maps::MovingAIGridMapReader reader{
 		'.', cost_t{1000}, color_t::WHITE,
@@ -33,26 +34,26 @@ SCENARIO("test GraphState") {
         const cpp_utils::function_t<OtherCost,cost_t> fromOtherCostToCost = [&](auto c) { return c.cost;};
 
 		WHEN("GrapState with cost_t") {
-			TestState state{0, graph, 0, false};
-			search::GraphStateSupplier<std::string, xyLoc, cost_t, bool> supplier{graph}; 
-			search::StandardStateExpander<TestState, std::string, xyLoc, cost_t, bool> expander{graph, fromCostToCost};
+			TestState state{0, graph, 0, map_base_reason_e::INPUT};
+			search::GraphStateSupplier<std::string, xyLoc, cost_t, map_base_reason_e> supplier{graph}; 
+			search::StandardStateExpander<TestState, std::string, xyLoc, cost_t, map_base_reason_e> expander{graph, fromCostToCost};
 			search::StandardLocationGoalChecker<TestState> goalChecker{};
 			REQUIRE(state.getId() == 0);
 		}
 
 		WHEN("GrapState with default") {
-			TestState state{0, graph, 0, false};
-			search::GraphStateSupplier<std::string, xyLoc, cost_t, bool> supplier{graph}; 
-			search::StandardStateExpander<TestState, std::string, xyLoc, cost_t, bool> expander{graph, fromCostToCost};
+			TestState state{0, graph, 0, map_base_reason_e::INPUT};
+			search::GraphStateSupplier<std::string, xyLoc, cost_t, map_base_reason_e> supplier{graph}; 
+			search::StandardStateExpander<TestState, std::string, xyLoc, cost_t, map_base_reason_e> expander{graph, fromCostToCost};
 			search::StandardLocationGoalChecker<TestState> goalChecker{};
 			REQUIRE(state.getId() == 0);
 		}
 
 		WHEN("GrapState with other") {
-			search::GraphState<std::string, xyLoc, OtherCost, bool> state{0, graph2, 0, false};
-			search::GraphStateSupplier<std::string, xyLoc, OtherCost, bool> supplier{graph2}; 
-			search::StandardStateExpander<TestState, std::string, xyLoc, OtherCost, bool> expander{graph2, fromOtherCostToCost};
-			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, OtherCost, bool>> goalChecker{};
+			search::GraphState<std::string, xyLoc, OtherCost, map_base_reason_e> state{0, graph2, 0, map_base_reason_e::INPUT};
+			search::GraphStateSupplier<std::string, xyLoc, OtherCost, map_base_reason_e> supplier{graph2}; 
+			search::StandardStateExpander<TestState, std::string, xyLoc, OtherCost, map_base_reason_e> expander{graph2, fromOtherCostToCost};
+			search::StandardLocationGoalChecker<search::GraphState<std::string, xyLoc, OtherCost, map_base_reason_e>> goalChecker{};
 			REQUIRE(state.getId() == 0);
 		}
 		

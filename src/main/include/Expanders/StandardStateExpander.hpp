@@ -51,7 +51,7 @@ namespace pathfinding::search {
             for (auto outEdge : graph.getOutEdges(state.getPosition())) {
                 fine("an outedge ", outEdge, " of ", state, "(", &state, ") goes to", outEdge.getSinkId(), "edge payload of", outEdge.getPayload());
                 result.add(std::pair<STATE&, cost_t>{
-                    supplier.getState(outEdge.getSinkId(), REASON{}),
+                    supplier.getState(outEdge.getSinkId(), REASON::getFirst()),
                     this->costFunction(outEdge.getPayload())
                 });
             }
@@ -61,10 +61,11 @@ namespace pathfinding::search {
         virtual std::pair<STATE&, cost_t> getSuccessor(const STATE& state, int successorNumber, Supplier& supplier) {
             auto outEdge = this->graph.getOutEdge(state.getPosition(), successorNumber);
             return std::pair<STATE&, cost_t>{
-                supplier.getState(outEdge.getSinkId(), REASON{}),
+                supplier.getState(outEdge.getSinkId(), REASON::getFirst()),
                 this->costFunction(outEdge.getPayload())
             };
         }
+        
     public:
         virtual void cleanup() {
 

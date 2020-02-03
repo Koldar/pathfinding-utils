@@ -194,20 +194,7 @@ SCENARIO("test xyLoc") {
 }
 
 
-SCENARIO("test octile") {
 
-    search::OctileHeuristic h{maps::GridBranching::EIGHT_CONNECTED};
-
-	REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{0,0}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 1}, false}) == 1L);
-	REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{0,1}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 1}, false}) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{10, 10}, false}) == 0L);
-    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{10, 0}, false}) == 10L);
-    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{10,10}, false}, search::GridMapState<bool>{0, 0, xyLoc{0, 10}, false}) == 10L);
-    
-    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{100,100}, false}, search::GridMapState<bool>{0, 0, xyLoc{150, 130}, false}) == (20L + 42L));
-
-    REQUIRE(h.getHeuristic(search::GridMapState<bool>{0, 0, xyLoc{100,100}}, search::GridMapState<bool>{0, 0, xyLoc{150, 170}}) == (20L + 70L));
-}
 
 SCENARIO("test manhattan") {
 
