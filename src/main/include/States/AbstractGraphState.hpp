@@ -145,6 +145,10 @@ namespace pathfinding::search {
             return this->reason;
         }
 
+        void setReason(const REASON& reason) {
+            this->reason = reason;
+        }
+
         virtual std::tuple<const IMPORTANT_STUFF&...> getPayload() const = 0;
     public:
         friend bool operator <(const This& a, const This& b) {

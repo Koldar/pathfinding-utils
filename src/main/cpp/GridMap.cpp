@@ -18,7 +18,7 @@ namespace pathfinding::maps {
     size_t GridMap::computeSize() const {
         return this->cells
             .map<cost_t>([&](char x) {return this->terrainCost.at(x);})
-            .filter([&](cost_t x) { return x.isNotInfinity(); })
+            .select([&](cost_t x) { return x.isNotInfinity(); })
             .size();
     }
     int GridMap::toVectorCoord(xyLoc xy) const {

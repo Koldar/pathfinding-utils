@@ -43,7 +43,7 @@ protected:
      * @param goal goal input by the user
      * @return SolutionPath<STATE> list of state we need to traverse in order to reach the goal from the start state
      */
-    virtual std::unique_ptr<ISolutionPath<STATE_IN_SOLUTION, CONST_REF>> buildSolutionFromGoalFetched(CONST_REF start, CONST_REF actualGoal, const STATE* goal) = 0;
+    virtual std::unique_ptr<ISolutionPath<STATE, STATE_IN_SOLUTION, CONST_REF>> buildSolutionFromGoalFetched(CONST_REF start, CONST_REF actualGoal, const STATE* goal) = 0;
     /**
      * @brief after a search have been completed, this instruction tells how to effectively build the solution cost starting from the goal fetched
      * 
@@ -91,7 +91,7 @@ public:
      * @param start the start state
      * @return STATE& the goal found
      */
-    virtual std::unique_ptr<ISolutionPath<STATE_IN_SOLUTION, CONST_REF>> search(STATE& start, bool performSetup=true, bool performTearDown=true) {
+    virtual std::unique_ptr<ISolutionPath<STATE, STATE_IN_SOLUTION, CONST_REF>> search(STATE& start, bool performSetup=true, bool performTearDown=true) {
         return this->_search(start, nullptr, performSetup, performTearDown);
     }
     /**
@@ -101,7 +101,7 @@ public:
      * @param goal the goal state we want to achieve.
      * @return STATE& the goal found
      */
-    virtual std::unique_ptr<ISolutionPath<STATE_IN_SOLUTION, CONST_REF>> search(STATE& start, const STATE& goal, bool performSetup=true, bool performTearDown=true) {
+    virtual std::unique_ptr<ISolutionPath<STATE, STATE_IN_SOLUTION, CONST_REF>> search(STATE& start, const STATE& goal, bool performSetup=true, bool performTearDown=true) {
         return this->_search(start, &goal,  performSetup, performTearDown);
     }
     virtual cost_t getSolutionCost(STATE& start, bool performSetup=true, bool performTearDown=true) {
@@ -119,7 +119,7 @@ protected:
      * @throws SolutionNotFoundException if a solution cannot be reached
      * @return SolutionPath<STATE> 
      */
-    std::unique_ptr<ISolutionPath<STATE_IN_SOLUTION, CONST_REF>> _search(STATE& start, const STATE* goal, bool performSetup, bool performTearDown) {
+    std::unique_ptr<ISolutionPath<STATE, STATE_IN_SOLUTION, CONST_REF>> _search(STATE& start, const STATE* goal, bool performSetup, bool performTearDown) {
         try {
             if (performSetup) {
                 this->setupSearch(&start, goal);

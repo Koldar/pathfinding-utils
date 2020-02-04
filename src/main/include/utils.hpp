@@ -59,7 +59,7 @@ namespace pathfinding::utils {
     template <typename G, typename V, typename E>
 	NodePath getOptimalPathAsVertices(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, std::function<cost_t(const E&)> mapper) {
 		DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, mapper};
-		std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> path = ::std::move(dijkstra.search(start, goal));
+		std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t, nodeid_t>> path = ::std::move(dijkstra.search(start, goal));
 		NodePath result{*path};
         finer("path is ", *path, path.get());
         finest("done building path with NodePath, which ", result, &result);

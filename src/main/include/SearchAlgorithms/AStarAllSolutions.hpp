@@ -107,7 +107,7 @@ public:
     virtual void tearDownSearch() {
 	}
 protected:
-    virtual std::unique_ptr<ISolutionPath<const STATE*, const STATE&>> buildSolutionFromGoalFetched(const STATE& start, const STATE& actualGoal, const STATE* goal) {
+    virtual std::unique_ptr<ISolutionPath<STATE>> buildSolutionFromGoalFetched(const STATE& start, const STATE& actualGoal, const STATE* goal) {
         auto result = new StateSolutionPath<STATE>{};
         const STATE* tmp = &actualGoal;
         while (tmp != nullptr) {

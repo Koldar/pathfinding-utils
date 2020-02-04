@@ -244,13 +244,14 @@ SCENARIO("test validator") {
 			graph.idOfVertex(xyLoc{3,0})
 		);
 
-		validator::checkPathValid<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(graph, path, [&](graphs::nodeid_t id) { return id; });
+		cpp_utils::function_t<nodeid_t, nodeid_t> idMapper = [&](auto id) {return id;};
+		validator::checkPathValid(graph, path, idMapper);
 		validator::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(
 			graph, 
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 			path,
 			GetCost<cost_t>{},
-			[&](graphs::nodeid_t v) { return v; }
+			idMapper
 		);
 
 		REQUIRE_THROWS(validator::checkIfPathOptimal<std::string, xyLoc, cost_t, graphs::nodeid_t, graphs::nodeid_t>(

@@ -77,7 +77,7 @@ SCENARIO("test search algorithms") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
 			REQUIRE(solution->getCost() == 0);
 		}
 
@@ -87,7 +87,7 @@ SCENARIO("test search algorithms") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
 			REQUIRE(solution->getCost() == 100);
 		}
 
@@ -97,7 +97,7 @@ SCENARIO("test search algorithms") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
 			REQUIRE(solution->getCost() == 141);
 		}
 
@@ -107,7 +107,7 @@ SCENARIO("test search algorithms") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
 			REQUIRE(solution->getCost() == (4*100 + 2*141));
 		}
 
@@ -241,7 +241,7 @@ SCENARIO("test ALT") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc));
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
 			REQUIRE(solution->getCost() == 0);
 		}
 
@@ -251,7 +251,7 @@ SCENARIO("test ALT") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc));
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
 			REQUIRE(solution->getCost() == 100);
 		}
 
@@ -261,7 +261,7 @@ SCENARIO("test ALT") {
 			auto start = supplier.getState(graph.idOfVertex(startLoc));
 			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
 			auto solution{searchAlgorithm.search(start, goal, false)};
-			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
+			REQUIRE(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
 			REQUIRE(solution->getCost() == 141);
 		}
 
@@ -273,9 +273,9 @@ SCENARIO("test ALT") {
 			auto solution{searchAlgorithm.search(start, goal, false)};
 			REQUIRE(solution->getCost() == (4*100 + 2*141));
 			REQUIRE((
-				(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}))
+				(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}))
 				||
-				(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}, xyLoc{1,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}))
+				(solution->map<xyLoc>([&](auto x) {return x.getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}, xyLoc{1,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}))
 			));
 		}
 

@@ -132,7 +132,7 @@ namespace pathfinding::search {
             //no solution found
             throw search::SolutionNotFoundException{};
         }
-        virtual std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> buildSolutionFromGoalFetched(nodeid_t start, nodeid_t actualGoal, const nodeid_t* goal) {
+        virtual std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t, nodeid_t>> buildSolutionFromGoalFetched(nodeid_t start, nodeid_t actualGoal, const nodeid_t* goal) {
             auto result = new GraphSolutionPath<G, V, E>{this->g, costFunction};
 
             nodeid_t tmp = actualGoal;
@@ -151,7 +151,7 @@ namespace pathfinding::search {
         }
     public:
         //we need to specify a goal
-        virtual std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t>> search(nodeid_t start, bool performSetup=true, bool performTearDown=true) {
+        virtual std::unique_ptr<ISolutionPath<nodeid_t, nodeid_t, nodeid_t>> search(nodeid_t start, bool performSetup=true, bool performTearDown=true) {
             throw cpp_utils::exceptions::ImpossibleException{};
         }
 

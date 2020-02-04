@@ -45,6 +45,12 @@ namespace pathfinding::search {
          * @return REASON 
          */
         virtual REASON getReason() const = 0;
+        /**
+         * @brief Set the underlying reason of why we have created this state
+         * 
+         * @param reason the reason to set
+         */
+        virtual void setReason(const REASON& reason) = 0;
     public:
         /**
          * @brief check if the state is the initial state
