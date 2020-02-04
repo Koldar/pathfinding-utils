@@ -14,6 +14,8 @@
 #include "AStar.hpp"
 #include "DijkstraSearchAlgorithm.hpp"
 #include "DifferentHeuristicAdvancePlacingLandmarkStrategy.hpp"
+#include "StandardLocationGoalChecker.hpp"
+#include "StandardStateExpander.hpp"
 
 using namespace pathfinding;
 using namespace pathfinding::search;
@@ -51,11 +53,12 @@ SCENARIO("test search algorithms") {
 		//h computer
 		search::OctileHeuristic<search::GridMapState<map_base_reason_e>> heuristic{maps::GridBranching::EIGHT_CONNECTED};
 		//goal checker
-		search::SAPFGridMapGoalChecker<search::GridMapState<map_base_reason_e>> goalChecker{};
+		search::StandardLocationGoalChecker<search::GridMapState<map_base_reason_e>> goalChecker{};
 		//state generator
 		search::GridMapStateSupplier<std::string, map_base_reason_e> supplier{graph};
 		//successor generator
-		search::SimpleGridMapStateExpander<std::string> expander{graph};
+		cpp_utils::function_t<cost_t, cost_t> costFunction = [&](const cost_t& c) { return c;};
+		search::StandardStateExpander<search::GridMapState<map_base_reason_e>, std::string, xyLoc, cost_t, map_base_reason_e> expander{graph, costFunction};
 		//pruner
 		search::PruneIfExpanded<search::GridMapState<map_base_reason_e>> pruner{};
 		//meta heuristic search
@@ -71,8 +74,8 @@ SCENARIO("test search algorithms") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,0};
 
-			search::GridMapState<map_base_reason_e>& start = supplier.getState(graph.idOfVertex(startLoc), false);
-			search::GridMapState<map_base_reason_e>& goal = supplier.getState(graph.idOfVertex(goalLoc), false);
+			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
+			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
 			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}));
 			REQUIRE(solution->getCost() == 0);
@@ -81,8 +84,8 @@ SCENARIO("test search algorithms") {
 		WHEN("goal is just below start") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{0,1};
-			auto start = supplier.getState(graph.idOfVertex(startLoc));
-			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
+			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
+			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
 			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}));
 			REQUIRE(solution->getCost() == 100);
@@ -91,8 +94,8 @@ SCENARIO("test search algorithms") {
 		WHEN("goal is just diagonally reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{1,1};
-			auto start = supplier.getState(graph.idOfVertex(startLoc));
-			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
+			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
+			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
 			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{1,1}));
 			REQUIRE(solution->getCost() == 141);
@@ -101,8 +104,8 @@ SCENARIO("test search algorithms") {
 		WHEN("goal is far but reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{4,4};
-			auto start = supplier.getState(graph.idOfVertex(startLoc));
-			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
+			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
+			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			auto solution{searchAlgorithm.search(start, goal, false)};
 			REQUIRE(solution->map<xyLoc>([&](auto x) {return x->getFirstData();}) == vectorplus<xyLoc>::make(xyLoc{0,0}, xyLoc{0,1}, xyLoc{0,2}, xyLoc{1,3}, xyLoc{2,4}, xyLoc{3,4}, xyLoc{4,4}));
 			REQUIRE(solution->getCost() == (4*100 + 2*141));
@@ -111,8 +114,8 @@ SCENARIO("test search algorithms") {
 		WHEN("goal is un reachable") {
 			xyLoc startLoc{0,0};
 			xyLoc goalLoc{4,2};
-			auto start = supplier.getState(graph.idOfVertex(startLoc));
-			auto goal = supplier.getState(graph.idOfVertex(goalLoc));
+			auto start = supplier.getState(graph.idOfVertex(startLoc), map_base_reason_e::INPUT);
+			auto goal = supplier.getState(graph.idOfVertex(goalLoc), map_base_reason_e::INPUT);
 			REQUIRE_THROWS(searchAlgorithm.search(start, goal, false));
 		}
 	}
@@ -214,11 +217,12 @@ SCENARIO("test ALT") {
 		//h computer
 		search::ALTHeuristic<search::GridMapState<map_base_reason_e>, std::string, xyLoc> heuristic{graph, landmarkDatabase};
 		//goal checker
-		search::SAPFGridMapGoalChecker goalChecker{};
+		search::StandardLocationGoalChecker<search::GridMapState<map_base_reason_e>> goalChecker{};
 		//state generator
 		search::GridMapStateSupplier<std::string, map_base_reason_e> supplier{graph};
 		//successor generator
-		search::SimpleGridMapStateExpander<std::string> expander{graph};
+		cpp_utils::function_t<cost_t, cost_t> costFunction = [&](const cost_t& c) { return c;};
+		search::StandardStateExpander<search::GridMapState<map_base_reason_e>, std::string, xyLoc, cost_t, map_base_reason_e> expander{graph, costFunction};
 		//pruner
 		search::PruneIfExpanded<search::GridMapState<map_base_reason_e>> pruner{};
 		//meta heuristic search

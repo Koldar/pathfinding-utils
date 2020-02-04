@@ -21,6 +21,7 @@
 namespace pathfinding::search {
 
     using namespace cpp_utils;
+    using namespace pathfinding::search::listeners;
 
 /**
  * @brief an impementation of A* which find all the optimal solutions there are in a problem
@@ -43,10 +44,11 @@ namespace pathfinding::search {
 template <typename STATE, typename... STATE_IMPORTANT_TYPES>
 class AStarAllSolutions: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
 public:
-    typedef AStarAllSolutions<STATE, STATE_IMPORTANT_TYPES...> This;
+    using This = AStarAllSolutions<STATE, STATE_IMPORTANT_TYPES...>;
+    using Listener = AstarListener<STATE>;
 public:
     AStarAllSolutions(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
-		ISingleListenable<AstarListener<STATE>>{}, 
+		ISingleListenable<Listener>{}, 
         heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
         openList{nullptr} {
             if (!heuristic.isConsistent()) {
@@ -94,7 +96,7 @@ public:
         return std::string{"A* all solutions"};
     }
     virtual void setupSearch(const STATE* start, const STATE* goal) {
-        this->doOnObserver([&](AstarListener<STATE>& l) { l.cleanup();});
+        this->doOnObserver([&](Listener& l) { l.cleanup();});
 		//cleanup before running since at the end we may want to poll information on the other structures
         this->heuristic.cleanup();
         this->expander.cleanup();
@@ -130,9 +132,9 @@ protected:
         cost_t optimalSolutionCost = 0;
 
         start.setG(0);
-        this->fireEvent([&start, aStarIteration](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(aStarIteration, start); });
+        this->fireEvent([&start, aStarIteration](Listener& l) { l.onStartingComputingHeuristic(aStarIteration, start); });
         start.setH(this->heuristic.getHeuristic(start, expectedGoal));
-        this->fireEvent([&start, aStarIteration](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(aStarIteration, start); });
+        this->fireEvent([&start, aStarIteration](Listener& l) { l.onEndingComputingHeuristic(aStarIteration, start); });
         start.setF(this->computeF(start.getG(), start.getH()));
 
         this->openList->push(start);
@@ -148,14 +150,14 @@ protected:
                 current.markAsExpanded();
                 optimalSolutionCost = current.getF();
 
-                this->fireEvent([&current, aStarIteration](AstarListener<STATE>& l) { l.onSolutionFound(aStarIteration, current); });
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onSolutionFound(aStarIteration, current); });
                 continue;
             }
 
             this->openList->pop();
 
             current.markAsExpanded();
-            this->fireEvent([&current, aStarIteration](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
+            this->fireEvent([&current, aStarIteration](Listener& l) { l.onNodeExpanded(aStarIteration, current); });
 
             // if a goal has already been found, we prune away all the states which have f greater than the oe we have found
             if ((goal != nullptr) && (current.getF() > optimalSolutionCost)) {
@@ -223,15 +225,15 @@ protected:
                 } else {
                     //state is not present in open list. Add to it
                     cost_t gval = current.getG() + current_to_successor_cost;
-                    this->fireEvent([&successor, aStarIteration](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(aStarIteration, successor); });
+                    this->fireEvent([&successor, aStarIteration](Listener& l) { l.onStartingComputingHeuristic(aStarIteration, successor); });
                     cost_t hval = this->heuristic.getHeuristic(successor, expectedGoal);
-                    this->fireEvent([&successor, aStarIteration](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(aStarIteration, successor); });
+                    this->fireEvent([&successor, aStarIteration](Listener& l) { l.onEndingComputingHeuristic(aStarIteration, successor); });
                     successor.setG(gval);
                     successor.setH(hval);
                     successor.setF(this->computeF(gval, hval));
                     successor.setParent(&current);
 
-                    this->fireEvent([&current, &successor, aStarIteration](AstarListener<STATE>& l) {l.onNodeGenerated(successor); });
+                    this->fireEvent([&current, &successor, aStarIteration](Listener& l) {l.onNodeGenerated(aStarIteration, successor); });
                     info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                     this->openList->push(successor);
                     
