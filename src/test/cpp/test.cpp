@@ -235,6 +235,8 @@ SCENARIO("test validator") {
 	maps::GridMapGraphConverter converter{maps::GridBranching::EIGHT_CONNECTED};
 	graphs::AdjacentGraph<std::string, xyLoc, cost_t> graph{*converter.toGraph(map)};
 
+	function_t<nodeid_t, nodeid_t> stateToId = [&](auto& n) { return n;};
+
 	GIVEN("optimality") {
 		search::GraphSolutionPath<std::string, xyLoc, cost_t> path{graph, GetCost<cost_t>{}};
 		path.add(
@@ -259,7 +261,7 @@ SCENARIO("test validator") {
 			graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{4,0}), 
 			path,
 			GetCost<cost_t>{},
-			[&](graphs::nodeid_t v) { return v; }
+			stateToId
 		));
 	}
 
@@ -280,7 +282,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				optimalPath,
 				GetCost<cost_t>{},
-				[&](graphs::nodeid_t v) { return v; }
+				stateToId
 			);
 		}
 
@@ -299,7 +301,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
 				GetCost<cost_t>{},
-				[&](graphs::nodeid_t v) { return v; }
+				stateToId
 			);
 		}
 
@@ -318,7 +320,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
 				GetCost<cost_t>{},
-				[&](graphs::nodeid_t v) { return v; }
+				stateToId
 			));
 		}
 
@@ -337,7 +339,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
 				GetCost<cost_t>{},
-				[&](graphs::nodeid_t v) { return v; }
+				stateToId
 			));
 		}
 
@@ -356,7 +358,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
 				GetCost<cost_t>{},
-				[&](graphs::nodeid_t v) { return v; }
+				stateToId
 			));
 		}
 
@@ -375,7 +377,7 @@ SCENARIO("test validator") {
 				graph.idOfVertex(xyLoc{0,0}), graph.idOfVertex(xyLoc{3,0}), 
 				path,
 				GetCost<cost_t>{},
-				[&](graphs::nodeid_t v) { return v; }
+				stateToId
 			));
 
 		}

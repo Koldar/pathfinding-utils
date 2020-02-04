@@ -69,6 +69,12 @@ namespace pathfinding::search {
             this->path.add(s);
             this->path.add(others...);
         }
+        typename cpp_utils::vectorplus<IN_VECTOR>::iterator begin() const {
+           return this->path.begin(); 
+        }
+        typename cpp_utils::vectorplus<IN_VECTOR>::iterator end() const {
+           return this->path.end(); 
+        }
     public:
         virtual void addHead(STATE_CONST_REF s) = 0;
         /**

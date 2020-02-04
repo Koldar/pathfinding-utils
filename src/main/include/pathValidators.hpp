@@ -26,7 +26,7 @@ namespace pathfinding::validator {
      * @param path 
      */
     template <typename G, typename V, typename E, typename STATE, typename IN_VECTOR=const STATE*, typename CONST_REF = const STATE&>
-    void checkPathValid(const IImmutableGraph<G, V, E>& graph, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& path, cpp_utils::function_t<IN_VECTOR, nodeid_t> mapper) {
+    void checkPathValid(const IImmutableGraph<G, V, E>& graph, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& path, cpp_utils::function_t<CONST_REF, nodeid_t> mapper) {
 
         nodeid_t previous;
         for (int i=0; i<path.size(); ++i) {
@@ -88,7 +88,7 @@ namespace pathfinding::validator {
      * @return false otherwise
      */
     template <typename G, typename V, typename E, typename STATE, typename IN_VECTOR= const STATE*, typename CONST_REF = const STATE&>
-    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<IN_VECTOR, nodeid_t>& mapper) {
+    void checkIfPathOptimal(const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<CONST_REF, nodeid_t>& mapper) {
         auto realActualPath = actualPath.map(mapper);
 
         checkPathValid<G, V, E>(
@@ -108,7 +108,7 @@ namespace pathfinding::validator {
     }
 
     template <typename G, typename V, typename E, typename STATE, typename IN_VECTOR=const STATE*, typename CONST_REF = const STATE&>
-    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<IN_VECTOR, nodeid_t>& mapper) {
+    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<CONST_REF, nodeid_t>& mapper) {
         
         auto realActualPath = actualPath.map(mapper);
 
