@@ -50,7 +50,15 @@ public:
         return *this;
     }
 
-    virtual GridMap load(const boost::filesystem::path& mapPath) {
+    const cpp_utils::MapPlus<char, cost_t>& getTerrainCostMap() const {
+        return this->terrainCost;
+    }
+
+    const cpp_utils::MapPlus<char, color_t>& getTerrainColorMap() const {
+        return this->terrainColor;
+    }
+
+    virtual GridMap load(const boost::filesystem::path& mapPath) const {
         //load the map
         std::ifstream ifs{mapPath.string()};
         std::string str;
@@ -105,6 +113,24 @@ public:
             this->terrainCost,
             this->terrainColor
         };
+    }
+
+    virtual void save(const GridMap& map, const boost::filesystem::path& mapPath) const {
+        std::ofstream ofs{mapPath.native()};
+
+        ofs << "type octile" << std::endl;
+        ofs << "height " << map.getHeight() << std::endl;
+        ofs << "width " << map.getWidth() << std::endl;
+        ofs << "map" << std::endl;
+
+        for (ucood_t y=0; y<map.getHeight(); ++y) {
+            for (ucood_t x=0; x<map.getWidth(); ++x) {
+                ofs << map.getCellTerrain(xyLoc{x, y});
+            }
+            ofs << std::endl;
+        }
+
+        ofs.close();
     }
 };
 

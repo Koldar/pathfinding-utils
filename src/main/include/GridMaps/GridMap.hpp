@@ -83,6 +83,7 @@ namespace pathfinding::maps {
          */
         size_t size;
     public:
+    
         GridMap(const std::string& name, const std::vector<char>& cells, ucood_t width, ucood_t height, std::unordered_map<char, cost_t> terrainCost, std::unordered_map<char, color_t> terrainColor);
 
         virtual ~GridMap();
@@ -97,15 +98,51 @@ namespace pathfinding::maps {
         int toVectorCoord(ucood_t y, ucood_t x) const;
         xyLoc toXyLoc(ucood_t x) const;
     public:
+        /**
+         * @brief number of cell each row has
+         * 
+         * @return ucood_t 
+         */
         ucood_t getWidth() const;
+        /**
+         * @brief number fo cells each column has
+         * 
+         * @return ucood_t 
+         */
         ucood_t getHeight() const;
         char getCellTerrain(xyLoc loc) const;
         cost_t getCellCost(xyLoc loc) const;
         bool isTraversable(xyLoc loc) const;
+        /**
+         * @brief create a vector containing all the locations which you may be
+         * 
+         * @return vectorplus<xyLoc> 
+         */
+        vectorplus<xyLoc> getTraversableCells() const;
+        /**
+         * @brief set the terrain in the specified location
+         * 
+         * @pre
+         *  @li @c terrain is an acceptable one
+         * 
+         * @param loc the location to alter
+         * @param terrain new terrain of the cell
+         */
+        void setCellTerrain(xyLoc loc, char terrain);
     public:
         GridMapImage* getPPM() const;
     public:
+        /**
+         * @brief name of the grid map
+         * 
+         * @return const std::string& the name of the grtidmap
+         */
         virtual const std::string& getName() const;
+        /**
+         * @brief number of cells which has their cost different than +infinity
+         * 
+         * @return size_t 
+         */
         virtual size_t getSize() const;
     };
 

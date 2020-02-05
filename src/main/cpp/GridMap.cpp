@@ -2,6 +2,8 @@
 #include <cpp-utils/operators.hpp>
 
 namespace pathfinding::maps {
+
+
     GridMap::GridMap(const std::string& name, const std::vector<char>& cells, ucood_t width, ucood_t height, std::unordered_map<char, cost_t> terrainCost, std::unordered_map<char, color_t> terrainColor): name{name}, cells{cells}, width{width}, height{height}, terrainCost{terrainCost}, terrainColor{terrainColor} {
         this->size = this->computeSize();
     }
@@ -9,10 +11,10 @@ namespace pathfinding::maps {
     GridMap::~GridMap() {
     }
 
-    GridMap::GridMap(const GridMap& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, terrainColor{other.terrainColor} {
+    GridMap::GridMap(const GridMap& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, terrainColor{other.terrainColor}, size{other.size} {
     }
 
-    GridMap::GridMap(GridMap&& other): name{other.name}, cells{other.cells}, width{other.width}, height{other.height}, terrainCost{other.terrainCost}, size{other.size}, terrainColor{other.terrainColor} {
+    GridMap::GridMap(GridMap&& other): name{std::move(other.name)}, cells{std::move(other.cells)}, width{other.width}, height{other.height}, terrainCost{std::move(other.terrainCost)}, size{other.size}, terrainColor{std::move(other.terrainColor)} {
     }
 
     size_t GridMap::computeSize() const {
@@ -50,6 +52,23 @@ namespace pathfinding::maps {
 
     bool GridMap::isTraversable(xyLoc loc) const {
         return getCellCost(loc).isNotInfinity();
+    }
+
+    vectorplus<xyLoc> GridMap::getTraversableCells() const {
+        vectorplus<xyLoc> result{};
+        for (auto y=0; y<this->getHeight(); ++y) {
+            for (auto x=0; x<this->getWidth(); ++x) {
+                xyLoc loc{static_cast<ucood_t>(x), static_cast<ucood_t>(y)};
+                if (this->isTraversable(loc)) {
+                    result.add(loc);
+                }
+            }
+        }
+        return result;
+    }
+
+    void GridMap::setCellTerrain(xyLoc loc, char terrain) {
+        this->cells[this->toVectorCoord(loc)] = terrain;
     }
 
     GridMapImage* GridMap::getPPM() const {

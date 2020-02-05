@@ -24,7 +24,15 @@ public:
      * @param mapPath name of the map to load
      * @return PATHFINDINGMAP 
      */
-    virtual PATHFINDINGMAP load(const boost::filesystem::path& mapPath) = 0;
+    virtual PATHFINDINGMAP load(const boost::filesystem::path& mapPath) const = 0;
+
+    /**
+     * @brief save the map on the file system
+     * 
+     * @param map the map to save
+     * @param mapPath the path of the file that will be created
+     */
+    virtual void save(const PATHFINDINGMAP& map, const boost::filesystem::path& mapPath) const = 0;
 };
 
 }
