@@ -112,7 +112,7 @@ protected:
         const STATE* tmp = &actualGoal;
         while (tmp != nullptr) {
             info("adding ", *tmp, "to solution!");
-            result->addHead(tmp);
+            result->addHead(*tmp);
             tmp = tmp->getParent();
         }
         return std::unique_ptr<StateSolutionPath<STATE>>{result};
