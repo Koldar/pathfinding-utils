@@ -7,6 +7,7 @@
 
 #include <cpp-utils/mapplus.hpp>
 #include <cpp-utils/ppmImage.hpp>
+#include <cpp-utils/filesystem.hpp>
 
 #include "IPathFindingMapReader.hpp"
 #include "GridMap.hpp"
@@ -60,7 +61,11 @@ public:
 
     virtual GridMap load(const boost::filesystem::path& mapPath) const {
         //load the map
-        std::ifstream ifs{mapPath.string()};
+        if (!cpp_utils::filesystem::exists(mapPath)){
+            throw cpp_utils::exceptions::FileOpeningException{mapPath};
+        }
+        std::ifstream ifs{mapPath.native()};
+        
         std::string str;
         ucood_t width;
         ucood_t height;
@@ -69,24 +74,24 @@ public:
 
         ifs >> str;
         if (str != "type") {
-            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
+            throw cpp_utils::exceptions::ExpectedValueException{"type", str};
         }
         ifs >> str;
         if (str != "octile") {
-            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
+            throw cpp_utils::exceptions::ExpectedValueException{"octile", str};
         }
         ifs >> str >> height;
         if (str != "height") {
-            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
+            throw cpp_utils::exceptions::ExpectedValueException{"height", str};
         }
         ifs >> str >> width;
         if (str != "width") {
-            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
+            throw cpp_utils::exceptions::ExpectedValueException{"width", str};
         }
 
         ifs >> str;
         if (str != "map") {
-            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
+            throw cpp_utils::exceptions::ExpectedValueException{"map", str};
         }
 
         // MAP BODY
