@@ -167,7 +167,7 @@ namespace pathfinding::search {
                 This result{};
                 result.populateDatabase(graph, policy);
 
-                FILE* f = fopen(databaseFilename.string().c_str(), "wb");
+                FILE* f = fopen(databaseFilename.native().c_str(), "wb");
                 if (f == NULL) {
                     throw cpp_utils::exceptions::FileOpeningException{databaseFilename};
                 }
