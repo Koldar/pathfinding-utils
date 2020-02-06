@@ -69,24 +69,24 @@ public:
 
         ifs >> str;
         if (str != "type") {
-            throw cpp_utils::exceptions::InvalidFormatException<boost::filesystem::path, std::string>{mapPath, str};
+            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
         }
         ifs >> str;
         if (str != "octile") {
-            throw cpp_utils::exceptions::InvalidFormatException<boost::filesystem::path, std::string>{mapPath, str};
+            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
         }
         ifs >> str >> height;
         if (str != "height") {
-            throw cpp_utils::exceptions::InvalidFormatException<boost::filesystem::path, std::string>{mapPath, str};
+            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
         }
         ifs >> str >> width;
         if (str != "width") {
-            throw cpp_utils::exceptions::InvalidFormatException<boost::filesystem::path, std::string>{mapPath, str};
+            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
         }
 
         ifs >> str;
         if (str != "map") {
-            throw cpp_utils::exceptions::InvalidFormatException<boost::filesystem::path, std::string>{mapPath, str};
+            throw cpp_utils::exceptions::InvalidFormatException{mapPath, str};
         }
 
         // MAP BODY

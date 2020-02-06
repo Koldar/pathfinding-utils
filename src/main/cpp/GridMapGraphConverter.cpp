@@ -78,7 +78,7 @@ namespace pathfinding::maps {
                 break;
             }
             default: {
-                throw cpp_utils::exceptions::InvalidScenarioException<GridBranching>{this->branching};
+                throw cpp_utils::exceptions::InvalidScenarioException{"grid connection property", this->branching};
             }
         }
 

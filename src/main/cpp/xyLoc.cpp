@@ -26,7 +26,7 @@ namespace pathfinding {
 			case Direction::SOUTH: { return "S"; }
 			case Direction::SOUTHEAST: { return "SE"; }
 			default:
-				throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
+				throw cpp_utils::exceptions::InvalidScenarioException{"direction", dir};
 			}
 		}
 
@@ -45,7 +45,7 @@ namespace pathfinding {
 					return false;
 				}
 				default: {
-					throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
+					throw cpp_utils::exceptions::InvalidScenarioException{"direction", dir};
 				}
 			}
 		}
@@ -121,7 +121,7 @@ namespace pathfinding {
 				return this->y < maxPoint.y && this->x < maxPoint.x;
 			}
 			default: {
-				throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
+				throw cpp_utils::exceptions::InvalidScenarioException{"direction", dir};
 			}
 		}
 	}
@@ -160,7 +160,7 @@ namespace pathfinding {
 				return *this + xyLoc{1, 1};
 			}
 			default: {
-				throw cpp_utils::exceptions::InvalidScenarioException<Direction>{dir};
+				throw cpp_utils::exceptions::InvalidScenarioException{"direction", dir};
 			}
 		}
 	}

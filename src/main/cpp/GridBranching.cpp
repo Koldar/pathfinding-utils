@@ -8,7 +8,7 @@ namespace pathfinding::maps {
             case GridBranching::SIX_CONNECTED: { ss << 6; return ss; }
             case GridBranching::EIGHT_CONNECTED: { ss << 8; return ss; }
             default:
-                throw cpp_utils::exceptions::makeInvalidScenarioException(b);
+                throw cpp_utils::exceptions::InvalidScenarioException{"grid connection property", b};
         }
     }
 

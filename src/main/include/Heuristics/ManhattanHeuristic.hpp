@@ -47,7 +47,7 @@ namespace pathfinding::search {
                     break;
                 }
                 default: {
-                    throw cpp_utils::exceptions::InvalidScenarioException<pathfinding::maps::GridBranching>(branching);
+                    throw cpp_utils::exceptions::InvalidScenarioException{"grid connection property", branching};
                 }
             }
         }

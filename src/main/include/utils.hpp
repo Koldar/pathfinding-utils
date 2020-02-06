@@ -225,7 +225,7 @@ namespace pathfinding::utils {
 			} else if (data == statevisited_e::EXPANDED) {
 				gridMapImage.lerpGridCellColor(loc, expandedColor);
 			} else {
-				throw cpp_utils::exceptions::makeInvalidArgumentException(data);
+				throw cpp_utils::exceptions::InvalidScenarioException{"state visited", data};
 			}
 		}
 

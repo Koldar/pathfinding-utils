@@ -47,7 +47,7 @@ namespace pathfinding::maps {
                 experiments.push_back(GridMapScenarioExperiment{xs,ys,xg,yg,sizeX,sizeY,bucket,dist,map});
             }
         } else {
-            throw cpp_utils::exceptions::InvalidScenarioException<double>{version};
+            throw cpp_utils::exceptions::InvalidScenarioException{"scenario version", version};
         }
     }
 
