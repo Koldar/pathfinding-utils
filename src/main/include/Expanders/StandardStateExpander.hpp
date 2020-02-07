@@ -20,7 +20,12 @@ namespace pathfinding::search {
         using Supplier = IStateSupplier<STATE, nodeid_t, REASON>;
     private:
         const cpp_utils::graphs::IImmutableGraph<G, V, E>& graph;
-        const cpp_utils::function_t<E, cost_t>& costFunction;
+        /**
+         * @brief the function we used to convert the edge into costs.
+         * 
+         * Owned by the class since lambdas tend to go out of scope quickly
+         */
+        const cpp_utils::function_t<E, cost_t> costFunction;
     public:
         /**
          * @brief Construct a new Graph State Expander object
