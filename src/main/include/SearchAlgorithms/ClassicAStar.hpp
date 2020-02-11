@@ -19,7 +19,7 @@ namespace pathfinding::search {
     /**
      * @brief A generic A\* implementation where the main events can be override by subclassing. However, the main algorithm cycle **cannot** be updated.
      * 
-     * This is by design. If you need to alter the algorithm cycle, consider copying AStar.hpp file.
+     * This is by design. If you need to alter the algorithm cycle, consider copying AStar.hpp file or create a new version altogether: this version only allows small modifications to the A\* loop
      * 
      */
     template <typename STATE, typename... STATE_IMPORTANT_TYPES>
@@ -28,14 +28,13 @@ namespace pathfinding::search {
         using Listener = listeners::AstarListener<STATE>;
         using Expander = IStateExpander<STATE, STATE_IMPORTANT_TYPES...>;
         using Supplier =  IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>;
+        using This = ClassicAStar<STATE, STATE_IMPORTANT_TYPES...>;
+        using Super1 = ISearchAlgorithm<STATE, const STATE*, cosnt STATE&>;
     public:
         ClassicAStar(IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, Supplier& supplier, Expander& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
             ISingleListenable<Listener>{}, 
             heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
             openList{nullptr} {
-                if (!heuristic.isConsistent()) {
-                    throw cpp_utils::exceptions::InvalidArgumentException{"the heuristic is not consistent!"};
-                }
                 this->openList = new StaticPriorityQueue<STATE>{openListCapacity, true};
             }
 
@@ -44,41 +43,38 @@ namespace pathfinding::search {
             delete this->openList;
         }
         //the class cannot be copied whatsoever
-        NoCloseListSingleGoalAstar(const NoCloseListSingleGoalAstar& other) = delete;
-        NoCloseListSingleGoalAstar& operator=(const NoCloseListSingleGoalAstar& other) = delete;
-
+        ClassicAStar(const This& o) = delete;
+        This& operator=(const This& o) = delete;
+        ClassicAStar(This&& o) = delete;
+        This& operator=(This&& o) = delete;
     public:
         virtual MemoryConsumption getByteMemoryOccupied() const {
             throw cpp_utils::exceptions::NotYetImplementedException{__func__};
-            //return
-                // memory for the priority quete
-                //this->openList->getByteMemoryOccupied() + 
-                // gridmap size and other stuff needed to expand nodes
-                //this->heuristic.getByteMemoryOccupied() +
-                // this->goalChecker.getByteMemoryOccupied() +
-                // this->expander.getByteMemoryOccupied() +
-                // this->supplier.getByteMemoryOccupied() +
-                // this->pruner.getByteMemoryOccupied() +
-                // // misc
-                // MemoryConsumption{sizeof(*this), MemoryConsumptionEnum::BYTE};
         }
     private:
         IHeuristic<STATE>& heuristic;
         IGoalChecker<STATE>& goalChecker;
-        IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander;
-        IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier;
+        Expander& expander;
+        Supplier& supplier;
         IStatePruner<STATE>& pruner;
         StaticPriorityQueue<STATE>* openList;
     protected:
+        /**
+         * @brief function used to compute the evaluation of a state
+         * 
+         * @param g g value of the state
+         * @param h h value of the state
+         * @return cost_t the f value of the state
+         */
         virtual cost_t computeF(cost_t g, cost_t h) const {
             return g + h;
         }
     public:
         virtual std::string getName() const {
-            return std::string{"A*"};
+            return std::string{"A*-classic"};
         }
         virtual void setupSearch(const STATE* start, const STATE* goal) {
-            this->doOnObserver([&](Listener& l) { l.cleanup();});
+            this->doOnObserver([&](auto& l) { l.cleanup();});
             //cleanup before running since at the end we may want to poll information on the other structures
             this->heuristic.cleanup();
             this->expander.cleanup();
@@ -97,17 +93,13 @@ namespace pathfinding::search {
                 result->addHead(*tmp);
                 tmp = tmp->getParent();
             }
-            return std::unique_ptr<StateSolutionPath<STATE>>{result};
+            return std::unique_ptr{result};
         }
         virtual cost_t getSolutionCostFromGoalFetched(const STATE& start, const STATE& actualGoal, const STATE* goal) const {
             return actualGoal.getCost();
         }
         virtual const STATE& performSearch(STATE& start, const STATE* expectedGoal) {
-            if (expectedGoal != nullptr) {
-                info("starting A*! start = ", start, "goal = ", *expectedGoal);
-            } else {
-                info("starting A*! start = ", start, "goal = ", "none");
-            }
+            this->fireEvent([&start, &expectedGoal](auto& l) { l.onNewSearchStarted(start, expecteGoal)});
             
             int aStarIteration = 0;
             STATE* goal = nullptr;
@@ -119,12 +111,12 @@ namespace pathfinding::search {
             start.setF(this->computeF(start.getG(), start.getH()));
 
             this->openList->push(start);
+            this->fireEvent([&start, aStarIteration](auto& l) { l.onNodeGenerated(aStarIteration, start)});
             while (!this->openList->isEmpty()) {
                 STATE& current = this->openList->peek();
-                info("state ", current, "popped from open list f=", current.getF(), "g=", current.getG(), "h=", current.getH());
+                this->fireEvent([&current, aStarIteration](auto& l) { l.onNodePoppedFromOpen(aStarIteration, current)});
 
                 if (this->goalChecker.isGoal(current, expectedGoal)) {
-                    info("state ", current, "is a goal!");
                     goal = &current;
 
                     this->fireEvent([&current, aStarIteration](Listener& l) { l.onSolutionFound(aStarIteration, current); });
@@ -132,18 +124,17 @@ namespace pathfinding::search {
                 }
 
                 this->openList->pop();
-
                 current.markAsExpanded();
+
                 this->fireEvent([&current, aStarIteration](Listener& l) { l.onNodeExpanded(aStarIteration,current); });
 
-                info("computing successors of state ", current, "...");
                 for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
                     STATE& successor = pair.first;
                     cost_t current_to_successor_cost = pair.second;
 
                     if (this->pruner.shouldPrune(successor)) {
-                        info("child", successor, "of state ", current, "should be pruned!");
                         //skip neighbours already expanded
+                        this->fireEvent([&current, aStarIteration](auto& l) { l.onNodePruned(aStarIteration, successor);})
                         continue;
                     }
 
@@ -151,8 +142,6 @@ namespace pathfinding::search {
                         //state inside the open list. Check if we need to update the path
                         cost_t gval = current.getG() + current_to_successor_cost;
                         if (gval < successor.getG()) {
-                            info("child", successor, "of state ", current, "present in open list and has a lower g. update its parent!");
-
                             //update successor information
                             successor.setG(gval);
                             successor.setF(this->computeF(gval, successor.getH()));
@@ -160,6 +149,29 @@ namespace pathfinding::search {
                             successor.setParent(&current);
 
                             this->openList->decrease_key(successor);
+
+                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInOpenListHasWorseG(aStarIteration, successor, successor.getG(), gval);});
+                        } else {
+                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInOpenListHasBetterG(aStarIteration, successor, successor.getG(), gval);});
+                        }
+                    } else if (successor.isExpanded()) {
+                        //state in closed list
+                        cost_t gval = current.getG() + current_to_successor_cost;
+                        if (gval < successor.getG()) {
+                            //this is impossible when the heuristic is admissible
+
+                            //update successor information
+                            successor.setG(gval);
+                            successor.setF(this->computeF(gval, successor.getH()));
+                            const STATE* oldParent = successor.getParent();
+                            successor.setParent(&current);
+                            successor.setExpanded(false);
+
+                            this->openList->decrease_key(successor);
+
+                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInClosedListHasWorseG(aStarIteration, successor, successor.getG(), gval);});
+                        } else {
+                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInClosedListHasBetterG(aStarIteration, successor, successor.getG(), gval);});
                         }
                     } else {
                         //state is not present in open list. Add to it
@@ -172,17 +184,15 @@ namespace pathfinding::search {
                         successor.setF(this->computeF(gval, hval));
                         successor.setParent(&current);
 
-                        this->fireEvent([&current, &successor, aStarIteration](Listener& l) {l.onNodeGenerated(aStarIteration, successor); });
-                        info("child", successor, "of state ", current, "not present in open list. Add it f=", successor.getF(), "g=", successor.getG(), "h=", successor.getH());
                         this->openList->push(successor);
-                        
-                        
+
+                        this->fireEvent([&current, &successor, aStarIteration](Listener& l) {l.onNodeGenerated(aStarIteration, successor); });
                     }
                 }
 
                 aStarIteration += 1;
             }
-            info("found no solutions!");
+            this->fireEvent([aStarIteration](auto& l) { l.onNoSolutionFound(aStariteration); });
             throw SolutionNotFoundException{};
 
             goal_found:
