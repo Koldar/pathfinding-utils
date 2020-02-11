@@ -3,9 +3,13 @@
 
 #include <cpp-utils/ICleanable.hpp>
 
+#include "types.hpp"
+
 namespace pathfinding::search::listeners {
 
     using namespace cpp_utils;
+    using namespace pathfinding;
+
 
     /**
      * @brief Allows you to further refines the behavior of an A* algorithm
