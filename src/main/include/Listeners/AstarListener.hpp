@@ -27,8 +27,7 @@ namespace pathfinding::search::listeners {
          * @param start start state
          * @param goal pattern of the goal to fetch
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNewSearchStarted(const STATE& start, const STATE* goal);
+        virtual void onNewSearchStarted(const STATE& start, const STATE* goal) = 0;
 
         /**
          * @brief called whenever a state is pruned by the pruner
@@ -36,8 +35,7 @@ namespace pathfinding::search::listeners {
          * @param iteration iteration where the state is discarded
          * @param state the state discarded
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNodePruned(int iteration, const STATE& state);
+        virtual void onNodePruned(int iteration, const STATE& state) = 0;
 
         /**
          * @brief called whenever a state is popped from the opern list
@@ -45,8 +43,7 @@ namespace pathfinding::search::listeners {
          * @param iteration iteration where the state is popped
          * @param state the state popposed from open
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNodePoppedFromOpen(int iteration, const STATE& state);
+        virtual void onNodePoppedFromOpen(int iteration, const STATE& state) = 0;
 
         /**
          * @brief called whenever we examine a state which is also in open list but the state in open list has a g-value which is smaller than the current one
@@ -56,8 +53,7 @@ namespace pathfinding::search::listeners {
          * @param inOpenG the g value the state in the open list has
          * @param outOpenG the g value we have found by exploring the search state
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNodeInOpenListHasBetterG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG);
+        virtual void onNodeInOpenListHasBetterG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG) = 0;
 
         /**
          * @brief called whenever we examine a state which is also in open list but the state in open list has a g-value which is greater than the current one
@@ -67,8 +63,7 @@ namespace pathfinding::search::listeners {
          * @param inOpenG the g value the state in the open list has
          * @param outOpenG the g value we have found by exploring the search state
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNodeInOpenListHasWorseG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG);
+        virtual void onNodeInOpenListHasWorseG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG) = 0;
 
         /**
          * @brief called whenever we examine a state which is also in closed list but the state in closed list has a g-value which is smaller than the current one
@@ -78,8 +73,7 @@ namespace pathfinding::search::listeners {
          * @param inCloseG the g value the state in the closed list has
          * @param outCloseG the g value we have found by exploring the search state
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNodeInClosedListHasBetterG(int iteration, const STATE& state, cost_t inCloseG, cost_t outCloseG);
+        virtual void onNodeInClosedListHasBetterG(int iteration, const STATE& state, cost_t inCloseG, cost_t outCloseG) = 0;
 
         /**
          * @brief called whenever we examine a state which is also in close list but the state in close list has a g-value which is greater than the current one
@@ -89,16 +83,14 @@ namespace pathfinding::search::listeners {
          * @param inCloseG the g value the state in the closed list has
          * @param outCloseG the g value we have found by exploring the search state
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNodeInClosedListHasWorseG(int iteration, const STATE& state, cost_t inCloseG, cost_t outCloseG);
+        virtual void onNodeInClosedListHasWorseG(int iteration, const STATE& state, cost_t inCloseG, cost_t outCloseG) = 0;
 
         /**
          * @brief brief when we have exausted the open list
          * 
          * @param iteration iterations when the event happens
          */
-        //TODO put it here as pure virtual. Now it isn't because I have lots of listener to update
-        virtual void onNoSolutionFound(int iteration);
+        virtual void onNoSolutionFound(int iteration) = 0;
 
         /**
          * @brief called whenever a new node is expanded from the open list

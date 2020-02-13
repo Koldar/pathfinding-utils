@@ -35,6 +35,30 @@ namespace pathfinding::search::listeners {
         This& operator =(const This& o) = default;
         This& operator = (This&& o) = default;
     public:
+        virtual void onNewSearchStarted(const STATE& start, const STATE* goal) {
+
+        }
+        virtual void onNodePruned(int iteration, const STATE& state) {
+
+        }
+        virtual void onNodePoppedFromOpen(int iteration, const STATE& state) {
+
+        }
+        virtual void onNodeInOpenListHasBetterG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG) {
+
+        }
+        virtual void onNodeInOpenListHasWorseG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG) {
+
+        }
+        virtual void onNodeInClosedListHasBetterG(int iteration, const STATE& state, cost_t inCloseG, cost_t outCloseG) {
+
+        }
+        virtual void onNodeInClosedListHasWorseG(int iteration, const STATE& state, cost_t inCloseG, cost_t outCloseG) {
+
+        }
+        virtual void onNoSolutionFound(int iteration) {
+            
+        }
         virtual void onNodeExpanded(int iteration, const STATE& s) {
             Super1::updateNodeExpanded();
             Super2::updateNodeExpanded(s);

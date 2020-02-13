@@ -15,7 +15,7 @@ namespace pathfinding::search {
      * @tparam G payload of the underlying weighted directed graph
      */
     template <typename STATE, typename G, typename V, typename E, typename REASON>
-    class StandardStateExpander: public IStateExpander<STATE, nodeid_t, REASON> {
+    class StandardStateExpander: public IStateCostExpander<STATE, nodeid_t, REASON> {
         using This = StandardStateExpander<STATE, G, V, E, REASON>;
         using Supplier = IStateSupplier<STATE, nodeid_t, REASON>;
     private:
@@ -50,12 +50,12 @@ namespace pathfinding::search {
             return *this;
         }
     public:
-        virtual cpp_utils::vectorplus<std::pair<STATE&, cost_t>> getSuccessors(const STATE& state, Supplier& supplier) {
-            cpp_utils::vectorplus<std::pair<STATE&, cost_t>> result{};
+        virtual cpp_utils::vectorplus<StateExpanderOutput<STATE>> getSuccessors(const STATE& state, Supplier& supplier) {
+            cpp_utils::vectorplus<StateExpanderOutput<STATE>> result{};
             //****************** MOVING *********************
             for (auto outEdge : graph.getOutEdges(state.getPosition())) {
                 fine("an outedge ", outEdge, " of ", state, "(", &state, ") goes to", outEdge.getSinkId(), "edge payload of", outEdge.getPayload());
-                result.add(std::pair<STATE&, cost_t>{
+                result.add(StateExpanderOutput{
                     supplier.getState(outEdge.getSinkId(), REASON::getFirst()),
                     this->costFunction(outEdge.getPayload())
                 });
@@ -63,11 +63,11 @@ namespace pathfinding::search {
 
             return result;
         }
-        virtual std::pair<STATE&, cost_t> getSuccessor(const STATE& state, int successorNumber, Supplier& supplier) {
+        virtual StateExpanderOutput<STATE> getSuccessor(const STATE& state, int successorNumber, Supplier& supplier) {
             auto outEdge = this->graph.getOutEdge(state.getPosition(), successorNumber);
-            return std::pair<STATE&, cost_t>{
+            return StateExpanderOutput{
                 supplier.getState(outEdge.getSinkId(), REASON::getFirst()),
-                this->costFunction(outEdge.getPayload())
+                this->costFunction(outEdge.getPayload()),
             };
         }
         

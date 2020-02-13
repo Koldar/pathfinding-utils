@@ -26,7 +26,7 @@ namespace pathfinding::search {
     class ClassicAStar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<listeners::AstarListener<STATE>> {
     public:
         using Listener = listeners::AstarListener<STATE>;
-        using Expander = IStateExpander<STATE, STATE_IMPORTANT_TYPES...>;
+        using Expander = IStateCostExpander<STATE, STATE_IMPORTANT_TYPES...>;
         using Supplier =  IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>;
         using This = ClassicAStar<STATE, STATE_IMPORTANT_TYPES...>;
         using Super1 = ISearchAlgorithm<STATE, const STATE*, cosnt STATE&>;
@@ -128,9 +128,9 @@ namespace pathfinding::search {
 
                 this->fireEvent([&current, aStarIteration](Listener& l) { l.onNodeExpanded(aStarIteration,current); });
 
-                for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
-                    STATE& successor = pair.first;
-                    cost_t current_to_successor_cost = pair.second;
+                for(auto outcome: this->expander.getSuccessors(current, this->supplier)) {
+                    STATE& successor = std::get<0>(outcome);
+                    cost_t current_to_successor_cost = std::get<1>(outcome);
 
                     if (this->pruner.shouldPrune(successor)) {
                         //skip neighbours already expanded

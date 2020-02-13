@@ -43,8 +43,9 @@ namespace pathfinding::search {
     template <typename STATE, typename... STATE_IMPORTANT_TYPES>
     class NoCloseListSingleGoalWAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
         using This = NoCloseListSingleGoalWAstar<STATE, STATE_IMPORTANT_TYPES...>;
+        using Expander = IStateCostExpander<STATE, STATE_IMPORTANT_TYPES...>;
     public:
-        NoCloseListSingleGoalWAstar(double weight, IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
+        NoCloseListSingleGoalWAstar(double weight, IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, Expander& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
             ISingleListenable<AstarListener<STATE>>{}, 
             weight{weight},
             heuristic{heuristic}, goalChecker{goalChecker}, supplier{supplier}, expander{expander}, pruner{pruner},
@@ -93,7 +94,7 @@ namespace pathfinding::search {
         cost_t dweight;
         IHeuristic<STATE>& heuristic;
         IGoalChecker<STATE>& goalChecker;
-        IStateExpander<STATE, STATE_IMPORTANT_TYPES...>& expander;
+        Expander& expander;
         IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier;
         IStatePruner<STATE>& pruner;
         StaticPriorityQueue<STATE>* openList;
@@ -165,9 +166,9 @@ namespace pathfinding::search {
                 this->fireEvent([&current](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
 
                 info("computing successors of state ", current, "...");
-                for(auto pair: this->expander.getSuccessors(current, this->supplier)) {
-                    STATE& successor = pair.first;
-                    cost_t current_to_successor_cost = pair.second;
+                for(auto outcome: this->expander.getSuccessors(current, this->supplier)) {
+                    STATE& successor = outcome.getState();
+                    cost_t current_to_successor_cost = outcome.getCostToReachState();
 
                     
                     if (this->pruner.shouldPrune(successor)) {
