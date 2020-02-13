@@ -120,15 +120,19 @@ namespace pathfinding::validator {
         DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction}; 
         auto expectedPath = dijkstra.search(start, goal);
 
-        double optimalPathCost = static_cast<double>(expectedPath->getCost());
-        double actualPathCost = static_cast<double>(actualPath.getCost());
+        double expectedOptimalPathCost = static_cast<double>(expectedPath->getCost());
+        double actualOptimalPathCost = static_cast<double>(actualPath.getCost());
         
-        if (cpp_utils::isDefinitelyLessThan(actualPathCost, optimalPathCost, 1e-6)) {
+        if (actualOptimalPathCost < expectedOptimalPathCost) {
             throw cpp_utils::exceptions::ImpossibleException{"suboptimal path is less than the optimal one!"};
         }
 
-        if (cpp_utils::isDefinitelyGreaterThan(actualPathCost, (optimalPathCost * bound), 1e-6)) {
-            log_error("real optimal path costs", expectedPath->getCost(), ". However the algorithm generated a suboptimal path (with bound ", bound, ") which however costs much more! costs", optimalPathCost);
+        if (actualOptimalPathCost > (bound * expectedOptimalPathCost)) {
+        //if (cpp_utils::isDefinitelyGreaterThan(actualPathCost, (optimalPathCost * bound), 1e-6)) {
+            log_error("BOUND IS INVALID!");
+            log_error("expected optimal path costs", expectedOptimalPathCost);
+            log_error("actual bound cost to ", bound * expectedOptimalPathCost);
+            log_error("actual optimal path costs", actualOptimalPathCost);
             log_error("expected path", *expectedPath);
             log_error("actual path", realActualPath);
             throw cpp_utils::exceptions::ImpossibleException{"suboptimal path was expected to be within a certain bound from the optimal solution, but it is not!"};
