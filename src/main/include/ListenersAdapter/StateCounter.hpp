@@ -66,9 +66,9 @@ namespace pathfinding::search::listeners {
         }
         void startSuccessorTimer() {
             this->successorTimer.cleanup();
-            this->successorTime.start();
+            this->successorTimer.start();
         }
-        void stopsuccessorTimer() {
+        void stopSuccessorTimer() {
             this->successorTimer.stop();
             this->successorTime.update(this->successorTimer.getElapsedMicroSeconds().toLong());
         }

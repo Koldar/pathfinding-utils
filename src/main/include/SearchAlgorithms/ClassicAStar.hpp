@@ -128,13 +128,17 @@ namespace pathfinding::search {
 
                 this->fireEvent([&current, aStarIteration](Listener& l) { l.onNodeExpanded(aStarIteration,current); });
 
-                for(auto outcome: this->expander.getSuccessors(current, this->supplier)) {
+
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onStartingComputingSuccessors(aStarIteration, current); });
+                auto successors = this->expander.getSuccessors(current, this->supplier);
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onEndingComputingSuccessors(aStarIteration, current); });
+                for(auto outcome: successors) {
                     STATE& successor = std::get<0>(outcome);
                     cost_t current_to_successor_cost = std::get<1>(outcome);
 
                     if (this->pruner.shouldPrune(successor)) {
                         //skip neighbours already expanded
-                        this->fireEvent([&current, aStarIteration](auto& l) { l.onNodePruned(aStarIteration, successor);})
+                        this->fireEvent([&current, aStarIteration](Listener& l) { l.onNodePruned(aStarIteration, successor);})
                         continue;
                     }
 
@@ -150,9 +154,9 @@ namespace pathfinding::search {
 
                             this->openList->decrease_key(successor);
 
-                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInOpenListHasWorseG(aStarIteration, successor, successor.getG(), gval);});
+                            this->fireEvent([&successor, aStarIteration](Listener& l) { l.onNodeInOpenListHasWorseG(aStarIteration, successor, successor.getG(), gval);});
                         } else {
-                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInOpenListHasBetterG(aStarIteration, successor, successor.getG(), gval);});
+                            this->fireEvent([&successor, aStarIteration](Listener& l) { l.onNodeInOpenListHasBetterG(aStarIteration, successor, successor.getG(), gval);});
                         }
                     } else if (successor.isExpanded()) {
                         //state in closed list
@@ -169,9 +173,9 @@ namespace pathfinding::search {
 
                             this->openList->decrease_key(successor);
 
-                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInClosedListHasWorseG(aStarIteration, successor, successor.getG(), gval);});
+                            this->fireEvent([&successor, aStarIteration](Listener& l) { l.onNodeInClosedListHasWorseG(aStarIteration, successor, successor.getG(), gval);});
                         } else {
-                            this->fireEvent([&successor, aStarIteration](auto& l) { l.onNodeInClosedListHasBetterG(aStarIteration, successor, successor.getG(), gval);});
+                            this->fireEvent([&successor, aStarIteration](Listener& l) { l.onNodeInClosedListHasBetterG(aStarIteration, successor, successor.getG(), gval);});
                         }
                     } else {
                         //state is not present in open list. Add to it

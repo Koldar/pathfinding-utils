@@ -42,7 +42,7 @@ namespace pathfinding::search::listeners {
 
         }
         virtual void onNodePoppedFromOpen(int iteration, const STATE& state) {
-
+            this->updateNodeExpanded();
         }
         virtual void onNodeInOpenListHasBetterG(int iteration, const STATE& state, cost_t inOpenG, cost_t outOpenG) {
 
@@ -57,10 +57,10 @@ namespace pathfinding::search::listeners {
 
         }
         virtual void onNoSolutionFound(int iteration) {
-            
+
         }
         virtual void onNodeExpanded(int iteration, const STATE& s) {
-            this->updateNodeExpanded();
+
         }
         virtual void onNodeGenerated(int iteration, const STATE& s) {
             this->updateNodeGenerated();

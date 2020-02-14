@@ -167,7 +167,10 @@ namespace pathfinding::search {
                 }
 
                 info("computing successors of state ", current, "...");
-                for(auto outcome: this->expander.getSuccessors(current, this->supplier)) {
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onStartingComputingSuccessors(aStarIteration, current); });
+                auto successors = this->expander.getSuccessors(current, this->supplier);
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onEndingComputingSuccessors(aStarIteration, current); });
+                for(auto outcome: successors) {
                     STATE& successor = outcome.getState();
                     cost_t current_to_successor_cost = outcome.getCostToReachState();
 

@@ -44,6 +44,7 @@ namespace pathfinding::search {
     class NoCloseListSingleGoalWAstar: public IMemorable, public ISearchAlgorithm<STATE, const STATE*, const STATE&>, public ISingleListenable<AstarListener<STATE>> {
         using This = NoCloseListSingleGoalWAstar<STATE, STATE_IMPORTANT_TYPES...>;
         using Expander = IStateCostExpander<STATE, STATE_IMPORTANT_TYPES...>;
+        using Listener = AstarListener<STATE>;
     public:
         NoCloseListSingleGoalWAstar(double weight, IHeuristic<STATE>& heuristic, IGoalChecker<STATE>& goalChecker, IStateSupplier<STATE, STATE_IMPORTANT_TYPES...>& supplier, Expander& expander, IStatePruner<STATE>& pruner,  unsigned int openListCapacity = 1024) : 
             ISingleListenable<AstarListener<STATE>>{}, 
@@ -142,9 +143,9 @@ namespace pathfinding::search {
             STATE* goal = nullptr;
 
             start.setG(0);
-            this->fireEvent([&start](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(start); });
+            this->fireEvent([&start](Listener& l) { l.onStartingComputingHeuristic(start); });
             start.setH(this->heuristic.getHeuristic(start, expectedGoal));
-            this->fireEvent([&start](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(start); });
+            this->fireEvent([&start](Listener& l) { l.onEndingComputingHeuristic(start); });
             start.setF(this->computeF(start.getG(), start.getH()));
 
             this->openList->push(start);
@@ -156,17 +157,19 @@ namespace pathfinding::search {
                     info("state ", current, "is a goal!");
                     goal = &current;
                     
-                    this->fireEvent([&current](AstarListener<STATE>& l) { l.onSolutionFound(current); });
+                    this->fireEvent([&current](Listener& l) { l.onSolutionFound(current); });
                     goto goal_found;
                 }
 
                 this->openList->pop();
 
                 current.markAsExpanded();
-                this->fireEvent([&current](AstarListener<STATE>& l) { l.onNodeExpanded(current); });
+                this->fireEvent([&current](Listener& l) { l.onNodeExpanded(current); });
 
-                info("computing successors of state ", current, "...");
-                for(auto outcome: this->expander.getSuccessors(current, this->supplier)) {
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onStartingComputingSuccessors(aStarIteration, current)});
+                auto successors = this->expander.getSuccessors(current, this->supplier);
+                this->fireEvent([&current, aStarIteration](Listener& l) { l.onEndingComputingSuccessors(aStarIteration, current)});
+                for(auto outcome: successors) {
                     STATE& successor = outcome.getState();
                     cost_t current_to_successor_cost = outcome.getCostToReachState();
 
@@ -194,9 +197,9 @@ namespace pathfinding::search {
                     } else {
                         //state is not present in open list. Add to it
                         cost_t gval = current.getG() + current_to_successor_cost;
-                        this->fireEvent([&successor](AstarListener<STATE>& l) { l.onStartingComputingHeuristic(successor); });
+                        this->fireEvent([&successor](Listener& l) { l.onStartingComputingHeuristic(successor); });
                         cost_t hval = this->heuristic.getHeuristic(successor, expectedGoal);
-                        this->fireEvent([&successor](AstarListener<STATE>& l) { l.onEndingComputingHeuristic(successor); });
+                        this->fireEvent([&successor](Listener& l) { l.onEndingComputingHeuristic(successor); });
                         successor.setG(gval);
                         successor.setH(hval);
                         successor.setF(this->computeF(gval, hval));
