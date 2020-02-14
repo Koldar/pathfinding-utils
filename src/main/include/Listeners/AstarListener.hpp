@@ -125,6 +125,22 @@ namespace pathfinding::search::listeners {
          * @param s 
          */
         virtual void onEndingComputingHeuristic(int iteration, const STATE& s) = 0;
+
+        /**
+         * @brief called each time we start computing the successors of a state
+         * 
+         * @param iteration the iteration where this event happens
+         * @param s the state whose successors we need to compute
+         */
+        virtual void onStartingComputingSuccessors(int iteration, const STATE& s) = 0;
+
+        /**
+         * @brief called each time we stop computing the successors of a state
+         * 
+         * @param iteration the iteration where this event happens
+         * @param s the state whose successors we need to compute
+         */
+        virtual void onEndingComputingSuccessors(int iteration, const STATE& s) = 0;
         
         /**
          * @brief called whenever a new goal is found
