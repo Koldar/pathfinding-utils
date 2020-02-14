@@ -6,6 +6,7 @@
 
 #include "ISolutionPath.hpp"
 #include "DijkstraSearchAlgorithm.hpp"
+#include "IPathFindingMap.hpp"
 
 
 namespace pathfinding::validator {
@@ -13,6 +14,7 @@ namespace pathfinding::validator {
     using namespace cpp_utils;
     using namespace cpp_utils::graphs;
     using namespace pathfinding;
+    using namespace pathfinding::maps;
     using namespace pathfinding::search;
 
     /**
@@ -109,7 +111,6 @@ namespace pathfinding::validator {
 
     template <typename G, typename V, typename E, typename STATE, typename IN_VECTOR, typename CONST_REF>
     void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<STATE, nodeid_t>& mapper) {
-        
         auto realActualPath = actualPath.map(mapper);
 
         checkPathValid<G, V, E>(
@@ -128,7 +129,6 @@ namespace pathfinding::validator {
         }
 
         if (actualOptimalPathCost > (bound * expectedOptimalPathCost)) {
-        //if (cpp_utils::isDefinitelyGreaterThan(actualPathCost, (optimalPathCost * bound), 1e-6)) {
             log_error("BOUND IS INVALID!");
             log_error("expected optimal path costs", expectedOptimalPathCost);
             log_error("actual bound cost to ", bound * expectedOptimalPathCost);
@@ -136,6 +136,63 @@ namespace pathfinding::validator {
             log_error("expected path", *expectedPath);
             log_error("actual path", realActualPath);
             throw cpp_utils::exceptions::ImpossibleException{"suboptimal path was expected to be within a certain bound from the optimal solution, but it is not!"};
+        }
+    }
+
+    template <typename G, typename V, typename E, typename STATE, typename IN_VECTOR, typename CONST_REF>
+    void checkIfPathSuboptimalityBound(double bound, const IImmutableGraph<G, V, E>& graph, nodeid_t start, nodeid_t goal, const ISolutionPath<STATE, IN_VECTOR, CONST_REF>& actualPath, const cpp_utils::function_t<E, cost_t>& costFunction, const cpp_utils::function_t<STATE, nodeid_t>& mapper, const IPathFindingMap& map) {
+        auto realActualPath = actualPath.map(mapper);
+
+        checkPathValid<G, V, E>(
+            graph,
+            realActualPath
+        );
+
+        DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction}; 
+        auto expectedPath = dijkstra.search(start, goal);
+
+        double expectedOptimalPathCost = static_cast<double>(expectedPath->getCost());
+        double actualOptimalPathCost = static_cast<double>(actualPath.getCost());
+        
+        if (actualOptimalPathCost < expectedOptimalPathCost) {
+            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path is less than the optimal one!"};
+        }
+
+        if (actualOptimalPathCost > (bound * expectedOptimalPathCost)) {
+            log_error("BOUND IS INVALID!");
+            log_error("expected optimal path costs", expectedOptimalPathCost);
+            log_error("actual bound cost to ", bound * expectedOptimalPathCost);
+            log_error("actual optimal path costs", actualOptimalPathCost);
+            log_error("expected path", *expectedPath);
+            log_error("actual path", realActualPath);
+            //print graph. We assume it's gridmap for now
+            const GridMap& gridMap = static_cast<const GridMap&>(map);
+
+            auto image = std::unique_ptr<GridMapImage>{gridMap.getPPM()};
+            auto startVertex = static_cast<xyLoc>(graph.getVertex(start));
+            auto goalVertex = static_cast<xyLoc>(graph.getVertex(goal));
+            //mark expected optimal path
+            DijkstraSearchAlgorithm<G, V, E> dijkstra{graph, costFunction}; 
+            auto expectedPath = dijkstra.search(start, goal);
+            for (auto it=expectedPath->cbegin(); it<expectedPath->cend(); ++it) {
+                auto tmpVertex = static_cast<xyLoc>(graph.getVertex(*it));
+                image->lerpGridCellColor(startVertex, color_t::BLUE.darker(0.3));
+            }
+            //mark actual optimal path
+            auto* actualTmp = &actualPath.getGoal();
+            while (actualTmp != nullptr) {
+                auto tmpVertex = static_cast<xyLoc>(graph.getVertex(actualTmp->getPosition()));
+                image->lerpGridCellColor(startVertex, color_t::RED.darker(0.3));
+                actualTmp = actualTmp->getParent();    
+            }
+            //mark start and goal
+            image->setGridCellColor(startVertex, color_t::YELLOW.darker(0.2));
+            image->setGridCellColor(goalVertex, color_t::YELLOW.darker(0.4));
+
+            boost::filesystem::path name{"expected=blue_actual=red.jpeg"};
+            image->saveJPEG(name);
+
+            throw cpp_utils::exceptions::ImpossibleException{"suboptimal path was expected to be within a certain bound from the optimal solution, but it is not! Map available as", name};
         }
     }
 

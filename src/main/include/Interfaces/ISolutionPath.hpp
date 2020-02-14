@@ -25,6 +25,7 @@ namespace pathfinding::search {
      * @tparam CONST_REF a constant reference of STATE. By default it's `const STATE&`
      */
     //TODO should be called AbstractSolutionPath
+    //TODO this class is not so great. With ISearchAlgorithm I generate a solution, but often i want just a ordered sequence of vertices and/or edges. The problem is that this class represents a generic solution, not a pathfinding one. I think I should subclass it in some way...
     template <typename STATE, typename IN_VECTOR=const STATE*, typename STATE_CONST_REF=const STATE&>
     class ISolutionPath {
         using This = ISolutionPath<STATE, IN_VECTOR, STATE_CONST_REF>;
@@ -69,11 +70,11 @@ namespace pathfinding::search {
             this->path.add(s);
             this->path.add(others...);
         }
-        typename cpp_utils::vectorplus<IN_VECTOR>::iterator begin() const {
-           return this->path.begin(); 
+        typename cpp_utils::vectorplus<IN_VECTOR>::const_iterator cbegin() const {
+           return this->path.cbegin(); 
         }
-        typename cpp_utils::vectorplus<IN_VECTOR>::iterator end() const {
-           return this->path.end(); 
+        typename cpp_utils::vectorplus<IN_VECTOR>::const_iterator cend() const {
+           return this->path.cend(); 
         }
     public:
         virtual void addHead(STATE_CONST_REF s) = 0;
