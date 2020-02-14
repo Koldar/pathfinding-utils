@@ -74,6 +74,13 @@ namespace pathfinding::search::listeners {
         virtual void onSolutionFound(int iteration, const STATE& s) {
 
         }
+        virtual void onStartingComputingSuccessors(int iteration, const STATE& s) {
+            Super2::startSuccessorTimer();
+        }
+
+        virtual void onEndingComputingSuccessors(int iteration, const STATE& s) {
+            Super2::stopSuccessorTimer();
+        }
     public:
         void cleanup() {
             Super2::cleanup();

@@ -77,6 +77,13 @@ namespace pathfinding::search::listeners {
             static function_t<STATE, nodeid_t> mapper = [&](auto s) { return s.getPosition();};
             Super2::updateSolution(s, mapper);
         }
+        virtual void onStartingComputingSuccessors(int iteration, const STATE& s) {
+            Super1::startSuccessorTimer();
+        }
+
+        virtual void onEndingComputingSuccessors(int iteration, const STATE& s) {
+            Super1::stopSuccessorTimer();
+        }
     public:
         virtual void cleanup() {
             Super1::cleanup();

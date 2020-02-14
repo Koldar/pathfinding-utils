@@ -44,12 +44,17 @@ namespace pathfinding::search::listeners {
     };
 
     /**
-     * @brief a class that you can use to keep track of the pathfinding expanded/generated states
+     * @brief a class that you can use to keep track of standard metrics of A*
+     * 
+     * The metrics are:
+     * @li states generated;
+     * @li states expanded;
+     * @li goal found;
      * 
      * It can track a solution as well. such tracking si done by **copying** the solution, so some performance smay be lost there.
      * 
-     * @tparam G 
-     * @tparam E 
+     * @tparam G type of the paylaod associated to the graph where the search is operating on
+     * @tparam E type of each label of each edge in the graph where the search is operating one
      */
     template <typename G, typename V, typename E>
     class StateTracker {

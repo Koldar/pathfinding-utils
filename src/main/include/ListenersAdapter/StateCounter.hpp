@@ -7,7 +7,13 @@
 namespace pathfinding::search::listeners {
 
     /**
-     * @brief count the number of expanded and generated states
+     * @brief A tracker which keeps track of basics metrics of A\* searchstates
+     * 
+     * the metrics are:
+     * @li number of node expanded;
+     * @li number of node generated;
+     * @li tracking of heuristic times;
+     * @li tracking of successor generation time;
      * 
      */
     class StateCounter: public ICleanable {
@@ -17,9 +23,11 @@ namespace pathfinding::search::listeners {
         int nodeExpanded;
         int nodeGenerated;
         NumTracker<long> heuristicTime;
+        NumTracker<long> successorTime;
         Timer heuristicTimer;
+        Timer successorTimer;
     public:
-        StateCounter(): nodeExpanded{0}, nodeGenerated{0}, heuristicTime{}, heuristicTimer{false} {
+        StateCounter(): nodeExpanded{0}, nodeGenerated{0}, heuristicTime{}, heuristicTimer{false}, successorTime{}, successorTimer{false} {
 
         }
         virtual ~StateCounter() {
@@ -39,6 +47,9 @@ namespace pathfinding::search::listeners {
         NumTracker<long> getHeuristicTracking() const {
             return this->heuristicTime;
         }
+        NumTracker<long> getSuccessorTracking() const {
+            return this->successorTime;
+        }
         void updateNodeExpanded() {
             this->nodeExpanded += 1;
         }
@@ -53,12 +64,22 @@ namespace pathfinding::search::listeners {
             this->heuristicTimer.stop();
             this->heuristicTime.update(this->heuristicTimer.getElapsedMicroSeconds().toLong());
         }
+        void startSuccessorTimer() {
+            this->successorTimer.cleanup();
+            this->successorTime.start();
+        }
+        void stopsuccessorTimer() {
+            this->successorTimer.stop();
+            this->successorTime.update(this->successorTimer.getElapsedMicroSeconds().toLong());
+        }
     public:
         void cleanup() {
             this->nodeExpanded = 0;
             this->nodeGenerated = 0;
             this->heuristicTime.cleanup();
             this->heuristicTimer.cleanup();
+            this->successorTime.cleanup();
+            this->successorTimer.cleanup();
         }
     };
 
