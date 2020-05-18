@@ -35,8 +35,11 @@ namespace pathfinding::utils {
 	NodePath getNodePath(const STATE& state, const function_t<STATE, nodeid_t>& mapper) {
 		NodePath result{};
 		auto tmp = &state;
+		debug("getNodePath is", tmp);
 		while (tmp != nullptr) {
+			debug("getNodePath is", tmp);
 			result.add(mapper(*tmp));
+			debug("mapper is", mapper(*tmp));
 			tmp = tmp->getParent();
 		}
 		return result;
@@ -253,6 +256,7 @@ namespace pathfinding::utils {
 		const GridMap& gridMap = static_cast<const GridMap&>(map);
 
 		color_t c{};
+		critical("putting path of size", path.size());
 		for (int i=0; i<path.size(); ++i) {
 			if (i == 0) {
 				c = startColor;
@@ -262,7 +266,7 @@ namespace pathfinding::utils {
 				c = pathColor;
 			}
 			xyLoc loc = graph.getVertex(path.at(i));
-			gridMapImage.lerpGridCellColor(loc, c);
+			gridMapImage.setGridCellColor(loc, c);
 		}
 		return gridMapImage;
 	}
